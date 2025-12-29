@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,74 +11,91 @@ namespace TaxZone
 {
     public class CsvClass
     {
+
         public static void CopiarNotasAreaTransferencia(int columnIndex)
         {
-            using (OpenFileDialog openFileDialog = new ()
+            using OpenFileDialog openFileDialog = new()
             {
-                Title = "Selecione um arquivo CSV",
-                Filter = "Arquivos CSV (*.csv)|*.csv|Todos os arquivos (*.*)|*.*",
+                Title = "Selecione um arquivo CSV ou ZIP",
+                Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
-            })
+            };
+
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            StringBuilder notasBuilder = new();
+            int totalLinhas = 0;
+            int linhasParciais = 0;
+            bool cabecalho = true;
+
+            try
             {
-                if (openFileDialog.ShowDialog() != DialogResult.OK)
-                    return;
+                IEnumerable<string> linhas;
 
-                string caminhoArquivo = openFileDialog.FileName;
-                StringBuilder notasBuilder = new ();
-                int totalLinhas = 0;
-                int linhasParciais = 0;
-                bool cabecalho = true;
+                string caminho = openFileDialog.FileName;
 
-                try
+                // CSV direto
+                if (Path.GetExtension(caminho).Equals(".csv", StringComparison.OrdinalIgnoreCase))
                 {
-                    foreach (string linha in File.ReadLines(caminhoArquivo))
+                    linhas = File.ReadLines(caminho);
+                }
+                // ZIP com CSV
+                else
+                {
+                    using ZipArchive zip = ZipFile.OpenRead(caminho);
+
+                    ZipArchiveEntry csv = zip.Entries
+                        .First(e => e.FullName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase));
+
+                    using StreamReader reader = new(csv.Open(), Encoding.UTF8);
+
+                    linhas = reader.ReadToEnd().Split('\n');
+                }
+
+                foreach (string linha in linhas)
+                {
+                    if (cabecalho)
                     {
-                        // Pula o cabeçalho
-                        if (cabecalho)
-                        {
-                            cabecalho = false;
-                            continue;
-                        }
-
-                        string[] colunas = linha.Split(';');
-
-                        if (colunas.Length > columnIndex)
-                        {
-                            string valor = colunas[columnIndex].Trim();
-
-                            // Se o texto acumulado já está grande, envia pro clipboard
-                            if (notasBuilder.Length > 3950)
-                            {
-                                Clipboard.SetText(notasBuilder.ToString());
-                                MessageBox.Show($"{linhasParciais} notas copiadas para a área de transferência.\n" +
-                                                "Reprocese essas e clique em OK para continuar.",
-                                    "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                                notasBuilder.Clear();
-                                linhasParciais = 0;
-                            }
-
-                            // Adiciona vírgula **somente se já tiver algo antes**
-                            if (linhasParciais > 0)
-                                notasBuilder.Append(',');
-
-                            notasBuilder.Append(int.Parse(valor));
-                            totalLinhas++;
-                            linhasParciais++;
-                        }
+                        cabecalho = false;
+                        continue;
                     }
 
-                    // Copia o restante que ficou
-                    if (notasBuilder.Length > 0)
-                        Clipboard.SetText(notasBuilder.ToString());
+                    string[] colunas = linha.Split(';');
 
-                    MessageBox.Show($"Finalizado! {totalLinhas} notas copiadas para a área de transferência.",
-                        "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (colunas.Length <= columnIndex)
+                        continue;
+
+                    if (notasBuilder.Length > 3950)
+                    {
+                        Clipboard.SetText(notasBuilder.ToString());
+                        MessageBox.Show(
+                            $"{linhasParciais} notas copiadas.\nClique OK para continuar.",
+                            "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                        notasBuilder.Clear();
+                        linhasParciais = 0;
+                    }
+
+                    if (linhasParciais > 0)
+                        notasBuilder.Append(',');
+
+                    notasBuilder.Append(int.Parse(colunas[columnIndex].Trim()));
+                    totalLinhas++;
+                    linhasParciais++;
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Erro ao ler o arquivo: " + ex.Message,
-                        "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
+                if (notasBuilder.Length > 0)
+                    Clipboard.SetText(notasBuilder.ToString());
+
+                MessageBox.Show(
+                    $"Finalizado! {totalLinhas} notas copiadas.",
+                    "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao ler o arquivo: " + ex.Message,
+                    "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

@@ -35,8 +35,6 @@
             label2 = new Label();
             bt_notas_canceladas = new Button();
             label3 = new Label();
-            tb_estabelecimento = new TextBox();
-            label4 = new Label();
             label5 = new Label();
             tb_senha_banco_far = new TextBox();
             label6 = new Label();
@@ -53,7 +51,7 @@
             label11 = new Label();
             cb_pendencia_processamento = new ComboBox();
             label14 = new Label();
-            bt_comparar_icms = new Button();
+            bt_obter_icms_sifar = new Button();
             groupBox1 = new GroupBox();
             label13 = new Label();
             tb_ano = new TextBox();
@@ -136,22 +134,6 @@
             label3.TabIndex = 5;
             label3.Text = "Diferença Canceladas";
             // 
-            // tb_estabelecimento
-            // 
-            tb_estabelecimento.Location = new Point(452, 35);
-            tb_estabelecimento.Name = "tb_estabelecimento";
-            tb_estabelecimento.Size = new Size(38, 23);
-            tb_estabelecimento.TabIndex = 6;
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(352, 38);
-            label4.Name = "label4";
-            label4.Size = new Size(94, 15);
-            label4.TabIndex = 7;
-            label4.Text = "Estabelecimento";
-            // 
             // label5
             // 
             label5.AutoSize = true;
@@ -190,7 +172,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(508, 38);
+            label7.Location = new Point(423, 34);
             label7.Name = "label7";
             label7.Size = new Size(40, 15);
             label7.TabIndex = 13;
@@ -234,9 +216,9 @@
             // cb_banco
             // 
             cb_banco.FormattingEnabled = true;
-            cb_banco.Location = new Point(554, 35);
+            cb_banco.Location = new Point(469, 31);
             cb_banco.Name = "cb_banco";
-            cb_banco.Size = new Size(105, 23);
+            cb_banco.Size = new Size(137, 23);
             cb_banco.TabIndex = 20;
             // 
             // cb_empresa
@@ -286,21 +268,21 @@
             // label14
             // 
             label14.AutoSize = true;
-            label14.Location = new Point(40, 80);
+            label14.Location = new Point(27, 80);
             label14.Name = "label14";
-            label14.Size = new Size(87, 15);
+            label14.Size = new Size(100, 15);
             label14.TabIndex = 27;
-            label14.Text = "Compara ICMS";
+            label14.Text = "Obter ICMS SIFAR";
             // 
-            // bt_comparar_icms
+            // bt_obter_icms_sifar
             // 
-            bt_comparar_icms.Location = new Point(143, 76);
-            bt_comparar_icms.Name = "bt_comparar_icms";
-            bt_comparar_icms.Size = new Size(87, 23);
-            bt_comparar_icms.TabIndex = 26;
-            bt_comparar_icms.Text = "Executar";
-            bt_comparar_icms.UseVisualStyleBackColor = true;
-            bt_comparar_icms.Click += bt_comparar_icms_Click;
+            bt_obter_icms_sifar.Location = new Point(143, 76);
+            bt_obter_icms_sifar.Name = "bt_obter_icms_sifar";
+            bt_obter_icms_sifar.Size = new Size(87, 23);
+            bt_obter_icms_sifar.TabIndex = 26;
+            bt_obter_icms_sifar.Text = "Executar";
+            bt_obter_icms_sifar.UseVisualStyleBackColor = true;
+            bt_obter_icms_sifar.Click += bt_obter_icms_sifar_Click;
             // 
             // groupBox1
             // 
@@ -311,9 +293,7 @@
             groupBox1.Controls.Add(label3);
             groupBox1.Controls.Add(label14);
             groupBox1.Controls.Add(bt_notas_canceladas);
-            groupBox1.Controls.Add(bt_comparar_icms);
-            groupBox1.Controls.Add(label4);
-            groupBox1.Controls.Add(tb_estabelecimento);
+            groupBox1.Controls.Add(bt_obter_icms_sifar);
             groupBox1.Controls.Add(cb_banco);
             groupBox1.Controls.Add(label7);
             groupBox1.Location = new Point(12, 97);
@@ -335,13 +315,13 @@
             // 
             tb_ano.Location = new Point(554, 68);
             tb_ano.Name = "tb_ano";
-            tb_ano.Size = new Size(50, 23);
+            tb_ano.Size = new Size(52, 23);
             tb_ano.TabIndex = 30;
             // 
             // label12
             // 
             label12.AutoSize = true;
-            label12.Location = new Point(417, 71);
+            label12.Location = new Point(434, 71);
             label12.Name = "label12";
             label12.Size = new Size(29, 15);
             label12.TabIndex = 29;
@@ -349,7 +329,7 @@
             // 
             // tb_mes
             // 
-            tb_mes.Location = new Point(452, 68);
+            tb_mes.Location = new Point(469, 68);
             tb_mes.Name = "tb_mes";
             tb_mes.Size = new Size(38, 23);
             tb_mes.TabIndex = 28;
@@ -560,8 +540,6 @@
         private Label label2;
         private Button bt_notas_canceladas;
         private Label label3;
-        private TextBox tb_estabelecimento;
-        private Label label4;
         private Label label5;
         private TextBox tb_senha_banco_far;
         private Label label6;
@@ -578,7 +556,7 @@
         private Label label11;
         private ComboBox cb_pendencia_processamento;
         private Label label14;
-        private Button bt_comparar_icms;
+        private Button bt_obter_icms_sifar;
         private GroupBox groupBox1;
         private Label label13;
         private TextBox tb_ano;

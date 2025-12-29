@@ -1,5 +1,6 @@
 ﻿using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
+using System.Data;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -54,7 +55,6 @@ namespace TaxZone
         {
             if(modeloHardcore && (string.IsNullOrEmpty(referenciaBuracoNota) || referenciaBuracoNota.Length < 7))
                 MessageBox.Show("Preencha a referencia para o modo hardcore!");
-            
 
             using (OpenFileDialog openFileDialog = new()
             {
@@ -228,6 +228,32 @@ namespace TaxZone
             }
 
             return resultado;
+        }
+
+        public static void MostrarDataTable(DataTable table)
+        {
+            StringBuilder sb = new();
+
+            // Cabeçalho
+            foreach (DataColumn col in table.Columns)
+            {
+                sb.Append(col.ColumnName).Append(" | ");
+            }
+            sb.AppendLine();
+            sb.AppendLine(new string('-', sb.Length));
+
+            // Linhas
+            foreach (DataRow row in table.Rows)
+            {
+                foreach (var item in row.ItemArray)
+                {
+                    sb.Append(item).Append(" | ");
+                }
+                sb.AppendLine();
+            }
+
+            MessageBox.Show(sb.ToString(), "Dados",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

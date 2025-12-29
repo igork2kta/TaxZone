@@ -1,6 +1,7 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Diagnostics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TaxZone
 {
@@ -108,32 +109,31 @@ namespace TaxZone
 
         private List<int> getDiferencaCanceladas()
         {
-            if (string.IsNullOrEmpty(tb_ano.Text))
+            if (string.IsNullOrEmpty(tb_ano.Text) || string.IsNullOrEmpty(tb_mes.Text))
             {
-                MessageBox.Show("Informe o Ano!");
+                MessageBox.Show("Informe o Ano/Mês!");
                 return null;
             }
-            if (string.IsNullOrEmpty(tb_mes.Text))
+
+            ComboValue? banco = cb_banco.SelectedItem as ComboValue;
+
+            if (banco is null)
             {
-                MessageBox.Show("Informe o Mês!");
+                MessageBox.Show("Informe o banco de dados!");
                 return null;
             }
 
             List<int> canceladasTax = CsvClass.CopiarNotas(3);
 
-            string query;
+    
+            string mes = int.Parse(tb_mes.Text).ToString("00");
+            string ano = tb_ano.Text;
 
-            if (!string.IsNullOrEmpty(tb_estabelecimento.Text))
-                query = $"select NUMDOC_FSC from capa_nf_sped_{int.Parse(tb_mes.Text):00}_{tb_ano.Text} where datcan is not null and codfil = {tb_estabelecimento.Text}";
-            else
-                query = $"select NUMDOC_FSC from capa_nf_sped_{int.Parse(tb_mes.Text):00}_{tb_ano.Text} where datcan is not null";
-
-
-
-
-            ComboValue? banco = cb_banco.SelectedItem as ComboValue;
-
-            if (banco is null) return null;
+            string query = string.Format(
+                Queries.canceladasFar,
+                mes,
+                ano
+            );
 
             DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.key, banco.value, query);
 
@@ -214,22 +214,19 @@ namespace TaxZone
             if (pendencia is null) return;
 
             string notas, query = "";
-            
-            //OracleParameterCollection parameters;
-
             switch (pendencia.value)
             {
                 case "1":
                     notas = Util.IntListToString(CsvClass.CopiarNotas(1));
-                    query = $"select * from safx43 where num_docfis IN({notas}) AND DTH_INCLUSAO IS NULL";
+                    query = string.Format(Queries.pendentesSafx43, notas);
                     break;
                 case "2":
                     notas = Util.IntListToString(CsvClass.CopiarNotas(2));
-                    query = $"select * from safx43 where num_docfis IN({notas}) AND DTH_INCLUSAO IS NULL";
+                    query = string.Format(Queries.pendentesSafx43, notas);
                     break;
                 case "3":
                     notas = Util.IntListToString(getDiferencaCanceladas());
-                    query = $"select * from safx42 where num_docfis IN ({notas}) AND DTH_INCLUSAO IS NULL";
+                    query = string.Format(Queries.pendentesSafx42, notas);
                     break;
             }
 
@@ -238,49 +235,41 @@ namespace TaxZone
             MessageBox.Show($"{pendentes.Rows.Count} notas pendentes!", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void bt_comparar_icms_Click(object sender, EventArgs e)
+        private void bt_obter_icms_sifar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(tb_estabelecimento.Text))
-            {
-                MessageBox.Show("Informe o estabelecimento!");
-                return;
-            }
+
             if (cb_banco.SelectedItem is not ComboValue banco)
             {
                 MessageBox.Show("Informe o banco!");
                 return;
             }
-            if (string.IsNullOrEmpty(tb_ano.Text))
+            if (string.IsNullOrEmpty(tb_ano.Text) || string.IsNullOrEmpty(tb_mes.Text))
             {
-                MessageBox.Show("Informe o Ano!");
-                return;
-            }
-            if (string.IsNullOrEmpty(tb_mes.Text))
-            {
-                MessageBox.Show("Informe o Mês!");
+                MessageBox.Show("Informe o Ano/Mês!");
                 return;
             }
 
-            string query = $@"SELECT  SUM(CASE WHEN DATCAN IS NULL THEN DECODE(INDADC_DCT, 'A', B.VLRICMS, B.VLRICMS * (-1)) ELSE 0 END) ICMS 
-                                FROM CAPA_NF_SPED_{int.Parse(tb_mes.Text):00}_{tb_ano.Text} A,
-                                     ITEM_NF_SPED_{int.Parse(tb_mes.Text):00}_{tb_ano.Text} B
-                                WHERE A.CODEMP = B.CODEMP AND
-                                      A.CODFIL=B.CODFIL AND 
-                                      A.DATEMI=B.DATEMI AND 
-                                      A.IDTPSS=B.IDTPSS AND
-                                      A.CODDTN=B.CODDTN AND 
-                                      A.NUMDOC_FSC=B.NUMDOC_FSC AND 
-                                      A.NUMSER=B.NUMSER AND A.CODMDE_DOC = '66' AND 
-                                      A.CODFIL = {tb_estabelecimento.Text}";
+            string mes = int.Parse(tb_mes.Text).ToString("00");
+            string ano = tb_ano.Text;
 
-            DataTable pendentes = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.key, banco.value, query);
+            string query = string.Format(
+                                Queries.queryIcmsSifar,
+                                mes,
+                                ano
+                            );
 
-            if (pendentes is null || pendentes.Rows.Count == 0) return;
+            DataTable dt_icms = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.key, banco.value, query);
 
-            decimal icms = Convert.ToDecimal(pendentes.Rows[0]["ICMS"]);
+            Util.MostrarDataTable(dt_icms);
+
+            /*
+            if (dt_icms is null || dt_icms.Rows.Count == 0) return;
+
+            decimal icms = Convert.ToDecimal(dt_icms.Rows[0]["ICMS"]);
 
 
             MessageBox.Show($"ICMS encontrado no SIFAR {icms}");
+            */
         }
 
         private void bt_qtd_notas_Click(object sender, EventArgs e)
