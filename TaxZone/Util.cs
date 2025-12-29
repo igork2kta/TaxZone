@@ -130,8 +130,9 @@ namespace TaxZone
                                 linhasParciais = 0;
                             }
                             linhasTotais++;
+                            linhasParciais++;
                         }
-                        linhasParciais++;
+                        
                     }
                 }
                 
