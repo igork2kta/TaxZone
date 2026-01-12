@@ -59,8 +59,8 @@
             tb_mes = new TextBox();
             groupBox2 = new GroupBox();
             label20 = new Label();
-            comboBox1 = new ComboBox();
             bt_qtd_notas = new Button();
+            comboBox1 = new ComboBox();
             cb_empresa_qtd_notas = new ComboBox();
             label17 = new Label();
             label16 = new Label();
@@ -337,8 +337,8 @@
             // groupBox2
             // 
             groupBox2.Controls.Add(label20);
-            groupBox2.Controls.Add(comboBox1);
             groupBox2.Controls.Add(bt_qtd_notas);
+            groupBox2.Controls.Add(comboBox1);
             groupBox2.Controls.Add(cb_empresa_qtd_notas);
             groupBox2.Controls.Add(label17);
             groupBox2.Controls.Add(label16);
@@ -355,24 +355,16 @@
             // label20
             // 
             label20.AutoSize = true;
-            label20.Location = new Point(14, 34);
+            label20.Location = new Point(536, 33);
             label20.Name = "label20";
             label20.Size = new Size(35, 15);
             label20.TabIndex = 37;
             label20.Text = "Local";
-            // 
-            // comboBox1
-            // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Items.AddRange(new object[] { "MSA", "SIFAR" });
-            comboBox1.Location = new Point(55, 29);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(72, 23);
-            comboBox1.TabIndex = 36;
+            label20.Visible = false;
             // 
             // bt_qtd_notas
             // 
-            bt_qtd_notas.Location = new Point(575, 28);
+            bt_qtd_notas.Location = new Point(423, 29);
             bt_qtd_notas.Name = "bt_qtd_notas";
             bt_qtd_notas.Size = new Size(75, 23);
             bt_qtd_notas.TabIndex = 35;
@@ -380,10 +372,20 @@
             bt_qtd_notas.UseVisualStyleBackColor = true;
             bt_qtd_notas.Click += bt_qtd_notas_Click;
             // 
+            // comboBox1
+            // 
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Items.AddRange(new object[] { "MSA", "SIFAR" });
+            comboBox1.Location = new Point(577, 29);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(72, 23);
+            comboBox1.TabIndex = 36;
+            comboBox1.Visible = false;
+            // 
             // cb_empresa_qtd_notas
             // 
             cb_empresa_qtd_notas.FormattingEnabled = true;
-            cb_empresa_qtd_notas.Location = new Point(492, 27);
+            cb_empresa_qtd_notas.Location = new Point(340, 29);
             cb_empresa_qtd_notas.Name = "cb_empresa_qtd_notas";
             cb_empresa_qtd_notas.Size = new Size(73, 23);
             cb_empresa_qtd_notas.TabIndex = 33;
@@ -391,7 +393,7 @@
             // label17
             // 
             label17.AutoSize = true;
-            label17.Location = new Point(434, 31);
+            label17.Location = new Point(282, 33);
             label17.Name = "label17";
             label17.Size = new Size(52, 15);
             label17.TabIndex = 32;
@@ -400,7 +402,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new Point(298, 31);
+            label16.Location = new Point(158, 33);
             label16.Name = "label16";
             label16.Size = new Size(13, 15);
             label16.TabIndex = 34;
@@ -409,7 +411,7 @@
             // dtp_periodo_fin_qtd_notas
             // 
             dtp_periodo_fin_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_fin_qtd_notas.Location = new Point(317, 26);
+            dtp_periodo_fin_qtd_notas.Location = new Point(177, 29);
             dtp_periodo_fin_qtd_notas.Name = "dtp_periodo_fin_qtd_notas";
             dtp_periodo_fin_qtd_notas.Size = new Size(85, 23);
             dtp_periodo_fin_qtd_notas.TabIndex = 33;
@@ -417,7 +419,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(153, 31);
+            label15.Location = new Point(13, 33);
             label15.Name = "label15";
             label15.Size = new Size(48, 15);
             label15.TabIndex = 32;
@@ -426,7 +428,7 @@
             // dtp_periodo_ini_qtd_notas
             // 
             dtp_periodo_ini_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_ini_qtd_notas.Location = new Point(207, 26);
+            dtp_periodo_ini_qtd_notas.Location = new Point(67, 29);
             dtp_periodo_ini_qtd_notas.Name = "dtp_periodo_ini_qtd_notas";
             dtp_periodo_ini_qtd_notas.Size = new Size(85, 23);
             dtp_periodo_ini_qtd_notas.TabIndex = 31;
@@ -494,7 +496,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(750, 457);
+            ClientSize = new Size(725, 457);
             Controls.Add(tb_referenciaBuracoNota);
             Controls.Add(bt_pessoa_fisica_juridica);
             Controls.Add(label19);

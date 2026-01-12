@@ -73,12 +73,18 @@ namespace TaxZone
             cb_pendencia_processamento.Items.Add(new ComboValue("Notas sem item", "2"));
             cb_pendencia_processamento.Items.Add(new ComboValue("Diferença canceladas", "3"));
 
-            tb_ano.Text = DateTime.Now.Year.ToString();
-            tb_mes.Text = (DateTime.Now.Month - 1).ToString();
+            DateTime referenciaAnterior = DateTime.Now.AddMonths(-1);
+
+            tb_ano.Text = referenciaAnterior.Year.ToString();
+            tb_mes.Text = referenciaAnterior.Month.ToString();
 
             //Sempre o mês fechado
-            dtp_periodo_ini_qtd_notas.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month - 1, 01);
-            dtp_periodo_fin_qtd_notas.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month - 1, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month - 1));
+            dtp_periodo_ini_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, 01);
+            dtp_periodo_fin_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, DateTime.DaysInMonth(referenciaAnterior.Year, referenciaAnterior.Month));
+
+            tb_referenciaBuracoNota.Text = $"{referenciaAnterior.Month}_{referenciaAnterior.Year}";
+
+
         }
 
 
