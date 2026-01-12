@@ -496,7 +496,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(725, 457);
+            ClientSize = new Size(723, 457);
             Controls.Add(tb_referenciaBuracoNota);
             Controls.Add(bt_pessoa_fisica_juridica);
             Controls.Add(label19);

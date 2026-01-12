@@ -219,21 +219,26 @@ namespace TaxZone
             ComboValue? pendencia = cb_pendencia_processamento.SelectedItem as ComboValue;
             if (pendencia is null) return;
 
-            string notas, query = "";
+            string notas = "", query = "";
             switch (pendencia.value)
             {
                 case "1":
-                    notas = Util.IntListToString(CsvClass.CopiarNotas(1));
+                    notas = CsvClass.CopiarNotas2(1);
                     query = string.Format(Queries.pendentesSafx43, notas);
                     break;
                 case "2":
-                    notas = Util.IntListToString(CsvClass.CopiarNotas(2));
+                    notas = CsvClass.CopiarNotas2(2);
                     query = string.Format(Queries.pendentesSafx43, notas);
                     break;
                 case "3":
                     notas = Util.IntListToString(getDiferencaCanceladas());
                     query = string.Format(Queries.pendentesSafx42, notas);
                     break;
+            }
+
+            if (string.IsNullOrEmpty(notas))
+            {
+                MessageBox.Show("Nenhuma nota encontrada", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             DataTable pendentes = DataAccess.ExecuteQuery(tb_usuario_banco_msa.Text, tb_senha_banco_msa.Text, "MSA_CRP_PR", empresa.value, query);

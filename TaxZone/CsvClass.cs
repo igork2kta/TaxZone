@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Drawing;
+﻿using System.Data;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace TaxZone
 {
     public class CsvClass
     {
-
         public static void CopiarNotasAreaTransferencia(int columnIndex)
         {
             using OpenFileDialog openFileDialog = new()
@@ -99,6 +93,78 @@ namespace TaxZone
             }
         }
 
+        public static string CopiarNotas2(int columnIndex)
+        {
+            using OpenFileDialog openFileDialog = new()
+            {
+                Title = "Selecione um arquivo CSV ou ZIP",
+                Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+            };
+
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+                return string.Empty;
+
+            StringBuilder notasBuilder = new();
+            bool cabecalho = true;
+
+            try
+            {
+                IEnumerable<string> linhas;
+
+                string caminho = openFileDialog.FileName;
+
+                // CSV direto
+                if (Path.GetExtension(caminho).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+                {
+                    linhas = File.ReadLines(caminho);
+                }
+                // ZIP com CSV
+                else
+                {
+                    using ZipArchive zip = ZipFile.OpenRead(caminho);
+
+                    ZipArchiveEntry csv = zip.Entries
+                        .First(e => e.FullName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase));
+
+                    using StreamReader reader = new(csv.Open(), Encoding.UTF8);
+
+                    linhas = reader.ReadToEnd().Split('\n');
+                }
+
+                foreach (string linha in linhas)
+                {
+                    if (cabecalho)
+                    {
+                        cabecalho = false;
+                        continue;
+                    }
+
+                    string[] colunas = linha.Split(';');
+
+                    if (colunas.Length <= columnIndex)
+                        continue;
+
+                    notasBuilder.Append(int.Parse(colunas[columnIndex].Trim()));
+                    notasBuilder.Append(',');
+
+                }
+                if (notasBuilder.Length > 0)
+                {
+                    notasBuilder.Remove(notasBuilder.Length - 1, 1);
+                }
+
+                return notasBuilder.ToString();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao ler o arquivo: " + ex.Message,
+                    "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                return string.Empty;
+            }
+        }
 
         public static List<int> CopiarNotas(int columnIndex)
         {
