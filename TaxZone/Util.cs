@@ -9,7 +9,7 @@ namespace TaxZone
 {
     public class Util
     {
-        public static void DividirValoresAreaTransferencia(List<int> lista)
+        public static void DividirValoresAreaTransferencia(List<int> lista, bool naoFracionar = false)
         {
             StringBuilder notasBuilder = new ();
             int linhasParciais = 0;
@@ -18,8 +18,8 @@ namespace TaxZone
             {
                 string valor = linha.ToString();
 
-                // Se o texto acumulado já está grande, envia pro clipboard
-                if (notasBuilder.Length > 3950)
+                // Se o texto acumulado já está grande, envia pro clipboard (somente se fracionamento estiver ativo)
+                if (!naoFracionar && notasBuilder.Length > 3950)
                 {
                     Clipboard.SetText(notasBuilder.ToString());
                     MessageBox.Show($"{linhasParciais} notas copiadas para a área de transferência.\n" +
@@ -51,7 +51,7 @@ namespace TaxZone
             return string.Join(",", list);
         }
 
-        public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota)
+        public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota, bool naoFracionar = false)
         {
             if(modeloHardcore && (string.IsNullOrEmpty(referenciaBuracoNota) || referenciaBuracoNota.Length < 7))
                 MessageBox.Show("Preencha a referencia para o modo hardcore!");
@@ -120,7 +120,7 @@ namespace TaxZone
                         {
                             buffer.Append(i).Append(',');
                             
-                            if (buffer.Length >= 3950)
+                            if (!naoFracionar && buffer.Length >= 3950)
                             {
                                 Clipboard.SetText(buffer.ToString().TrimEnd(','));
                                 MessageBox.Show($"{linhasParciais} notas copiadas para a área de transferência.\n" +
@@ -148,7 +148,7 @@ namespace TaxZone
             }
         }
 
-        public static void ImportarPessoaFisicaJuridica()
+        public static void ImportarPessoaFisicaJuridica(bool naoFracionar = false)
         {
             using (OpenFileDialog openFileDialog = new()
             {
@@ -196,7 +196,7 @@ namespace TaxZone
                 {
                     buffer.Append(v).Append(',');
 
-                    if (buffer.Length >= 1950)
+                    if (!naoFracionar && buffer.Length >= 1950)
                     {
                         Clipboard.SetText(buffer.ToString().TrimEnd(','));
                         MessageBox.Show($"Valores copiados para a área de transferência.\n" +

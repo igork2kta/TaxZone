@@ -73,6 +73,7 @@
             bt_pessoa_fisica_juridica = new Button();
             label19 = new Label();
             tb_referenciaBuracoNota = new MaskedTextBox();
+            checkBox2 = new CheckBox();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -492,11 +493,22 @@
             tb_referenciaBuracoNota.ValidatingType = typeof(DateTime);
             tb_referenciaBuracoNota.Visible = false;
             // 
+            // checkBox2
+            // 
+            checkBox2.AutoSize = true;
+            checkBox2.Location = new Point(508, 72);
+            checkBox2.Name = "checkBox2";
+            checkBox2.Size = new Size(148, 19);
+            checkBox2.TabIndex = 38;
+            checkBox2.Text = "Não fracionar control c";
+            checkBox2.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(723, 457);
+            ClientSize = new Size(750, 457);
+            Controls.Add(checkBox2);
             Controls.Add(tb_referenciaBuracoNota);
             Controls.Add(bt_pessoa_fisica_juridica);
             Controls.Add(label19);
@@ -581,5 +593,6 @@
         private Label label20;
         private ComboBox comboBox1;
         private MaskedTextBox tb_referenciaBuracoNota;
+        private CheckBox checkBox2;
     }
 }

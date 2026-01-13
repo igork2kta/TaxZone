@@ -91,26 +91,26 @@ namespace TaxZone
         private void bt_diferenca_capa_item_Click(object sender, EventArgs e)
         {
             //No arquivo Diferenca_Capa_Item as notas ficam na coluna 2
-            CsvClass.CopiarNotasAreaTransferencia(1);
+            CsvClass.CopiarNotasAreaTransferencia(1, checkBox2.Checked);
         }
 
         private void bt_notas_sem_item_Click(object sender, EventArgs e)
         {
             //No arquivo Notas_sem_item as notas ficam na coluna 3
-            CsvClass.CopiarNotasAreaTransferencia(2);
+            CsvClass.CopiarNotasAreaTransferencia(2, checkBox2.Checked);
         }
 
 
         private void bt_buraco_nota_Click(object sender, EventArgs e)
         {
-            Util.BuracoDeNota(ckb_buraco_notas_hardcore.Checked, tb_referenciaBuracoNota.Text);
+            Util.BuracoDeNota(ckb_buraco_notas_hardcore.Checked, tb_referenciaBuracoNota.Text, checkBox2.Checked);
         }
 
         private void bt_notas_canceladas_Click(object sender, EventArgs e)
         {
             List<int> naoExistem = getDiferencaCanceladas();
             if (naoExistem is null) return;
-            Util.DividirValoresAreaTransferencia(naoExistem);
+            Util.DividirValoresAreaTransferencia(naoExistem, checkBox2.Checked);
         }
 
         private List<int> getDiferencaCanceladas()
@@ -353,7 +353,7 @@ namespace TaxZone
 
         private void bt_pessoa_fisica_juridica_Click(object sender, EventArgs e)
         {
-            Util.ImportarPessoaFisicaJuridica();
+            Util.ImportarPessoaFisicaJuridica(checkBox2.Checked);
         }
 
         private void ckb_buraco_notas_hardcore_CheckedChanged(object sender, EventArgs e)
