@@ -6,7 +6,8 @@ namespace TaxZone
 {
     public class CsvClass
     {
-        public static void CopiarNotasAreaTransferencia(int columnIndex)
+
+        public static void CopiarNotasAreaTransferencia(int columnIndex, bool naoFracionar = false)
         {
             using OpenFileDialog openFileDialog = new()
             {
@@ -60,7 +61,7 @@ namespace TaxZone
                     if (colunas.Length <= columnIndex)
                         continue;
 
-                    if (notasBuilder.Length > 3950)
+                    if (!naoFracionar && notasBuilder.Length > 3950)
                     {
                         Clipboard.SetText(notasBuilder.ToString());
                         MessageBox.Show(
