@@ -182,6 +182,8 @@ namespace TaxZone
                         valores.Add(int.Parse(valor.Substring(valor.Length - 10)));
                 }
 
+                valores = valores.Distinct().ToList();
+
                 if (valores.Count == 0)
                 {
                     MessageBox.Show("Nenhum valor encontrado no PDF.",
