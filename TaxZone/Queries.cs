@@ -31,6 +31,38 @@
                                 group by COD_ESTAB";
 
 
+        public const string qtdNotasFar = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
+                                            from CAPA_NF_SPED_{0}_{1} a
+                                            where CODMDE_DOC = 66 
+                                            group by codfil
+
+                                            union all
+
+                                            select '{2}' EMPRESA, 'ITENS', count(1) TOTAL, a.codfil
+                                            from CAPA_NF_SPED_{0}_{1} a,
+                                                 ITEM_NF_SPED_{0}_{1} b
+                                            where   a.CODEMP = b.CODEMP
+                                                    and a.CODFIL=b.CODFIL
+                                                    and a.DATEMI=b.DATEMI
+                                                    and a.IDTPSS=b.IDTPSS
+                                                    and a.CODDTN=b.CODDTN
+                                                    and a.NUMDOC_FSC=b.NUMDOC_FSC
+                                                    and a.NUMser=b.NUMser
+                                                    and a.CODMDE_DOC = 66 
+                                                    group by a.codfil
+
+                                            union all
+
+                                            select '{2}' EMPRESA, 'CANCELADAS',count(1) TOTAL, codfil
+                                            from CAPA_NF_SPED_{0}_{1} a
+                                            where DATCAN is not null AND CODMDE_DOC = 66
+                                            group by codfil
+
+                                            order by 4, 2 desc";
+
+
+
+
         public const string queryIcmsSifar = @"SELECT  A.CODFIL, SUM(
                                             CASE 
                                                 WHEN DATCAN IS NULL 

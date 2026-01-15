@@ -76,12 +76,14 @@ namespace TaxZone
                 var regex = new Regex(@"\|\s*(\d{6,})\s*\|\s*(\d{6,})\s*\|", RegexOptions.Multiline);
 
                 var pairs = new List<(int NumDocfis, int Proximo)>();
+                int totalNotas = 0;
 
                 foreach (Match match in regex.Matches(allText))
                 {
                     int numDocfis = int.Parse(match.Groups[1].Value);
                     int proximo = int.Parse(match.Groups[2].Value);
                     pairs.Add((numDocfis, proximo));
+                    totalNotas += proximo - numDocfis;
                 }
 
                 var buffer = new StringBuilder();
@@ -123,13 +125,11 @@ namespace TaxZone
                             if (!naoFracionar && buffer.Length >= 3950)
                             {
                                 Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                                MessageBox.Show($"{linhasParciais} notas copiadas para a área de transferência.\n" +
+                                MessageBox.Show($"{linhasParciais} / {totalNotas} notas copiadas para a área de transferência.\n" +
                                                 "Reprocese essas e clique em OK para continuar.",
                                     "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                                 buffer.Clear();
-                                linhasParciais = 0;
                             }
-                            linhasTotais++;
                             linhasParciais++;
                         }
                         
@@ -140,7 +140,7 @@ namespace TaxZone
                 if (buffer.Length > 0)
                 {
                     Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                    MessageBox.Show($"Fim, {linhasParciais} notas copiadas para a área de transferência.\n Total de {linhasTotais} notas.",
+                    MessageBox.Show($"Fim, {linhasParciais} / {totalNotas} notas copiadas para a área de transferência.",
                                 "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
 
@@ -174,12 +174,14 @@ namespace TaxZone
                 var matches = regex.Matches(allText);
 
                 var valores = new List<int>();
+                int linhasParciais = 0;
 
                 foreach (Match match in matches)
                 {
                     string valor = match.Value;
                     if (valor.Length >= 10)
                         valores.Add(int.Parse(valor.Substring(valor.Length - 10)));
+                    
                 }
 
                 valores = valores.Distinct().ToList();
@@ -199,18 +201,19 @@ namespace TaxZone
                     if (!naoFracionar && buffer.Length >= 1950)
                     {
                         Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                        MessageBox.Show($"Valores copiados para a área de transferência.\n" +
+                        MessageBox.Show($"{linhasParciais} / {valores.Count} UC's copiadas para a área de transferência.\n" +
                                         "Cole onde precisar e clique em OK para continuar.",
                             "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         buffer.Clear();
                     }
+                    linhasParciais++;
                 }
 
                 // Copia o restante final, se existir
                 if (buffer.Length > 0)
                 {
                     Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                    MessageBox.Show($"Valores copiados para a área de transferência.\n",
+                    MessageBox.Show($"{linhasParciais} / {valores.Count} UC's copiadas para a área de transferência. Finalizado!\n",
                                 "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
             }
@@ -235,28 +238,77 @@ namespace TaxZone
 
         public static void MostrarDataTable(DataTable table)
         {
+            if (table == null || table.Rows.Count == 0)
+                return;
+
+            int colCount = table.Columns.Count;
+            int[] colWidths = new int[colCount];
+
+            // Calcula a largura máxima de cada coluna
+            for (int i = 0; i < colCount; i++)
+            {
+                colWidths[i] = table.Columns[i].ColumnName.Length;
+
+                foreach (DataRow row in table.Rows)
+                {
+                    int length = row[i]?.ToString()?.Length ?? 0;
+                    if (length > colWidths[i])
+                        colWidths[i] = length;
+                }
+            }
+
             StringBuilder sb = new();
 
             // Cabeçalho
-            foreach (DataColumn col in table.Columns)
+            for (int i = 0; i < colCount; i++)
             {
-                sb.Append(col.ColumnName).Append(" | ");
+                sb.Append(table.Columns[i].ColumnName.PadRight(colWidths[i] + 2));
             }
             sb.AppendLine();
-            sb.AppendLine(new string('-', sb.Length));
+
+            // Linha separadora
+            for (int i = 0; i < colCount; i++)
+            {
+                sb.Append(new string('-', colWidths[i])).Append("  ");
+            }
+            sb.AppendLine();
 
             // Linhas
             foreach (DataRow row in table.Rows)
             {
-                foreach (var item in row.ItemArray)
+                for (int i = 0; i < colCount; i++)
                 {
-                    sb.Append(item).Append(" | ");
+                    string value = row[i]?.ToString() ?? string.Empty;
+                    sb.Append(value.PadRight(colWidths[i] + 2));
                 }
                 sb.AppendLine();
             }
 
-            MessageBox.Show(sb.ToString(), "Dados",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Form form = new()
+            {
+                Text = "Dados",
+                Width = 300,
+                Height = 300,
+                StartPosition = FormStartPosition.CenterScreen
+            };
+
+            TextBox textBox = new()
+            {
+                Multiline = true,
+                ReadOnly = true,
+                Dock = DockStyle.Fill,
+                ScrollBars = ScrollBars.Both,
+                Font = new Font("Consolas", 10),
+                WordWrap = false,
+                Text = sb.ToString()
+            };
+
+            form.Controls.Add(textBox);
+
+            // NÃO modal — mantém o form principal utilizável
+            form.Show();
         }
+
+
     }
 }

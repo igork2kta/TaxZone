@@ -36,37 +36,12 @@ namespace TaxZone
             tb_usuario_banco_msa.Text = ConfigManager.DatabaseUserMsa;
             tb_senha_banco_msa.Text = ConfigManager.DatabasePasswordMsa;
 
-            cb_banco.Items.Add(new ComboValue("COM_MGR_ES", "CFLCL"));
-            cb_banco.Items.Add(new ComboValue("COM_SER_ES", "ENERGIPE"));
-            cb_banco.Items.Add(new ComboValue("COM_PAB_ES", "SAELPA"));
-            cb_banco.Items.Add(new ComboValue("COM_TOC_ES", "FARETO"));
-            cb_banco.Items.Add(new ComboValue("COM_MTN_ES", "FAREMT"));
-            cb_banco.Items.Add(new ComboValue("COM_MTS_ES", "FAREMS"));
-            cb_banco.Items.Add(new ComboValue("COM_SPR_ES", "FARESS"));
-            cb_banco.Items.Add(new ComboValue("COM_RON_ES", "FARERO"));
-            cb_banco.Items.Add(new ComboValue("COM_ACR_ES", "FAREAC"));
+            var dataSourceEmpresas = new List<string> { "EMR", "ESE", "EPB", "ETO", "EMT", "EMS", "ESS", "ERO", "EAC" };
+            cb_banco.DataSource = dataSourceEmpresas;
+            cb_empresa.DataSource = dataSourceEmpresas;
 
-            cb_empresa.Items.Add(new ComboValue("EMR", "MSFEMG"));
-            cb_empresa.Items.Add(new ComboValue("ESE", "MSFESE"));
-            cb_empresa.Items.Add(new ComboValue("EPB", "MSFEPB"));
-            cb_empresa.Items.Add(new ComboValue("ETO", "MSFETO"));
-            cb_empresa.Items.Add(new ComboValue("EMT", "MSFEMT"));
-            cb_empresa.Items.Add(new ComboValue("EMS", "MSFEMS"));
-            cb_empresa.Items.Add(new ComboValue("ESS", "MSFESS"));
-            cb_empresa.Items.Add(new ComboValue("ERO", "MSFERO"));
-            cb_empresa.Items.Add(new ComboValue("EAC", "MSFEAC"));
-
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("TODAS", "TODAS"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("EMR", "MSFEMG"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("ESE", "MSFESE"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("EPB", "MSFEPB"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("ETO", "MSFETO"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("EMT", "MSFEMT"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("EMS", "MSFEMS"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("ESS", "MSFESS"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("ERO", "MSFERO"));
-            cb_empresa_qtd_notas.Items.Add(new ComboValue("EAC", "MSFEAC"));
-
+            cb_empresa_qtd_notas.Items.Add("TODAS");
+            cb_empresa_qtd_notas.Items.AddRange(dataSourceEmpresas.ToArray());
             cb_empresa_qtd_notas.SelectedIndex = 0;
 
             cb_pendencia_processamento.Items.Add(new ComboValue("Diferença capa-item", "1"));
@@ -84,7 +59,7 @@ namespace TaxZone
 
             tb_referenciaBuracoNota.Text = $"{referenciaAnterior.Month}_{referenciaAnterior.Year}";
 
-
+            cb_local_qtd_notas.SelectedIndex = 0;
         }
 
 
@@ -121,7 +96,7 @@ namespace TaxZone
                 return null;
             }
 
-            ComboValue? banco = cb_banco.SelectedItem as ComboValue;
+            Banco banco = Empresa.GetBancoFar(cb_banco.Text);
 
             if (banco is null)
             {
@@ -131,7 +106,7 @@ namespace TaxZone
 
             List<int> canceladasTax = CsvClass.CopiarNotas(3);
 
-    
+
             string mes = int.Parse(tb_mes.Text).ToString("00");
             string ano = tb_ano.Text;
 
@@ -141,7 +116,7 @@ namespace TaxZone
                 ano
             );
 
-            DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.key, banco.value, query);
+            DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.database, banco.owner, query);
 
             List<int> canceladasFar = dataTableCanceladasFar.AsEnumerable()
                 .Select(r => r.Field<int>("NUMDOC_FSC"))
@@ -159,6 +134,7 @@ namespace TaxZone
 
             List<int> faltando = new();
 
+            
             // Verifica se algum número está faltando ou aparece menos vezes
             foreach (var kvp in farCounts)
             {
@@ -173,6 +149,22 @@ namespace TaxZone
                     faltando.AddRange(Enumerable.Repeat(numero, faltam));
                 }
             }
+            
+            /*
+            // Para verificar as notas a mais que estão no tax
+            foreach (var kvp in taxCounts)
+            {
+                int numero = kvp.Key;
+                int qtdTax = kvp.Value;
+                int qtdFar = farCounts.ContainsKey(numero) ? farCounts[numero] : 0;
+
+                if (qtdFar < qtdTax)
+                {
+                    // Adiciona o número tantas vezes quanto faltar
+                    int faltam = qtdTax - qtdFar;
+                    faltando.AddRange(Enumerable.Repeat(numero, faltam));
+                }
+            }*/
 
             return faltando;
         }
@@ -209,11 +201,9 @@ namespace TaxZone
 
         private void bt_pendencia_processamento_Click(object sender, EventArgs e)
         {
-            ComboValue? empresa;
-            if (string.IsNullOrEmpty(cb_empresa.Text))
-                return;
-            else
-                empresa = cb_empresa.SelectedItem as ComboValue;
+            Banco banco = Empresa.GetBancoMsa(cb_empresa.Text);
+            if (banco is null) return;
+
 
 
             ComboValue? pendencia = cb_pendencia_processamento.SelectedItem as ComboValue;
@@ -241,15 +231,15 @@ namespace TaxZone
                 MessageBox.Show("Nenhuma nota encontrada", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            DataTable pendentes = DataAccess.ExecuteQuery(tb_usuario_banco_msa.Text, tb_senha_banco_msa.Text, "MSA_CRP_PR", empresa.value, query);
+            DataTable pendentes = DataAccess.ExecuteQuery(tb_usuario_banco_msa.Text, tb_senha_banco_msa.Text, banco.database, banco.owner, query);
 
             MessageBox.Show($"{pendentes.Rows.Count} notas pendentes!", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void bt_obter_icms_sifar_Click(object sender, EventArgs e)
         {
-
-            if (cb_banco.SelectedItem is not ComboValue banco)
+            Banco banco = Empresa.GetBancoFar(cb_banco.Text);
+            if (banco is null)
             {
                 MessageBox.Show("Informe o banco!");
                 return;
@@ -269,7 +259,7 @@ namespace TaxZone
                                 ano
                             );
 
-            DataTable dt_icms = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.key, banco.value, query);
+            DataTable dt_icms = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.database, banco.owner, query);
 
             Util.MostrarDataTable(dt_icms);
 
@@ -288,45 +278,62 @@ namespace TaxZone
             DateTime periodoIni = dtp_periodo_ini_qtd_notas.Value;
             DateTime periodoFin = dtp_periodo_fin_qtd_notas.Value;
 
-            string queryOriginal = Queries.qtdNotasMsa;
-
             SaveFileDialog salvarDialog = new SaveFileDialog();
 
             int taskCount = 1;
             if (cb_empresa_qtd_notas.Text == "TODAS") taskCount = 9;
 
-            salvarDialog.Title = "Salvar arquivo como...";
-            salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
-            salvarDialog.DefaultExt = "csv";
-            salvarDialog.AddExtension = true;
-            if (taskCount == 1)
-                salvarDialog.FileName = $"qtd_notas_{cb_empresa_qtd_notas.Text}.csv"; // Nome padrão
-            else
-                salvarDialog.FileName = $"qtd_notas.csv"; // Nome padrão
+            if (!ckb_mostrar_na_tela.Checked)
+            {
 
-            if (salvarDialog.ShowDialog() != DialogResult.OK) return;
+                salvarDialog.Title = "Salvar arquivo como...";
+                salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
+                salvarDialog.DefaultExt = "csv";
+                salvarDialog.AddExtension = true;
+                if (taskCount == 1)
+                    salvarDialog.FileName = $"qtd_notas_{cb_empresa_qtd_notas.Text}.csv"; // Nome padrão
+                else
+                    salvarDialog.FileName = $"qtd_notas.csv"; // Nome padrão
 
+                if (salvarDialog.ShowDialog() != DialogResult.OK) return;
+            }
 
             Task[] tasks = new Task[taskCount];
-            //SetStatus("Executando, por favor aguarde...");
-            //Extracting = true;
             DataTable qtd_notas = new();
             for (int i = 0; i < taskCount; i++)
             {
 
-                ComboValue? banco;
+                Banco banco = null;
+                string query = "";
+                string empresa;
+                string user = tb_usuario_banco_msa.Text;
+                string password = tb_senha_banco_msa.Text;
 
-                if (taskCount == 1) banco = cb_empresa_qtd_notas.SelectedItem as ComboValue;
-                else banco = cb_empresa_qtd_notas.Items[i + 1] as ComboValue;
+                if (taskCount == 1) empresa = cb_empresa_qtd_notas.Text;
+                else empresa = cb_empresa_qtd_notas.Items[i + 1].ToString();
+
+                if (cb_local_qtd_notas.Text == "MSA")
+                {
+                    banco = Empresa.GetBancoMsa(empresa);
+
+                    query = string.Format(Queries.qtdNotasMsa, periodoIni.ToString("dd/MM/yyyy"), periodoFin.ToString("dd/MM/yyyy"), empresa);
+                    user = tb_usuario_banco_msa.Text;
+                    password = tb_senha_banco_msa.Text;
+                }
+                else if (cb_local_qtd_notas.Text == "SIFAR")
+                {
+                    banco = Empresa.GetBancoFar(empresa);
+                    query = string.Format(Queries.qtdNotasFar, periodoIni.ToString("MM"), periodoFin.ToString("yyyy"), empresa);
+                    user = tb_usuario_banco_far.Text;
+                    password = tb_senha_banco_far.Text;
+                }
 
                 if (banco is null) return;
 
-                string serviceName = "MSA_CRP_PR";
-                string user = tb_usuario_banco_msa.Text;
-                string password = tb_senha_banco_msa.Text;
-                string session = banco.value;
+                string serviceName = banco.database;
+                string session = banco.owner;
 
-                string query = string.Format(queryOriginal, periodoIni.ToString("dd/MM/yyyy"), periodoFin.ToString("dd/MM/yyyy"), banco.key);
+
 
                 tasks[i] = Task.Run(
                     () =>
@@ -339,16 +346,22 @@ namespace TaxZone
 
             Task.WaitAll(tasks);
 
-            CsvClass.WriteDataTableToCsv(qtd_notas, salvarDialog.FileName);
 
-            var resposta = MessageBox.Show("Extração Finalizada! Deseja abrir o arquivo?", "Pronto!", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
-            if (resposta == DialogResult.Yes)
+            if (ckb_mostrar_na_tela.Checked)
             {
-                Process.Start(new ProcessStartInfo(salvarDialog.FileName) { UseShellExecute = true });
+                Util.MostrarDataTable(qtd_notas);
+            }
+            else
+            {
+                CsvClass.WriteDataTableToCsv(qtd_notas, salvarDialog.FileName);
+
+                var resposta = MessageBox.Show("Extração Finalizada! Deseja abrir o arquivo?", "Pronto!", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                if (resposta == DialogResult.Yes)
+                {
+                    Process.Start(new ProcessStartInfo(salvarDialog.FileName) { UseShellExecute = true });
+                }
             }
 
-            //SetStatus("Pronto!");
-            //Extracting = false;
         }
 
         private void bt_pessoa_fisica_juridica_Click(object sender, EventArgs e)
@@ -359,6 +372,11 @@ namespace TaxZone
         private void ckb_buraco_notas_hardcore_CheckedChanged(object sender, EventArgs e)
         {
             tb_referenciaBuracoNota.Visible = ckb_buraco_notas_hardcore.Checked;
+        }
+
+        private void cb_banco_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

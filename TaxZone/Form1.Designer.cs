@@ -58,9 +58,10 @@
             label12 = new Label();
             tb_mes = new TextBox();
             groupBox2 = new GroupBox();
+            ckb_mostrar_na_tela = new CheckBox();
             label20 = new Label();
             bt_qtd_notas = new Button();
-            comboBox1 = new ComboBox();
+            cb_local_qtd_notas = new ComboBox();
             cb_empresa_qtd_notas = new ComboBox();
             label17 = new Label();
             label16 = new Label();
@@ -175,9 +176,9 @@
             label7.AutoSize = true;
             label7.Location = new Point(423, 34);
             label7.Name = "label7";
-            label7.Size = new Size(40, 15);
+            label7.Size = new Size(52, 15);
             label7.TabIndex = 13;
-            label7.Text = "Banco";
+            label7.Text = "Empresa";
             // 
             // label9
             // 
@@ -217,10 +218,11 @@
             // cb_banco
             // 
             cb_banco.FormattingEnabled = true;
-            cb_banco.Location = new Point(469, 31);
+            cb_banco.Location = new Point(481, 30);
             cb_banco.Name = "cb_banco";
-            cb_banco.Size = new Size(137, 23);
+            cb_banco.Size = new Size(59, 23);
             cb_banco.TabIndex = 20;
+            cb_banco.SelectedIndexChanged += cb_banco_SelectedIndexChanged;
             // 
             // cb_empresa
             // 
@@ -306,7 +308,7 @@
             // label13
             // 
             label13.AutoSize = true;
-            label13.Location = new Point(519, 71);
+            label13.Location = new Point(530, 75);
             label13.Name = "label13";
             label13.Size = new Size(29, 15);
             label13.TabIndex = 31;
@@ -314,7 +316,7 @@
             // 
             // tb_ano
             // 
-            tb_ano.Location = new Point(554, 68);
+            tb_ano.Location = new Point(565, 72);
             tb_ano.Name = "tb_ano";
             tb_ano.Size = new Size(52, 23);
             tb_ano.TabIndex = 30;
@@ -322,7 +324,7 @@
             // label12
             // 
             label12.AutoSize = true;
-            label12.Location = new Point(434, 71);
+            label12.Location = new Point(445, 75);
             label12.Name = "label12";
             label12.Size = new Size(29, 15);
             label12.TabIndex = 29;
@@ -330,16 +332,17 @@
             // 
             // tb_mes
             // 
-            tb_mes.Location = new Point(469, 68);
+            tb_mes.Location = new Point(480, 72);
             tb_mes.Name = "tb_mes";
             tb_mes.Size = new Size(38, 23);
             tb_mes.TabIndex = 28;
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(ckb_mostrar_na_tela);
             groupBox2.Controls.Add(label20);
             groupBox2.Controls.Add(bt_qtd_notas);
-            groupBox2.Controls.Add(comboBox1);
+            groupBox2.Controls.Add(cb_local_qtd_notas);
             groupBox2.Controls.Add(cb_empresa_qtd_notas);
             groupBox2.Controls.Add(label17);
             groupBox2.Controls.Add(label16);
@@ -351,50 +354,58 @@
             groupBox2.Size = new Size(700, 71);
             groupBox2.TabIndex = 31;
             groupBox2.TabStop = false;
-            groupBox2.Text = "Quantidade notas MSA";
+            groupBox2.Text = "Quantidade notas";
+            // 
+            // ckb_mostrar_na_tela
+            // 
+            ckb_mostrar_na_tela.AutoSize = true;
+            ckb_mostrar_na_tela.Location = new Point(512, 35);
+            ckb_mostrar_na_tela.Name = "ckb_mostrar_na_tela";
+            ckb_mostrar_na_tela.Size = new Size(105, 19);
+            ckb_mostrar_na_tela.TabIndex = 38;
+            ckb_mostrar_na_tela.Text = "Mostrar na tela";
+            ckb_mostrar_na_tela.UseVisualStyleBackColor = true;
             // 
             // label20
             // 
             label20.AutoSize = true;
-            label20.Location = new Point(536, 33);
+            label20.Location = new Point(14, 37);
             label20.Name = "label20";
             label20.Size = new Size(35, 15);
             label20.TabIndex = 37;
             label20.Text = "Local";
-            label20.Visible = false;
             // 
             // bt_qtd_notas
             // 
-            bt_qtd_notas.Location = new Point(423, 29);
+            bt_qtd_notas.Location = new Point(623, 33);
             bt_qtd_notas.Name = "bt_qtd_notas";
-            bt_qtd_notas.Size = new Size(75, 23);
+            bt_qtd_notas.Size = new Size(68, 23);
             bt_qtd_notas.TabIndex = 35;
             bt_qtd_notas.Text = "Executar";
             bt_qtd_notas.UseVisualStyleBackColor = true;
             bt_qtd_notas.Click += bt_qtd_notas_Click;
             // 
-            // comboBox1
+            // cb_local_qtd_notas
             // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Items.AddRange(new object[] { "MSA", "SIFAR" });
-            comboBox1.Location = new Point(577, 29);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(72, 23);
-            comboBox1.TabIndex = 36;
-            comboBox1.Visible = false;
+            cb_local_qtd_notas.FormattingEnabled = true;
+            cb_local_qtd_notas.Items.AddRange(new object[] { "SIFAR", "MSA" });
+            cb_local_qtd_notas.Location = new Point(55, 33);
+            cb_local_qtd_notas.Name = "cb_local_qtd_notas";
+            cb_local_qtd_notas.Size = new Size(55, 23);
+            cb_local_qtd_notas.TabIndex = 36;
             // 
             // cb_empresa_qtd_notas
             // 
             cb_empresa_qtd_notas.FormattingEnabled = true;
-            cb_empresa_qtd_notas.Location = new Point(340, 29);
+            cb_empresa_qtd_notas.Location = new Point(436, 33);
             cb_empresa_qtd_notas.Name = "cb_empresa_qtd_notas";
-            cb_empresa_qtd_notas.Size = new Size(73, 23);
+            cb_empresa_qtd_notas.Size = new Size(62, 23);
             cb_empresa_qtd_notas.TabIndex = 33;
             // 
             // label17
             // 
             label17.AutoSize = true;
-            label17.Location = new Point(282, 33);
+            label17.Location = new Point(378, 37);
             label17.Name = "label17";
             label17.Size = new Size(52, 15);
             label17.TabIndex = 32;
@@ -403,7 +414,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new Point(158, 33);
+            label16.Location = new Point(265, 37);
             label16.Name = "label16";
             label16.Size = new Size(13, 15);
             label16.TabIndex = 34;
@@ -412,7 +423,7 @@
             // dtp_periodo_fin_qtd_notas
             // 
             dtp_periodo_fin_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_fin_qtd_notas.Location = new Point(177, 29);
+            dtp_periodo_fin_qtd_notas.Location = new Point(284, 33);
             dtp_periodo_fin_qtd_notas.Name = "dtp_periodo_fin_qtd_notas";
             dtp_periodo_fin_qtd_notas.Size = new Size(85, 23);
             dtp_periodo_fin_qtd_notas.TabIndex = 33;
@@ -420,7 +431,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(13, 33);
+            label15.Location = new Point(120, 37);
             label15.Name = "label15";
             label15.Size = new Size(48, 15);
             label15.TabIndex = 32;
@@ -429,7 +440,7 @@
             // dtp_periodo_ini_qtd_notas
             // 
             dtp_periodo_ini_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_ini_qtd_notas.Location = new Point(67, 29);
+            dtp_periodo_ini_qtd_notas.Location = new Point(174, 33);
             dtp_periodo_ini_qtd_notas.Name = "dtp_periodo_ini_qtd_notas";
             dtp_periodo_ini_qtd_notas.Size = new Size(85, 23);
             dtp_periodo_ini_qtd_notas.TabIndex = 31;
@@ -594,5 +605,7 @@
         private ComboBox comboBox1;
         private MaskedTextBox tb_referenciaBuracoNota;
         private CheckBox checkBox2;
+        private ComboBox cb_local_qtd_notas;
+        private CheckBox ckb_mostrar_na_tela;
     }
 }
