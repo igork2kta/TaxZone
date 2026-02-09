@@ -122,7 +122,7 @@ namespace TaxZone
                 return;
             }
 
-            FuncoesTax.PendenciaProcessamento(cb_pendencia_processamento.Text, cb_empresa.Text);
+            FuncoesTax.PendenciaProcessamento(cb_pendencia_processamento.Text, cb_empresa.Text, ckb_arq_temporario.Checked);
         }
 
         private void bt_obter_icms_sifar_Click(object sender, EventArgs e)
@@ -233,7 +233,7 @@ namespace TaxZone
                     () =>
                     {
                         DataTable a = DataAccess.ExecuteQuery(user, password, serviceName, session, query);
-                        if(a != null)
+                        if (a != null)
                             qtd_notas.Merge(a);
                     }
                     );
@@ -269,5 +269,19 @@ namespace TaxZone
             tb_referenciaBuracoNota.Visible = ckb_buraco_notas_hardcore.Checked;
         }
 
+        private void ckb_arq_temporario_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ckb_arq_temporario.Checked)
+            {
+                if (!Directory.Exists(Path.GetDirectoryName(Config.PathScriptTemporario)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(Config.PathScriptTemporario));
+
+
+                if (!File.Exists(Config.PathScriptTemporario))
+                    File.Create(Config.PathScriptTemporario).Close();
+
+                Process.Start("notepad.exe", Config.PathScriptTemporario);
+            }
+        }
     }
 }

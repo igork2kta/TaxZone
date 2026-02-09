@@ -75,6 +75,7 @@
             tb_referenciaBuracoNota = new MaskedTextBox();
             ckb_fracionar_valores = new CheckBox();
             ckb_gerar_arquivo = new CheckBox();
+            ckb_arq_temporario = new CheckBox();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -530,11 +531,23 @@
             ckb_gerar_arquivo.Text = "Gerar Arquivo";
             ckb_gerar_arquivo.UseVisualStyleBackColor = true;
             // 
+            // ckb_arq_temporario
+            // 
+            ckb_arq_temporario.AutoSize = true;
+            ckb_arq_temporario.Location = new Point(563, 214);
+            ckb_arq_temporario.Name = "ckb_arq_temporario";
+            ckb_arq_temporario.Size = new Size(182, 19);
+            ckb_arq_temporario.TabIndex = 40;
+            ckb_arq_temporario.Text = "Buscar de arquivo temporário";
+            ckb_arq_temporario.UseVisualStyleBackColor = true;
+            ckb_arq_temporario.CheckedChanged += ckb_arq_temporario_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(757, 428);
+            Controls.Add(ckb_arq_temporario);
             Controls.Add(ckb_mes_aberto);
             Controls.Add(ckb_gerar_arquivo);
             Controls.Add(ckb_fracionar_valores);
@@ -622,5 +635,6 @@
         private ComboBox cb_local_qtd_notas;
         private CheckBox ckb_mostrar_na_tela;
         private CheckBox ckb_gerar_arquivo;
+        private CheckBox ckb_arq_temporario;
     }
 }
