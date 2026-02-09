@@ -31,8 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             bt_diferenca_capa_item = new Button();
             label1 = new Label();
-            bt_notas_sem_item = new Button();
-            label2 = new Label();
             bt_notas_canceladas = new Button();
             label3 = new Label();
             label5 = new Label();
@@ -68,22 +66,24 @@
             dtp_periodo_fin_qtd_notas = new DateTimePicker();
             label15 = new Label();
             dtp_periodo_ini_qtd_notas = new DateTimePicker();
+            ckb_mes_aberto = new CheckBox();
             label18 = new Label();
             bt_buraco_nota = new Button();
             ckb_buraco_notas_hardcore = new CheckBox();
             bt_pessoa_fisica_juridica = new Button();
             label19 = new Label();
             tb_referenciaBuracoNota = new MaskedTextBox();
-            checkBox2 = new CheckBox();
+            ckb_fracionar_valores = new CheckBox();
+            ckb_gerar_arquivo = new CheckBox();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
             // 
             // bt_diferenca_capa_item
             // 
-            bt_diferenca_capa_item.Location = new Point(156, 28);
+            bt_diferenca_capa_item.Location = new Point(57, 28);
             bt_diferenca_capa_item.Name = "bt_diferenca_capa_item";
-            bt_diferenca_capa_item.Size = new Size(86, 23);
+            bt_diferenca_capa_item.Size = new Size(82, 23);
             bt_diferenca_capa_item.TabIndex = 0;
             bt_diferenca_capa_item.Text = "Obter notas";
             bt_diferenca_capa_item.UseVisualStyleBackColor = true;
@@ -92,30 +92,11 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(25, 32);
+            label1.Location = new Point(19, 32);
             label1.Name = "label1";
-            label1.Size = new Size(114, 15);
+            label1.Size = new Size(32, 15);
             label1.TabIndex = 1;
-            label1.Text = "Diferença capa-item";
-            // 
-            // bt_notas_sem_item
-            // 
-            bt_notas_sem_item.Location = new Point(156, 68);
-            bt_notas_sem_item.Name = "bt_notas_sem_item";
-            bt_notas_sem_item.Size = new Size(86, 23);
-            bt_notas_sem_item.TabIndex = 2;
-            bt_notas_sem_item.Text = "Obter notas";
-            bt_notas_sem_item.UseVisualStyleBackColor = true;
-            bt_notas_sem_item.Click += bt_notas_sem_item_Click;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(49, 72);
-            label2.Name = "label2";
-            label2.Size = new Size(90, 15);
-            label2.TabIndex = 3;
-            label2.Text = "Notas sem item";
+            label1.Text = "Itens";
             // 
             // bt_notas_canceladas
             // 
@@ -138,8 +119,9 @@
             // 
             // label5
             // 
+            label5.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label5.AutoSize = true;
-            label5.Location = new Point(34, 414);
+            label5.Location = new Point(34, 390);
             label5.Name = "label5";
             label5.Size = new Size(98, 15);
             label5.TabIndex = 9;
@@ -147,7 +129,8 @@
             // 
             // tb_senha_banco_far
             // 
-            tb_senha_banco_far.Location = new Point(142, 414);
+            tb_senha_banco_far.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            tb_senha_banco_far.Location = new Point(142, 390);
             tb_senha_banco_far.Name = "tb_senha_banco_far";
             tb_senha_banco_far.PasswordChar = '*';
             tb_senha_banco_far.Size = new Size(100, 23);
@@ -156,8 +139,9 @@
             // 
             // label6
             // 
+            label6.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label6.AutoSize = true;
-            label6.Location = new Point(26, 388);
+            label6.Location = new Point(26, 364);
             label6.Name = "label6";
             label6.Size = new Size(106, 15);
             label6.TabIndex = 11;
@@ -165,7 +149,8 @@
             // 
             // tb_usuario_banco_far
             // 
-            tb_usuario_banco_far.Location = new Point(142, 385);
+            tb_usuario_banco_far.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            tb_usuario_banco_far.Location = new Point(142, 361);
             tb_usuario_banco_far.Name = "tb_usuario_banco_far";
             tb_usuario_banco_far.Size = new Size(100, 23);
             tb_usuario_banco_far.TabIndex = 10;
@@ -182,8 +167,9 @@
             // 
             // label9
             // 
+            label9.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label9.AutoSize = true;
-            label9.Location = new Point(289, 385);
+            label9.Location = new Point(275, 361);
             label9.Name = "label9";
             label9.Size = new Size(111, 15);
             label9.TabIndex = 19;
@@ -191,7 +177,8 @@
             // 
             // tb_usuario_banco_msa
             // 
-            tb_usuario_banco_msa.Location = new Point(404, 382);
+            tb_usuario_banco_msa.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            tb_usuario_banco_msa.Location = new Point(390, 358);
             tb_usuario_banco_msa.Name = "tb_usuario_banco_msa";
             tb_usuario_banco_msa.Size = new Size(100, 23);
             tb_usuario_banco_msa.TabIndex = 18;
@@ -199,8 +186,9 @@
             // 
             // label10
             // 
+            label10.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label10.AutoSize = true;
-            label10.Location = new Point(295, 414);
+            label10.Location = new Point(281, 390);
             label10.Name = "label10";
             label10.Size = new Size(103, 15);
             label10.TabIndex = 17;
@@ -208,7 +196,8 @@
             // 
             // tb_senha_banco_msa
             // 
-            tb_senha_banco_msa.Location = new Point(404, 411);
+            tb_senha_banco_msa.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            tb_senha_banco_msa.Location = new Point(390, 387);
             tb_senha_banco_msa.Name = "tb_senha_banco_msa";
             tb_senha_banco_msa.PasswordChar = '*';
             tb_senha_banco_msa.Size = new Size(100, 23);
@@ -222,12 +211,11 @@
             cb_banco.Name = "cb_banco";
             cb_banco.Size = new Size(59, 23);
             cb_banco.TabIndex = 20;
-            cb_banco.SelectedIndexChanged += cb_banco_SelectedIndexChanged;
             // 
             // cb_empresa
             // 
             cb_empresa.FormattingEnabled = true;
-            cb_empresa.Location = new Point(406, 239);
+            cb_empresa.Location = new Point(406, 210);
             cb_empresa.Name = "cb_empresa";
             cb_empresa.Size = new Size(53, 23);
             cb_empresa.TabIndex = 22;
@@ -235,7 +223,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(348, 243);
+            label8.Location = new Point(348, 214);
             label8.Name = "label8";
             label8.Size = new Size(52, 15);
             label8.TabIndex = 21;
@@ -243,7 +231,7 @@
             // 
             // bt_pendencia_processamento
             // 
-            bt_pendencia_processamento.Location = new Point(465, 240);
+            bt_pendencia_processamento.Location = new Point(480, 211);
             bt_pendencia_processamento.Name = "bt_pendencia_processamento";
             bt_pendencia_processamento.Size = new Size(72, 23);
             bt_pendencia_processamento.TabIndex = 23;
@@ -254,7 +242,7 @@
             // label11
             // 
             label11.AutoSize = true;
-            label11.Location = new Point(26, 244);
+            label11.Location = new Point(26, 215);
             label11.Name = "label11";
             label11.Size = new Size(146, 15);
             label11.TabIndex = 24;
@@ -263,7 +251,8 @@
             // cb_pendencia_processamento
             // 
             cb_pendencia_processamento.FormattingEnabled = true;
-            cb_pendencia_processamento.Location = new Point(178, 240);
+            cb_pendencia_processamento.Items.AddRange(new object[] { "Notas", "Itens", "Canceladas" });
+            cb_pendencia_processamento.Location = new Point(178, 211);
             cb_pendencia_processamento.Name = "cb_pendencia_processamento";
             cb_pendencia_processamento.Size = new Size(139, 23);
             cb_pendencia_processamento.TabIndex = 25;
@@ -299,9 +288,9 @@
             groupBox1.Controls.Add(bt_obter_icms_sifar);
             groupBox1.Controls.Add(cb_banco);
             groupBox1.Controls.Add(label7);
-            groupBox1.Location = new Point(12, 97);
+            groupBox1.Location = new Point(12, 68);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(700, 117);
+            groupBox1.Size = new Size(733, 117);
             groupBox1.TabIndex = 28;
             groupBox1.TabStop = false;
             // 
@@ -349,9 +338,9 @@
             groupBox2.Controls.Add(dtp_periodo_fin_qtd_notas);
             groupBox2.Controls.Add(label15);
             groupBox2.Controls.Add(dtp_periodo_ini_qtd_notas);
-            groupBox2.Location = new Point(12, 287);
+            groupBox2.Location = new Point(12, 258);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(700, 71);
+            groupBox2.Size = new Size(733, 75);
             groupBox2.TabIndex = 31;
             groupBox2.TabStop = false;
             groupBox2.Text = "Quantidade notas";
@@ -377,7 +366,7 @@
             // 
             // bt_qtd_notas
             // 
-            bt_qtd_notas.Location = new Point(623, 33);
+            bt_qtd_notas.Location = new Point(623, 32);
             bt_qtd_notas.Name = "bt_qtd_notas";
             bt_qtd_notas.Size = new Size(68, 23);
             bt_qtd_notas.TabIndex = 35;
@@ -425,7 +414,7 @@
             dtp_periodo_fin_qtd_notas.Format = DateTimePickerFormat.Short;
             dtp_periodo_fin_qtd_notas.Location = new Point(284, 33);
             dtp_periodo_fin_qtd_notas.Name = "dtp_periodo_fin_qtd_notas";
-            dtp_periodo_fin_qtd_notas.Size = new Size(85, 23);
+            dtp_periodo_fin_qtd_notas.Size = new Size(86, 23);
             dtp_periodo_fin_qtd_notas.TabIndex = 33;
             // 
             // label15
@@ -442,13 +431,24 @@
             dtp_periodo_ini_qtd_notas.Format = DateTimePickerFormat.Short;
             dtp_periodo_ini_qtd_notas.Location = new Point(174, 33);
             dtp_periodo_ini_qtd_notas.Name = "dtp_periodo_ini_qtd_notas";
-            dtp_periodo_ini_qtd_notas.Size = new Size(85, 23);
+            dtp_periodo_ini_qtd_notas.Size = new Size(86, 23);
             dtp_periodo_ini_qtd_notas.TabIndex = 31;
+            // 
+            // ckb_mes_aberto
+            // 
+            ckb_mes_aberto.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            ckb_mes_aberto.AutoSize = true;
+            ckb_mes_aberto.Location = new Point(524, 392);
+            ckb_mes_aberto.Name = "ckb_mes_aberto";
+            ckb_mes_aberto.Size = new Size(85, 19);
+            ckb_mes_aberto.TabIndex = 39;
+            ckb_mes_aberto.Text = "Mês aberto";
+            ckb_mes_aberto.UseVisualStyleBackColor = true;
             // 
             // label18
             // 
             label18.AutoSize = true;
-            label18.Location = new Point(327, 32);
+            label18.Location = new Point(404, 32);
             label18.Name = "label18";
             label18.Size = new Size(71, 15);
             label18.TabIndex = 32;
@@ -456,7 +456,7 @@
             // 
             // bt_buraco_nota
             // 
-            bt_buraco_nota.Location = new Point(416, 28);
+            bt_buraco_nota.Location = new Point(485, 28);
             bt_buraco_nota.Name = "bt_buraco_nota";
             bt_buraco_nota.Size = new Size(86, 23);
             bt_buraco_nota.TabIndex = 33;
@@ -467,7 +467,7 @@
             // ckb_buraco_notas_hardcore
             // 
             ckb_buraco_notas_hardcore.AutoSize = true;
-            ckb_buraco_notas_hardcore.Location = new Point(508, 31);
+            ckb_buraco_notas_hardcore.Location = new Point(577, 30);
             ckb_buraco_notas_hardcore.Name = "ckb_buraco_notas_hardcore";
             ckb_buraco_notas_hardcore.Size = new Size(110, 19);
             ckb_buraco_notas_hardcore.TabIndex = 34;
@@ -477,7 +477,7 @@
             // 
             // bt_pessoa_fisica_juridica
             // 
-            bt_pessoa_fisica_juridica.Location = new Point(416, 68);
+            bt_pessoa_fisica_juridica.Location = new Point(295, 28);
             bt_pessoa_fisica_juridica.Name = "bt_pessoa_fisica_juridica";
             bt_pessoa_fisica_juridica.Size = new Size(86, 23);
             bt_pessoa_fisica_juridica.TabIndex = 36;
@@ -488,7 +488,7 @@
             // label19
             // 
             label19.AutoSize = true;
-            label19.Location = new Point(283, 72);
+            label19.Location = new Point(166, 32);
             label19.Name = "label19";
             label19.Size = new Size(117, 15);
             label19.TabIndex = 35;
@@ -496,7 +496,7 @@
             // 
             // tb_referenciaBuracoNota
             // 
-            tb_referenciaBuracoNota.Location = new Point(624, 29);
+            tb_referenciaBuracoNota.Location = new Point(693, 28);
             tb_referenciaBuracoNota.Mask = "00_0000";
             tb_referenciaBuracoNota.Name = "tb_referenciaBuracoNota";
             tb_referenciaBuracoNota.Size = new Size(52, 23);
@@ -504,22 +504,40 @@
             tb_referenciaBuracoNota.ValidatingType = typeof(DateTime);
             tb_referenciaBuracoNota.Visible = false;
             // 
-            // checkBox2
+            // ckb_fracionar_valores
             // 
-            checkBox2.AutoSize = true;
-            checkBox2.Location = new Point(508, 72);
-            checkBox2.Name = "checkBox2";
-            checkBox2.Size = new Size(148, 19);
-            checkBox2.TabIndex = 38;
-            checkBox2.Text = "Não fracionar control c";
-            checkBox2.UseVisualStyleBackColor = true;
+            ckb_fracionar_valores.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            ckb_fracionar_valores.AutoSize = true;
+            ckb_fracionar_valores.Checked = true;
+            ckb_fracionar_valores.CheckState = CheckState.Checked;
+            ckb_fracionar_valores.Location = new Point(635, 358);
+            ckb_fracionar_valores.Name = "ckb_fracionar_valores";
+            ckb_fracionar_valores.Size = new Size(115, 19);
+            ckb_fracionar_valores.TabIndex = 38;
+            ckb_fracionar_valores.Text = "Fracionar valores";
+            ckb_fracionar_valores.UseVisualStyleBackColor = true;
+            // 
+            // ckb_gerar_arquivo
+            // 
+            ckb_gerar_arquivo.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            ckb_gerar_arquivo.AutoSize = true;
+            ckb_gerar_arquivo.Checked = true;
+            ckb_gerar_arquivo.CheckState = CheckState.Checked;
+            ckb_gerar_arquivo.Location = new Point(524, 357);
+            ckb_gerar_arquivo.Name = "ckb_gerar_arquivo";
+            ckb_gerar_arquivo.Size = new Size(99, 19);
+            ckb_gerar_arquivo.TabIndex = 39;
+            ckb_gerar_arquivo.Text = "Gerar Arquivo";
+            ckb_gerar_arquivo.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(750, 457);
-            Controls.Add(checkBox2);
+            ClientSize = new Size(757, 428);
+            Controls.Add(ckb_mes_aberto);
+            Controls.Add(ckb_gerar_arquivo);
+            Controls.Add(ckb_fracionar_valores);
             Controls.Add(tb_referenciaBuracoNota);
             Controls.Add(bt_pessoa_fisica_juridica);
             Controls.Add(label19);
@@ -541,8 +559,6 @@
             Controls.Add(tb_usuario_banco_far);
             Controls.Add(label5);
             Controls.Add(tb_senha_banco_far);
-            Controls.Add(label2);
-            Controls.Add(bt_notas_sem_item);
             Controls.Add(label1);
             Controls.Add(bt_diferenca_capa_item);
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -561,8 +577,6 @@
 
         private Button bt_diferenca_capa_item;
         private Label label1;
-        private Button bt_notas_sem_item;
-        private Label label2;
         private Button bt_notas_canceladas;
         private Label label3;
         private Label label5;
@@ -587,7 +601,7 @@
         private TextBox tb_ano;
         private Label label12;
         private TextBox tb_mes;
-        private CheckBox checkBox1;
+        private CheckBox ckb_mes_aberto;
         private GroupBox groupBox2;
         private Label label16;
         private DateTimePicker dtp_periodo_fin_qtd_notas;
@@ -604,8 +618,9 @@
         private Label label20;
         private ComboBox comboBox1;
         private MaskedTextBox tb_referenciaBuracoNota;
-        private CheckBox checkBox2;
+        private CheckBox ckb_fracionar_valores;
         private ComboBox cb_local_qtd_notas;
         private CheckBox ckb_mostrar_na_tela;
+        private CheckBox ckb_gerar_arquivo;
     }
 }

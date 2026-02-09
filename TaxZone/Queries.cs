@@ -7,7 +7,7 @@
                                         FROM safx42
                                         group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                         )
-                                where dat_fiscal between '{0}' and '{1}'
+                                where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
                                 group by COD_ESTAB
 
                                 union all
@@ -17,7 +17,7 @@
                                         from safx43 
                                         group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
                                 ) 
-                                where dat_fiscal between '{0}' and '{1}'
+                                where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
                                 group by COD_ESTAB
 
                                 union all
@@ -27,11 +27,11 @@
                                         from safx42 where situacao = 'S'
                                         group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                 ) 
-                                where dat_fiscal between '{0}' and '{1}'
+                                where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
                                 group by COD_ESTAB";
 
 
-        public const string qtdNotasFar = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
+        public const string qtdNotasFarMesFechado = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
                                             from CAPA_NF_SPED_{0}_{1} a
                                             where CODMDE_DOC = 66 
                                             group by codfil
@@ -60,7 +60,36 @@
 
                                             order by 4, 2 desc";
 
+        public const string qtdNotasFarMesAberto = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
+                                            from CAPA_NF_SPED a
+                                            where CODMDE_DOC = 66 and TRUNC(DATEMI) BETWEEN '{0}' AND '{1}'
+                                            group by codfil
 
+                                            union all
+
+                                            select '{2}' EMPRESA, 'ITENS', count(1) TOTAL, a.codfil
+                                            from CAPA_NF_SPED a,
+                                                 ITEM_NF_SPED b
+                                            where   a.CODEMP = b.CODEMP
+                                                    and a.CODFIL=b.CODFIL
+                                                    and a.DATEMI=b.DATEMI
+                                                    and a.IDTPSS=b.IDTPSS
+                                                    and a.CODDTN=b.CODDTN
+                                                    and a.NUMDOC_FSC=b.NUMDOC_FSC
+                                                    and a.NUMser=b.NUMser
+                                                    and a.CODMDE_DOC = 66
+                                                    and TRUNC(a.DATEMI) BETWEEN '{0}' AND '{1}'
+                                                    group by a.codfil
+
+
+                                            union all
+
+                                            select '{2}' EMPRESA, 'CANCELADAS',count(1) TOTAL, codfil
+                                            from CAPA_NF_SPED a
+                                            where DATCAN is not null AND CODMDE_DOC = 66 and TRUNC(DATEMI) BETWEEN '{0}' AND '{1}'
+                                            group by codfil
+
+                                            order by 4, 2 desc";
 
 
         public const string queryIcmsSifar = @"SELECT  A.CODFIL, SUM(
@@ -82,11 +111,14 @@
                                   AND A.CODMDE_DOC = '66'
                                 GROUP BY A.CODFIL";
 
+        //num_docfis IN({0}) AND
+        public const string pendentesSafx43 = "select * from safx43 where DTH_INCLUSAO IS NULL";
+        public const string pendentesSafx42 = "select * from safx42 where DTH_INCLUSAO IS NULL";
 
-        public const string pendentesSafx43 = "select * from safx43 where num_docfis IN({0}) AND DTH_INCLUSAO IS NULL";
-        public const string pendentesSafx42 = "select * from safx42 where num_docfis IN({0}) AND DTH_INCLUSAO IS NULL";
+        public const string canceladasFarMesAberto = "select NUMDOC_FSC from capa_nf_sped where datcan is not null";
+        public const string canceladasFarMesFechado = "select NUMDOC_FSC from capa_nf_sped_{0}_{1} where datcan is not null";
 
-        public const string canceladasFar = "select NUMDOC_FSC from capa_nf_sped_{0}_{1} where datcan is not null";
+        public const string validaExistenciaNota = "select numcod_fsc from capa_nf_sped_{0}_{1}";
 
     }
 }
