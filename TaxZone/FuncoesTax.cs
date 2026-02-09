@@ -163,7 +163,7 @@ namespace TaxZone
 
 
 
-        public static void PendenciaProcessamento(string tipoPendencia, string empresa)
+        public static void PendenciaProcessamento(string tipoPendencia, string empresa, bool arq_temporario)
         {
             Banco banco = Empresa.GetBancoMsa(empresa);
             if (banco is null) return;
@@ -173,12 +173,20 @@ namespace TaxZone
             {
                 case "Notas":
                 case "Canceladas":
-                    notas = CsvClass.CopiarNotas(0);
+                    if(arq_temporario)
+                        notas = CsvClass.CopiarNotas(0, Config.PathScriptTemporario);
+                    else
+                        notas = CsvClass.CopiarNotas(0);
+
                     condicao = Util.DividirValoresIn(notas, "num_docfis", false);
                     query = Queries.pendentesSafx42 + " AND (" + condicao + ")";
                     break;
                 case "Items":
-                    notas = CsvClass.CopiarNotas(1);
+                    if (arq_temporario)
+                        notas = CsvClass.CopiarNotas(0, Config.PathScriptTemporario);
+                    else
+                        notas = CsvClass.CopiarNotas(1);
+
                     condicao = Util.DividirValoresIn(notas, "num_docfis", false);
                     query = Queries.pendentesSafx43 + " AND (" + condicao + ")";
                     break;

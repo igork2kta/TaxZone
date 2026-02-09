@@ -8,6 +8,7 @@ namespace TaxZone
 {
     public class Config
     {
+        public static readonly string PathScriptTemporario = AppDomain.CurrentDomain.BaseDirectory + "Temp\\scriptTemporario.csv";
         public string LastImportPath { get; set; }
         public string DatabaseUserFar { get; set; }
         public string DatabasePasswordFar { get; set; }

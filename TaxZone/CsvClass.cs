@@ -1,27 +1,37 @@
 ﻿using System.Data;
 using System.IO.Compression;
 using System.Text;
+using System.Windows.Forms;
 
 namespace TaxZone
 {
     public class CsvClass
     {
 
-        public static IEnumerable<string> LerArquivo()
+        public static IEnumerable<string> LerArquivo(string path = "")
         {
-            using OpenFileDialog openFileDialog = new()
-            {
-                Title = "Selecione um arquivo CSV ou ZIP",
-                Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
-            };
+            string caminho;
 
-            if (openFileDialog.ShowDialog() != DialogResult.OK)
-                return null;
+            if (string.IsNullOrEmpty(path))
+            {
+                using OpenFileDialog openFileDialog = new()
+                {
+                    Title = "Selecione um arquivo CSV ou ZIP",
+                    Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*",
+                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+                };
+
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                    return null;
+                caminho = openFileDialog.FileName;
+            }
+            else
+            {
+                caminho = path;
+            }
+
 
             IEnumerable<string> linhas;
-
-            string caminho = openFileDialog.FileName;
 
             // CSV direto
             if (Path.GetExtension(caminho).Equals(".csv", StringComparison.OrdinalIgnoreCase))
@@ -102,14 +112,14 @@ namespace TaxZone
             }
         }
 
-        public static string CopiarNotas(int columnIndex)
+        public static string CopiarNotas(int columnIndex, string path = "")
         {
            
             StringBuilder notasBuilder = new();
             bool cabecalho = true;
             try
             {
-                IEnumerable<string> linhas = LerArquivo();
+                IEnumerable<string> linhas = LerArquivo(path);
 
                 if (linhas is null) return string.Empty;
                 
@@ -403,21 +413,6 @@ namespace TaxZone
             foreach (var line in lines)
                 writer.WriteLine(line);
 
-        }
-
-
-
-        static int CountCsvLines(string filePath)
-        {
-            int lineCount = 0;
-
-            using (var reader = new StreamReader(filePath))
-            {
-                while (reader.ReadLine() != null)
-                    lineCount++;
-            }
-
-            return lineCount;
         }
 
     }
