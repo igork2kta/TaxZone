@@ -13,12 +13,6 @@ namespace TaxZone
             public string key { get; set; }   // Ex: COM_MGR_PR
             public string value { get; set; } // Ex: CFLCL
 
-            public ComboValue(string key, string value)
-            {
-                this.key = key;
-                this.value = value;
-            }
-
             public override string ToString()
             {
                 // Define o que vai aparecer no ComboBox
@@ -44,10 +38,6 @@ namespace TaxZone
             cb_empresa_qtd_notas.Items.AddRange(dataSourceEmpresas.ToArray());
             cb_empresa_qtd_notas.SelectedIndex = 0;
 
-            cb_pendencia_processamento.Items.Add(new ComboValue("Diferença capa-item", "1"));
-            cb_pendencia_processamento.Items.Add(new ComboValue("Notas sem item", "2"));
-            cb_pendencia_processamento.Items.Add(new ComboValue("Diferença canceladas", "3"));
-
             DateTime referenciaAnterior = DateTime.Now.AddMonths(-1);
 
             tb_ano.Text = referenciaAnterior.Year.ToString();
@@ -65,110 +55,35 @@ namespace TaxZone
 
         private void bt_diferenca_capa_item_Click(object sender, EventArgs e)
         {
-            //No arquivo Diferenca_Capa_Item as notas ficam na coluna 2
-            CsvClass.CopiarNotasAreaTransferencia(1, checkBox2.Checked);
+            FuncoesTax.DiferencaItens(ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked);
         }
 
         private void bt_notas_sem_item_Click(object sender, EventArgs e)
         {
             //No arquivo Notas_sem_item as notas ficam na coluna 3
-            CsvClass.CopiarNotasAreaTransferencia(2, checkBox2.Checked);
+            CsvClass.CopiarNotasAreaTransferencia(2, ckb_fracionar_valores.Checked);
         }
 
 
         private void bt_buraco_nota_Click(object sender, EventArgs e)
         {
-            Util.BuracoDeNota(ckb_buraco_notas_hardcore.Checked, tb_referenciaBuracoNota.Text, checkBox2.Checked);
+            FuncoesTax.BuracoDeNota(ckb_buraco_notas_hardcore.Checked, tb_referenciaBuracoNota.Text, ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked);
         }
 
         private void bt_notas_canceladas_Click(object sender, EventArgs e)
         {
-            List<int> naoExistem = getDiferencaCanceladas();
-            if (naoExistem is null) return;
-            Util.DividirValoresAreaTransferencia(naoExistem, checkBox2.Checked);
-        }
-
-        private List<int> getDiferencaCanceladas()
-        {
             if (string.IsNullOrEmpty(tb_ano.Text) || string.IsNullOrEmpty(tb_mes.Text))
             {
                 MessageBox.Show("Informe o Ano/Mês!");
-                return null;
+                return;
             }
-
-            Banco banco = Empresa.GetBancoFar(cb_banco.Text);
-
-            if (banco is null)
-            {
-                MessageBox.Show("Informe o banco de dados!");
-                return null;
-            }
-
-            List<int> canceladasTax = CsvClass.CopiarNotas(3);
-
 
             string mes = int.Parse(tb_mes.Text).ToString("00");
             string ano = tb_ano.Text;
 
-            string query = string.Format(
-                Queries.canceladasFar,
-                mes,
-                ano
-            );
+            FuncoesTax.GetDiferencaCanceladas(ano, mes, cb_banco.Text, ckb_mes_aberto.Checked, ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked);
 
-            DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(tb_usuario_banco_far.Text, tb_senha_banco_far.Text, banco.database, banco.owner, query);
-
-            List<int> canceladasFar = dataTableCanceladasFar.AsEnumerable()
-                .Select(r => r.Field<int>("NUMDOC_FSC"))
-                .ToList();
-
-
-            MessageBox.Show($"{canceladasFar.Count} canceladas recuperadas no SIFAR e {canceladasTax.Count} canceladas recuperadas no TAX. Diferença de {canceladasFar.Count - canceladasTax.Count} notas encontrada.",
-                "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-
-            // Contagem das ocorrências de cada número nas duas listas
-            var farCounts = canceladasFar.GroupBy(x => x)
-                                         .ToDictionary(g => g.Key, g => g.Count());
-            var taxCounts = canceladasTax.GroupBy(x => x)
-                                         .ToDictionary(g => g.Key, g => g.Count());
-
-            List<int> faltando = new();
-
-            
-            // Verifica se algum número está faltando ou aparece menos vezes
-            foreach (var kvp in farCounts)
-            {
-                int numero = kvp.Key;
-                int qtdFar = kvp.Value;
-                int qtdTax = taxCounts.ContainsKey(numero) ? taxCounts[numero] : 0;
-
-                if (qtdTax < qtdFar)
-                {
-                    // Adiciona o número tantas vezes quanto faltar
-                    int faltam = qtdFar - qtdTax;
-                    faltando.AddRange(Enumerable.Repeat(numero, faltam));
-                }
-            }
-            
-            /*
-            // Para verificar as notas a mais que estão no tax
-            foreach (var kvp in taxCounts)
-            {
-                int numero = kvp.Key;
-                int qtdTax = kvp.Value;
-                int qtdFar = farCounts.ContainsKey(numero) ? farCounts[numero] : 0;
-
-                if (qtdFar < qtdTax)
-                {
-                    // Adiciona o número tantas vezes quanto faltar
-                    int faltam = qtdTax - qtdFar;
-                    faltando.AddRange(Enumerable.Repeat(numero, faltam));
-                }
-            }*/
-
-            return faltando;
         }
-
 
         private void tb_usuario_banco_TextChanged(object sender, EventArgs e)
         {
@@ -201,39 +116,13 @@ namespace TaxZone
 
         private void bt_pendencia_processamento_Click(object sender, EventArgs e)
         {
-            Banco banco = Empresa.GetBancoMsa(cb_empresa.Text);
-            if (banco is null) return;
-
-
-
-            ComboValue? pendencia = cb_pendencia_processamento.SelectedItem as ComboValue;
-            if (pendencia is null) return;
-
-            string notas = "", query = "";
-            switch (pendencia.value)
+            if (string.IsNullOrEmpty(cb_pendencia_processamento.Text) || string.IsNullOrEmpty(cb_empresa.Text))
             {
-                case "1":
-                    notas = CsvClass.CopiarNotas2(1);
-                    query = string.Format(Queries.pendentesSafx43, notas);
-                    break;
-                case "2":
-                    notas = CsvClass.CopiarNotas2(2);
-                    query = string.Format(Queries.pendentesSafx43, notas);
-                    break;
-                case "3":
-                    notas = Util.IntListToString(getDiferencaCanceladas());
-                    query = string.Format(Queries.pendentesSafx42, notas);
-                    break;
+                MessageBox.Show("Obrigatório informar tipo de pendencia e empresa");
+                return;
             }
 
-            if (string.IsNullOrEmpty(notas))
-            {
-                MessageBox.Show("Nenhuma nota encontrada", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            DataTable pendentes = DataAccess.ExecuteQuery(tb_usuario_banco_msa.Text, tb_senha_banco_msa.Text, banco.database, banco.owner, query);
-
-            MessageBox.Show($"{pendentes.Rows.Count} notas pendentes!", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            FuncoesTax.PendenciaProcessamento(cb_pendencia_processamento.Text, cb_empresa.Text);
         }
 
         private void bt_obter_icms_sifar_Click(object sender, EventArgs e)
@@ -285,7 +174,6 @@ namespace TaxZone
 
             if (!ckb_mostrar_na_tela.Checked)
             {
-
                 salvarDialog.Title = "Salvar arquivo como...";
                 salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
                 salvarDialog.DefaultExt = "csv";
@@ -323,7 +211,15 @@ namespace TaxZone
                 else if (cb_local_qtd_notas.Text == "SIFAR")
                 {
                     banco = Empresa.GetBancoFar(empresa);
-                    query = string.Format(Queries.qtdNotasFar, periodoIni.ToString("MM"), periodoFin.ToString("yyyy"), empresa);
+
+                    if (ckb_mes_aberto.Checked)
+                        query = string.Format(Queries.qtdNotasFarMesAberto, periodoIni.ToString("dd/MM/yyyy"), periodoFin.ToString("dd/MM/yyyy"), empresa);
+                    else
+                        query = string.Format(Queries.qtdNotasFarMesFechado, periodoIni.Month.ToString("00"), periodoFin.Year, empresa);
+
+
+
+
                     user = tb_usuario_banco_far.Text;
                     password = tb_senha_banco_far.Text;
                 }
@@ -333,13 +229,12 @@ namespace TaxZone
                 string serviceName = banco.database;
                 string session = banco.owner;
 
-
-
                 tasks[i] = Task.Run(
                     () =>
                     {
                         DataTable a = DataAccess.ExecuteQuery(user, password, serviceName, session, query);
-                        qtd_notas.Merge(a);
+                        if(a != null)
+                            qtd_notas.Merge(a);
                     }
                     );
             }
@@ -366,7 +261,7 @@ namespace TaxZone
 
         private void bt_pessoa_fisica_juridica_Click(object sender, EventArgs e)
         {
-            Util.ImportarPessoaFisicaJuridica(checkBox2.Checked);
+            FuncoesTax.ImportarPessoaFisicaJuridica(ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked);
         }
 
         private void ckb_buraco_notas_hardcore_CheckedChanged(object sender, EventArgs e)
@@ -374,9 +269,5 @@ namespace TaxZone
             tb_referenciaBuracoNota.Visible = ckb_buraco_notas_hardcore.Checked;
         }
 
-        private void cb_banco_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }
