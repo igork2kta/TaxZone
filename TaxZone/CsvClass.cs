@@ -116,7 +116,7 @@ namespace TaxZone
         {
            
             StringBuilder notasBuilder = new();
-            bool cabecalho = true;
+            //bool cabecalho = true;
             try
             {
                 IEnumerable<string> linhas = LerArquivo(path);
@@ -125,20 +125,28 @@ namespace TaxZone
                 
                 foreach (string linha in linhas)
                 {
+                    /*
                     if (cabecalho)
                     {
                         cabecalho = false;
                         continue;
                     }
-                    
+                    */
+
                     string[] colunas = linha.Split(';');
 
                     if (colunas.Length <= columnIndex)
                         continue;
 
-                    notasBuilder.Append(int.Parse(colunas[columnIndex].Trim()));
-                    notasBuilder.Append(',');
+                    if (int.TryParse(colunas[columnIndex].Trim(), out int numero))
+                    {
+                        notasBuilder.Append(numero);
+                        notasBuilder.Append(',');
+                    }
+                    else continue;
+
                 }
+
                 if (notasBuilder.Length > 0)
                 {
                     notasBuilder.Remove(notasBuilder.Length - 1, 1);

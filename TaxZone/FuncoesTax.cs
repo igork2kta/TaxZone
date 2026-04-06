@@ -83,6 +83,11 @@ namespace TaxZone
                     totalNotas += (proximo - 1) - numDocfis; //precisa do -1, confia em mim
                 }
 
+                F_buraco_nota buraco = new F_buraco_nota(ref pairs);
+                var a = buraco.ShowDialog();
+                if (a == DialogResult.Cancel) 
+                    return;
+
                 var buffer = new StringBuilder();
                 int linhasParciais = 0;
                 int linhasTotais = 0;
@@ -149,15 +154,6 @@ namespace TaxZone
                 else
                     Util.DividirValoresAreaTransferencia(resultado, fracionar);
 
-                /*
-                // Copia o restante final, se existir
-                if (buffer.Length > 0)
-                {
-                    Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                    MessageBox.Show($"FIM, {linhasParciais} / {totalNotas} notas copiadas para a área de transferência.",
-                                "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                }*/
-
             }
         }
 
@@ -181,11 +177,11 @@ namespace TaxZone
                     condicao = Util.DividirValoresIn(notas, "num_docfis", false);
                     query = Queries.pendentesSafx42 + " AND (" + condicao + ")";
                     break;
-                case "Items":
+                case "Itens":
                     if (arq_temporario)
                         notas = CsvClass.CopiarNotas(0, Config.PathScriptTemporario);
                     else
-                        notas = CsvClass.CopiarNotas(1);
+                        notas = CsvClass.CopiarNotas(0);
 
                     condicao = Util.DividirValoresIn(notas, "num_docfis", false);
                     query = Queries.pendentesSafx43 + " AND (" + condicao + ")";
@@ -206,7 +202,7 @@ namespace TaxZone
 
 
         /*VOU TER QUE CONVERTER TUDO PARA WRITE STRING LIST DO CSV*/
-        public static void ImportarPessoaFisicaJuridica(bool gerarArquivo, bool fracionar = true)
+        public static void ImportarPessoaFisicaJuridica(bool gerarArquivo, bool fracionar = true, bool codFisJurCompleto = false)
         {
             using (OpenFileDialog openFileDialog = new()
             {
@@ -231,14 +227,16 @@ namespace TaxZone
                 var regex = new Regex(@"F\d{13}", RegexOptions.Multiline);
                 var matches = regex.Matches(allText);
 
-                var valores = new List<int>();
+                var valores = new List<string>();
                 int linhasParciais = 0;
 
                 foreach (Match match in matches)
                 {
                     string valor = match.Value;
-                    if (valor.Length >= 10)
-                        valores.Add(int.Parse(valor.Substring(valor.Length - 10)));
+                    if (codFisJurCompleto)
+                        valores.Add(valor);
+                    else if (valor.Length >= 10)
+                        valores.Add(int.Parse(valor.Substring(valor.Length - 10)).ToString()); //o parse é para remover os zeros à esquerda
 
                 }
 
@@ -256,15 +254,6 @@ namespace TaxZone
                 {
                     buffer.Append(v).Append(',');
 
-                    /*
-                    if (fracionar && buffer.Length >= 1950)
-                    {
-                        Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                        MessageBox.Show($"{linhasParciais} / {valores.Count} UC's copiadas para a área de transferência.\n" +
-                                        "Cole onde precisar e clique em OK para continuar.",
-                            "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        buffer.Clear();
-                    }*/
                     linhasParciais++;
                 }
 
@@ -278,7 +267,13 @@ namespace TaxZone
                     MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
                 }
                 else
-                    Util.DividirValoresAreaTransferencia(lista, fracionar);
+                {
+                    if(codFisJurCompleto)
+                        lista = lista.Select(s => $"'{s}'").ToList();
+                    
+                    Util.DividirValoresAreaTransferencia(lista, fracionar); 
+                }
+                    
 
                 /*
                 // Copia o restante final, se existir
@@ -302,7 +297,7 @@ namespace TaxZone
                 return;
             }
 
-            List<int> canceladasTax = CsvClass.CopiarNotasCanceladas(3);
+            List<int> canceladasTax = CsvClass.CopiarNotasCanceladas(1);
 
             if (canceladasTax is null)
             {

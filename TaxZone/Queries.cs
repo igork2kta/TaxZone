@@ -2,9 +2,10 @@
 {
     public static class Queries
     {
-        public const string qtdNotasMsa = @"select '{2}' EMPRESA, COD_ESTAB, 'NOTAS', count(1) TOTAL 
+        public const string qtdNotasMsa = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL , COD_ESTAB
                                 from (  SELECT COD_ESTAB, TO_DATE(dat_fiscal, 'YYYYMMDD') DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                         FROM safx42
+                                        where DTH_INCLUSAO is not null
                                         group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                         )
                                 where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
@@ -12,9 +13,10 @@
 
                                 union all
 
-                                select '{2}'  EMPRESA, COD_ESTAB,'ITENS', count(1) TOTAL 
+                                select '{2}'  EMPRESA,'ITENS', count(1) TOTAL, COD_ESTAB 
                                 from (  select COD_ESTAB, TO_DATE(dat_fiscal, 'YYYYMMDD') DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
                                         from safx43 
+                                        where DTH_INCLUSAO is not null
                                         group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
                                 ) 
                                 where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
@@ -22,13 +24,15 @@
 
                                 union all
 
-                                select '{2}' EMPRESA, COD_ESTAB, 'CANCELADAS', count(1) TOTAL 
+                                select '{2}' EMPRESA, 'CANC', count(1) TOTAL, COD_ESTAB 
                                 from (  select COD_ESTAB,  TO_DATE(dat_fiscal, 'YYYYMMDD') DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                         from safx42 where situacao = 'S'
+                                        and DTH_INCLUSAO is not null
                                         group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                 ) 
                                 where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
-                                group by COD_ESTAB";
+                                group by COD_ESTAB
+                                order by 4, 2 desc";
 
 
         public const string qtdNotasFarMesFechado = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
@@ -53,7 +57,7 @@
 
                                             union all
 
-                                            select '{2}' EMPRESA, 'CANCELADAS',count(1) TOTAL, codfil
+                                            select '{2}' EMPRESA, 'CANC',count(1) TOTAL, codfil
                                             from CAPA_NF_SPED_{0}_{1} a
                                             where DATCAN is not null AND CODMDE_DOC = 66
                                             group by codfil
@@ -84,7 +88,7 @@
 
                                             union all
 
-                                            select '{2}' EMPRESA, 'CANCELADAS',count(1) TOTAL, codfil
+                                            select '{2}' EMPRESA, 'CANC',count(1) TOTAL, codfil
                                             from CAPA_NF_SPED a
                                             where DATCAN is not null AND CODMDE_DOC = 66 and TRUNC(DATEMI) BETWEEN '{0}' AND '{1}'
                                             group by codfil

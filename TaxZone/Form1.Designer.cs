@@ -76,6 +76,7 @@
             ckb_fracionar_valores = new CheckBox();
             ckb_gerar_arquivo = new CheckBox();
             ckb_arq_temporario = new CheckBox();
+            ckb_codFisJur = new CheckBox();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -542,11 +543,22 @@
             ckb_arq_temporario.UseVisualStyleBackColor = true;
             ckb_arq_temporario.CheckedChanged += ckb_arq_temporario_CheckedChanged;
             // 
+            // ckb_codFisJur
+            // 
+            ckb_codFisJur.AutoSize = true;
+            ckb_codFisJur.Location = new Point(166, 50);
+            ckb_codFisJur.Name = "ckb_codFisJur";
+            ckb_codFisJur.Size = new Size(131, 19);
+            ckb_codFisJur.TabIndex = 41;
+            ckb_codFisJur.Text = "CodFisJur completo";
+            ckb_codFisJur.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(757, 428);
+            Controls.Add(ckb_codFisJur);
             Controls.Add(ckb_arq_temporario);
             Controls.Add(ckb_mes_aberto);
             Controls.Add(ckb_gerar_arquivo);
@@ -636,5 +648,6 @@
         private CheckBox ckb_mostrar_na_tela;
         private CheckBox ckb_gerar_arquivo;
         private CheckBox ckb_arq_temporario;
+        private CheckBox ckb_codFisJur;
     }
 }

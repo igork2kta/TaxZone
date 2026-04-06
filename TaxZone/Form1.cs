@@ -152,14 +152,6 @@ namespace TaxZone
 
             Util.MostrarDataTable(dt_icms);
 
-            /*
-            if (dt_icms is null || dt_icms.Rows.Count == 0) return;
-
-            decimal icms = Convert.ToDecimal(dt_icms.Rows[0]["ICMS"]);
-
-
-            MessageBox.Show($"ICMS encontrado no SIFAR {icms}");
-            */
         }
 
         private void bt_qtd_notas_Click(object sender, EventArgs e)
@@ -238,10 +230,28 @@ namespace TaxZone
                     }
                     );
             }
+            
 
             Task.WaitAll(tasks);
 
+            if(qtd_notas.Rows.Count == 0)
+            {
+                MessageBox.Show("Falha ao consultar dados!", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
+            if (cb_local_qtd_notas.Text == "SIFAR")
+            {
+                qtd_notas.Columns["'NOTAS'"].MaxLength = 20;
+                DataRow linha = qtd_notas.NewRow();
+                linha["EMPRESA"] = "DAT";
+                linha["'NOTAS'"] = DateTime.Now.ToString();
+                linha["TOTAL"] = 0;
+                linha["CODFIL"] = 0;
+                qtd_notas.Rows.Add(linha);
+            }
+                
+            
             if (ckb_mostrar_na_tela.Checked)
             {
                 Util.MostrarDataTable(qtd_notas);
@@ -261,7 +271,7 @@ namespace TaxZone
 
         private void bt_pessoa_fisica_juridica_Click(object sender, EventArgs e)
         {
-            FuncoesTax.ImportarPessoaFisicaJuridica(ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked);
+            FuncoesTax.ImportarPessoaFisicaJuridica(ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked, ckb_codFisJur.Checked);
         }
 
         private void ckb_buraco_notas_hardcore_CheckedChanged(object sender, EventArgs e)
