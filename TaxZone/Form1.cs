@@ -50,6 +50,10 @@ namespace TaxZone
             tb_referenciaBuracoNota.Text = $"{referenciaAnterior.Month}_{referenciaAnterior.Year}";
 
             cb_local_qtd_notas.SelectedIndex = 0;
+
+            Globais.gerarArquivo = ckb_gerar_arquivo.Checked;
+            Globais.fracionarValores = ckb_fracionar_valores.Checked;
+            Globais.mesAberto = ckb_mes_aberto.Checked;
         }
 
 
@@ -67,7 +71,7 @@ namespace TaxZone
 
         private void bt_buraco_nota_Click(object sender, EventArgs e)
         {
-            FuncoesTax.BuracoDeNota(ckb_buraco_notas_hardcore.Checked, tb_referenciaBuracoNota.Text, ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked);
+            FuncoesTax.BuracoDeNota(ckb_buraco_notas_hardcore.Checked, tb_referenciaBuracoNota.Text);
         }
 
         private void bt_notas_canceladas_Click(object sender, EventArgs e)
@@ -230,11 +234,11 @@ namespace TaxZone
                     }
                     );
             }
-            
+
 
             Task.WaitAll(tasks);
 
-            if(qtd_notas.Rows.Count == 0)
+            if (qtd_notas.Rows.Count == 0)
             {
                 MessageBox.Show("Falha ao consultar dados!", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -250,8 +254,8 @@ namespace TaxZone
                 linha["CODFIL"] = 0;
                 qtd_notas.Rows.Add(linha);
             }
-                
-            
+
+
             if (ckb_mostrar_na_tela.Checked)
             {
                 Util.MostrarDataTable(qtd_notas);
@@ -292,6 +296,26 @@ namespace TaxZone
 
                 Process.Start("notepad.exe", Config.PathScriptTemporario);
             }
+        }
+
+        private void ckb_gerar_arquivo_CheckedChanged(object sender, EventArgs e)
+        {
+            Globais.gerarArquivo = ckb_gerar_arquivo.Checked;
+        }
+
+        private void ckb_fracionar_valores_CheckedChanged(object sender, EventArgs e)
+        {
+            Globais.fracionarValores = ckb_fracionar_valores.Checked;
+        }
+
+        private void ckb_mes_aberto_CheckedChanged(object sender, EventArgs e)
+        {
+            Globais.mesAberto = ckb_mes_aberto.Checked;
+        }
+
+        private void bt_produtos_taxas_Click(object sender, EventArgs e)
+        {
+            FuncoesTax.ImportarProdutos();
         }
     }
 }

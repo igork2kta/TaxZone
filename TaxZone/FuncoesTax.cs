@@ -3,6 +3,7 @@ using iText.Kernel.Pdf.Canvas.Parser;
 using System.Data;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace TaxZone
 {
@@ -45,10 +46,11 @@ namespace TaxZone
             }
             else
                 Util.DividirValoresAreaTransferencia(resultado, fracionar);
+
         }
 
 
-        public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota, bool gerarArquivo, bool fracionar = true)
+        public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota)
         {
             if (modeloHardcore && (string.IsNullOrEmpty(referenciaBuracoNota) || referenciaBuracoNota.Length < 7))
                 MessageBox.Show("Preencha a referencia para o modo hardcore!");
@@ -123,15 +125,6 @@ namespace TaxZone
                         for (int i = inicio + 1; i < fim; i++)
                         {
                             buffer.Append(i).Append(',');
-                            /*
-                            if (fracionar && buffer.Length >= 3950)
-                            {
-                                Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                                MessageBox.Show($"{linhasParciais} / {totalNotas} notas copiadas para a área de transferência.\n" +
-                                                "Reprocese essas e clique em OK para continuar.",
-                                    "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                                buffer.Clear();
-                            }*/
                             linhasParciais++;
                         }
 
@@ -146,13 +139,16 @@ namespace TaxZone
                         .ToList();
 
 
-                if (gerarArquivo)
+                if (Globais.gerarArquivo)
                 {
-                    CsvClass.WriteListToCsv(resultado, fracionar);
+                    CsvClass.WriteListToCsv(resultado, Globais.fracionarValores);
                     MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
                 }
                 else
-                    Util.DividirValoresAreaTransferencia(resultado, fracionar);
+                    Util.DividirValoresAreaTransferencia(resultado, Globais.fracionarValores);
+
+       
+                    
 
             }
         }
@@ -273,16 +269,107 @@ namespace TaxZone
                     
                     Util.DividirValoresAreaTransferencia(lista, fracionar); 
                 }
-                    
 
-                /*
-                // Copia o restante final, se existir
-                if (buffer.Length > 0)
+            }
+        }
+
+        public static void ImportarProdutos()
+        {
+            using (OpenFileDialog openFileDialog = new()
+            {
+                Title = "Selecione um arquivo PDF",
+                Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+            })
+            {
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
+
+                string allText = "";
+                for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
                 {
-                    Clipboard.SetText(buffer.ToString().TrimEnd(','));
-                    MessageBox.Show($"{linhasParciais} / {valores.Count} UC's copiadas para a área de transferência. Finalizado!\n",
-                                "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                }*/
+                    allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
+                }
+
+                // Captura valores que aparecem após "Conteúdo do Campo"
+                // Exemplo: F1910005128733 F.T0003603
+                var regex = new Regex(@"F.T\d{7}", RegexOptions.Multiline);
+                var taxas = regex.Matches(allText);
+
+                regex = new Regex(@"F.P\d{7}", RegexOptions.Multiline);
+                var produtos = regex.Matches(allText);
+
+                var listaTaxas = new List<string>();
+                var listaProdutos = new List<string>();
+
+                //Encontra as taxas no pdf
+                foreach (Match match in taxas)
+                {
+                    string valor = match.Value;
+
+                    if (valor.Length >= 7)
+                        listaTaxas.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
+                }
+
+                //Encontra os produtos no pdf
+                foreach (Match match in produtos)
+                {
+                    string valor = match.Value;
+
+                    if (valor.Length >= 7)
+                        listaProdutos.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
+                }
+
+                if (listaTaxas.Count == 0 && listaProdutos.Count == 0)
+                {
+                    MessageBox.Show("Nenhum valor encontrado no PDF.",
+                        "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                //Remove as duplicatas
+                listaTaxas = listaTaxas.Distinct().ToList();
+                listaProdutos = listaProdutos.Distinct().ToList();
+
+
+                var buffer = new StringBuilder();
+
+                //Monta sql das taxas
+                if (listaTaxas.Count > 0) {
+
+                    buffer.AppendLine("update taxa set IND_SINCRONISMO_FISCAL = 'S' where codtaxa_tab in (");
+
+                    foreach (var v in listaTaxas)
+                    {
+                        buffer.Append(v).AppendLine(",");
+                    }
+                    buffer.Remove(buffer.Length - 1, 1); //remove a ultima virgula
+                    buffer.AppendLine(");");
+
+                }
+                
+                //Monta sql dos produtos
+                if (listaProdutos.Count > 0)
+                {
+
+                    buffer.AppendLine("update TIPO_ITEM_CONTA set IND_SINCRONISMO_FISCAL = 'S' where COD_TIPO_ITEM in (");
+
+                    foreach (var v in listaProdutos)
+                    {
+                        buffer.Append(v).AppendLine(",");
+                    }
+                    buffer.Remove(buffer.Length - 1, 1); //remove a ultima virgula
+                    buffer.AppendLine(");");
+
+                }
+
+                Clipboard.SetText(buffer.ToString());
+
+                MessageBox.Show($"Finalizado! {listaTaxas.Count} taxas e {listaProdutos.Count} copiados para área de transferência.",
+                    "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
             }
         }
 
@@ -362,21 +449,6 @@ namespace TaxZone
                 }
             }
 
-            /*
-            // Para verificar as notas a mais que estão no tax
-            foreach (var kvp in taxCounts)
-            {
-                int numero = kvp.Key;
-                int qtdTax = kvp.Value;
-                int qtdFar = farCounts.ContainsKey(numero) ? farCounts[numero] : 0;
-
-                if (qtdFar < qtdTax)
-                {
-                    // Adiciona o número tantas vezes quanto faltar
-                    int faltam = qtdTax - qtdFar;
-                    faltando.AddRange(Enumerable.Repeat(numero, faltam));
-                }
-            }*/
 
             if (gerarArquivo)
             {
