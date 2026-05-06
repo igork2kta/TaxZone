@@ -345,7 +345,7 @@ namespace TaxZone
                     {
                         buffer.Append(v).AppendLine(",");
                     }
-                    buffer.Remove(buffer.Length - 1, 1); //remove a ultima virgula
+                    buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
                     buffer.AppendLine(");");
 
                 }
@@ -360,7 +360,7 @@ namespace TaxZone
                     {
                         buffer.Append(v).AppendLine(",");
                     }
-                    buffer.Remove(buffer.Length - 1, 1); //remove a ultima virgula
+                    buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
                     buffer.AppendLine(");");
 
                 }
