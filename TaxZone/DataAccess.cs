@@ -65,7 +65,7 @@ namespace TaxZone
 
                             dataTable.Load(reader);
                             GravaLog.Gravar($"Base: {serviceName}. Criando arquivo CSV.");
-                            CsvClass.WriteDataTableToCsv(dataTable, path, query);
+                            CsvClass.WriteDataTableToCsv(dataTable, path);
 
                             GravaLog.Gravar($"Base: {serviceName}. Extração finalizada.\n{dataTable.Rows.Count} Linhas extraídas.");
 

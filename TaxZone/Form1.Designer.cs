@@ -79,6 +79,7 @@
             ckb_codFisJur = new CheckBox();
             label2 = new Label();
             bt_produtos_taxas = new Button();
+            ckb_arquivo_temp = new CheckBox();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             SuspendLayout();
@@ -332,6 +333,7 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(ckb_arquivo_temp);
             groupBox2.Controls.Add(ckb_mostrar_na_tela);
             groupBox2.Controls.Add(label20);
             groupBox2.Controls.Add(bt_qtd_notas);
@@ -352,7 +354,7 @@
             // ckb_mostrar_na_tela
             // 
             ckb_mostrar_na_tela.AutoSize = true;
-            ckb_mostrar_na_tela.Location = new Point(512, 35);
+            ckb_mostrar_na_tela.Location = new Point(512, 22);
             ckb_mostrar_na_tela.Name = "ckb_mostrar_na_tela";
             ckb_mostrar_na_tela.Size = new Size(105, 19);
             ckb_mostrar_na_tela.TabIndex = 38;
@@ -370,7 +372,7 @@
             // 
             // bt_qtd_notas
             // 
-            bt_qtd_notas.Location = new Point(623, 32);
+            bt_qtd_notas.Location = new Point(650, 32);
             bt_qtd_notas.Name = "bt_qtd_notas";
             bt_qtd_notas.Size = new Size(68, 23);
             bt_qtd_notas.TabIndex = 35;
@@ -575,6 +577,18 @@
             bt_produtos_taxas.UseVisualStyleBackColor = true;
             bt_produtos_taxas.Click += bt_produtos_taxas_Click;
             // 
+            // ckb_arquivo_temp
+            // 
+            ckb_arquivo_temp.AutoSize = true;
+            ckb_arquivo_temp.Checked = true;
+            ckb_arquivo_temp.CheckState = CheckState.Checked;
+            ckb_arquivo_temp.Location = new Point(512, 47);
+            ckb_arquivo_temp.Name = "ckb_arquivo_temp";
+            ckb_arquivo_temp.Size = new Size(132, 19);
+            ckb_arquivo_temp.TabIndex = 39;
+            ckb_arquivo_temp.Text = "Arquivo Temporário";
+            ckb_arquivo_temp.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -675,5 +689,6 @@
         private CheckBox ckb_codFisJur;
         private Label label2;
         private Button bt_produtos_taxas;
+        private CheckBox ckb_arquivo_temp;
     }
 }

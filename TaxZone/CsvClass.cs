@@ -203,7 +203,7 @@ namespace TaxZone
             
         }
 
-        public static void WriteDataTableToCsv(DataTable dataTable, string filePath, string query = null)
+        public static void WriteDataTableToCsv(DataTable dataTable, string filePath)
         {
             // Verifica se o caminho do arquivo está vazio
             if (string.IsNullOrEmpty(filePath)) return;
@@ -215,6 +215,7 @@ namespace TaxZone
             // Verifica se a extensão .csv foi fornecida, se não, adiciona
             if (string.IsNullOrEmpty(Path.GetExtension(filePath))) filePath += ".csv";
 
+            /*
             // Se o arquivo já existir, pergunta se deseja substituir
             if (File.Exists(filePath))
             {
@@ -222,7 +223,7 @@ namespace TaxZone
                 if (response == DialogResult.No) return;
                 else File.Delete(filePath);
             }
-
+            */
             // Define o encoding como ISO-8859-1
             Encoding iso = Encoding.GetEncoding("iso-8859-1");
 
@@ -246,10 +247,6 @@ namespace TaxZone
                     }
                     streamWriter.WriteLine(sb.ToString().TrimEnd(';')); // Remover o último ponto e vírgula
                 }
-
-                // Se houver uma query, adiciona no final do arquivo
-                if (!string.IsNullOrEmpty(query))
-                    streamWriter.WriteLine($"\"{query}\";");
 
             }
         }

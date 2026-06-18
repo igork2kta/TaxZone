@@ -2,37 +2,44 @@
 {
     public static class Queries
     {
-        public const string qtdNotasMsa = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL , COD_ESTAB
-                                from (  SELECT COD_ESTAB, TO_DATE(dat_fiscal, 'YYYYMMDD') DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
-                                        FROM safx42
-                                        where DTH_INCLUSAO is not null
-                                        group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
-                                        )
-                                where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
-                                group by COD_ESTAB
+        public const string qtdNotasMsa = @" select '{1}' EMPRESA, 'NOTAS', count(1) TOTAL , COD_ESTAB
+                                            from (  SELECT  COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
+                                                    FROM safx42
+                                                    where   DTH_INCLUSAO is not null and
+                                                            COD_EMPRESA = {0} and
+                                                            COD_ESTAB in ({2}) and
+                                                            DAT_FISCAL between '{3}' and '{4}'
+                                                    group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
+                                                    )
+                                            group by COD_ESTAB
 
-                                union all
+                                            union all
 
-                                select '{2}'  EMPRESA,'ITENS', count(1) TOTAL, COD_ESTAB 
-                                from (  select COD_ESTAB, TO_DATE(dat_fiscal, 'YYYYMMDD') DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
-                                        from safx43 
-                                        where DTH_INCLUSAO is not null
-                                        group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
-                                ) 
-                                where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
-                                group by COD_ESTAB
+                                            select '{1}'  EMPRESA,'ITENS', count(1) TOTAL, COD_ESTAB 
+                                            from (  select COD_ESTAB,DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
+                                                    from safx43 
+                                                    where   DTH_INCLUSAO is not null and
+                                                            COD_EMPRESA = {0} and
+                                                            COD_ESTAB in ({2}) and
+                                                            DAT_FISCAL between '{3}' and '{4}'
+                                                    group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
+                                            ) 
+                                            group by COD_ESTAB
 
-                                union all
+                                            union all
 
-                                select '{2}' EMPRESA, 'CANC', count(1) TOTAL, COD_ESTAB 
-                                from (  select COD_ESTAB,  TO_DATE(dat_fiscal, 'YYYYMMDD') DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
-                                        from safx42 where situacao = 'S'
-                                        and DTH_INCLUSAO is not null
-                                        group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
-                                ) 
-                                where dat_fiscal between to_date('{0}','DD/MM/YYYY') and to_date('{1}','DD/MM/YYYY')
-                                group by COD_ESTAB
-                                order by 4, 2 desc";
+                                            select '{1}' EMPRESA, 'CANC', count(1) TOTAL, COD_ESTAB 
+                                            from (  select COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
+                                                    from safx42 
+                                                    where   situacao = 'S' and
+                                                            DTH_INCLUSAO is not null and
+                                                            COD_EMPRESA = {0} and
+                                                            COD_ESTAB in ({2}) and
+                                                            DAT_FISCAL between '{3}' and '{4}'
+                                                    group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
+                                            ) 
+                                            group by COD_ESTAB
+                                            order by 4, 2 desc";
 
 
         public const string qtdNotasFarMesFechado = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil

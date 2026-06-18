@@ -168,7 +168,8 @@ namespace TaxZone
             int taskCount = 1;
             if (cb_empresa_qtd_notas.Text == "TODAS") taskCount = 9;
 
-            if (!ckb_mostrar_na_tela.Checked)
+            
+            if (!ckb_mostrar_na_tela.Checked && !ckb_arquivo_temp.Checked)
             {
                 salvarDialog.Title = "Salvar arquivo como...";
                 salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
@@ -181,6 +182,7 @@ namespace TaxZone
 
                 if (salvarDialog.ShowDialog() != DialogResult.OK) return;
             }
+            
 
             Task[] tasks = new Task[taskCount];
             DataTable qtd_notas = new();
@@ -200,7 +202,7 @@ namespace TaxZone
                 {
                     banco = Empresa.GetBancoMsa(empresa);
 
-                    query = string.Format(Queries.qtdNotasMsa, periodoIni.ToString("dd/MM/yyyy"), periodoFin.ToString("dd/MM/yyyy"), empresa);
+                    query = string.Format(Queries.qtdNotasMsa, Util.ObterCodEmpresa(empresa), empresa, Util.ObterFiliais(empresa), periodoIni.ToString("yyyyMMdd"), periodoFin.ToString("yyyyMMdd"));
                     user = tb_usuario_banco_msa.Text;
                     password = tb_senha_banco_msa.Text;
                 }
@@ -262,12 +264,18 @@ namespace TaxZone
             }
             else
             {
-                CsvClass.WriteDataTableToCsv(qtd_notas, salvarDialog.FileName);
+                string filename;
+                if (!ckb_arquivo_temp.Checked)
+                    filename = salvarDialog.FileName;
+                else
+                    filename = "C:\\Temp\\qtd_notas_{cb_empresa_qtd_notas.Text}.csv";
+
+                CsvClass.WriteDataTableToCsv(qtd_notas, filename);
 
                 var resposta = MessageBox.Show("Extração Finalizada! Deseja abrir o arquivo?", "Pronto!", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
                 if (resposta == DialogResult.Yes)
                 {
-                    Process.Start(new ProcessStartInfo(salvarDialog.FileName) { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
                 }
             }
 
@@ -311,6 +319,18 @@ namespace TaxZone
         private void ckb_mes_aberto_CheckedChanged(object sender, EventArgs e)
         {
             Globais.mesAberto = ckb_mes_aberto.Checked;
+            if (ckb_mes_aberto.Checked)
+            {
+                dtp_periodo_ini_qtd_notas.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 01);
+                dtp_periodo_fin_qtd_notas.Value = DateTime.Now.AddDays(-1);
+            }
+            else
+            {
+                DateTime referenciaAnterior = DateTime.Now.AddMonths(-1);
+                dtp_periodo_ini_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, 01);
+                dtp_periodo_fin_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, DateTime.DaysInMonth(referenciaAnterior.Year, referenciaAnterior.Month));
+
+            }
         }
 
         private void bt_produtos_taxas_Click(object sender, EventArgs e)

@@ -224,7 +224,7 @@ namespace TaxZone
                 var matches = regex.Matches(allText);
 
                 var valores = new List<string>();
-                int linhasParciais = 0;
+
 
                 foreach (Match match in matches)
                 {
@@ -245,29 +245,17 @@ namespace TaxZone
                     return;
                 }
 
-                var buffer = new StringBuilder();
-                foreach (var v in valores)
-                {
-                    buffer.Append(v).Append(',');
-
-                    linhasParciais++;
-                }
-
-                List<string> lista = buffer.ToString()
-                  .Split(',')
-                  .ToList();
-
                 if (gerarArquivo)
                 {
-                    CsvClass.WriteListToCsv(lista, fracionar);
+                    CsvClass.WriteListToCsv(valores, fracionar);
                     MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
                 }
                 else
                 {
                     if(codFisJurCompleto)
-                        lista = lista.Select(s => $"'{s}'").ToList();
+                        valores = valores.Select(s => $"'{s}'").ToList();
                     
-                    Util.DividirValoresAreaTransferencia(lista, fracionar); 
+                    Util.DividirValoresAreaTransferencia(valores, fracionar); 
                 }
 
             }
@@ -339,14 +327,21 @@ namespace TaxZone
                 //Monta sql das taxas
                 if (listaTaxas.Count > 0) {
 
-                    buffer.AppendLine("update taxa set IND_SINCRONISMO_FISCAL = 'S' where codtaxa_tab in (");
+                    //buffer.AppendLine("update taxa set IND_SINCRONISMO_FISCAL = 'S' where codtaxa_tab in (");
 
                     foreach (var v in listaTaxas)
                     {
-                        buffer.Append(v).AppendLine(",");
+                        buffer.Append($"{v},");
+
                     }
+
                     buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
-                    buffer.AppendLine(");");
+                    //buffer.AppendLine(");");
+
+                    Clipboard.SetText(buffer.ToString());
+
+                    MessageBox.Show($"{listaTaxas.Count} taxas copiadas para área de transferência.",
+                        "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 }
                 
@@ -354,21 +349,28 @@ namespace TaxZone
                 if (listaProdutos.Count > 0)
                 {
 
-                    buffer.AppendLine("update TIPO_ITEM_CONTA set IND_SINCRONISMO_FISCAL = 'S' where COD_TIPO_ITEM in (");
+                    //buffer.AppendLine("update TIPO_ITEM_CONTA set IND_SINCRONISMO_FISCAL = 'S' where COD_TIPO_ITEM in (");
 
                     foreach (var v in listaProdutos)
                     {
-                        buffer.Append(v).AppendLine(",");
+                      buffer.Append($"{v},");
                     }
+
                     buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
-                    buffer.AppendLine(");");
+                    // buffer.AppendLine(");");
+
+                    Clipboard.SetText(buffer.ToString());
+
+                    MessageBox.Show($"Finalizado! {listaProdutos.Count} produtos copiados para área de transferência.",
+                        "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 }
-
+                /*
                 Clipboard.SetText(buffer.ToString());
 
                 MessageBox.Show($"Finalizado! {listaTaxas.Count} taxas e {listaProdutos.Count} copiados para área de transferência.",
                     "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                */
 
             }
         }
