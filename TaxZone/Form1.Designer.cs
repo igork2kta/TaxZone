@@ -82,6 +82,21 @@
             label2 = new Label();
             bt_produtos_taxas = new Button();
             groupBox3 = new GroupBox();
+            ckb_extracao_canceladas = new CheckBox();
+            ckb_qtd_canceladas = new CheckBox();
+            ckb_qtd_notas = new CheckBox();
+            ckb_qtd_itens = new CheckBox();
+            ckb_notas_sem_item = new CheckBox();
+            ckb_icms_resumido = new CheckBox();
+            ckb_diferenca_capa_item = new CheckBox();
+            ckb_buraco_notas = new CheckBox();
+            label26 = new Label();
+            label25 = new Label();
+            dtp_tax_data_fim = new DateTimePicker();
+            dtp_tax_data_inicio = new DateTimePicker();
+            label24 = new Label();
+            cb_estab = new ComboBox();
+            bt_executar_relatorio = new Button();
             label23 = new Label();
             bt_status_tax_automation = new Button();
             label22 = new Label();
@@ -90,7 +105,6 @@
             bt_tax_automation = new Button();
             cb_empresa_tax_api = new ComboBox();
             label4 = new Label();
-            button1 = new Button();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             groupBox3.SuspendLayout();
@@ -618,7 +632,21 @@
             // groupBox3
             // 
             groupBox3.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            groupBox3.Controls.Add(button1);
+            groupBox3.Controls.Add(ckb_extracao_canceladas);
+            groupBox3.Controls.Add(ckb_qtd_canceladas);
+            groupBox3.Controls.Add(ckb_qtd_notas);
+            groupBox3.Controls.Add(ckb_qtd_itens);
+            groupBox3.Controls.Add(ckb_notas_sem_item);
+            groupBox3.Controls.Add(ckb_icms_resumido);
+            groupBox3.Controls.Add(ckb_diferenca_capa_item);
+            groupBox3.Controls.Add(ckb_buraco_notas);
+            groupBox3.Controls.Add(label26);
+            groupBox3.Controls.Add(label25);
+            groupBox3.Controls.Add(dtp_tax_data_fim);
+            groupBox3.Controls.Add(dtp_tax_data_inicio);
+            groupBox3.Controls.Add(label24);
+            groupBox3.Controls.Add(cb_estab);
+            groupBox3.Controls.Add(bt_executar_relatorio);
             groupBox3.Controls.Add(label23);
             groupBox3.Controls.Add(bt_status_tax_automation);
             groupBox3.Controls.Add(label22);
@@ -629,15 +657,171 @@
             groupBox3.Controls.Add(label4);
             groupBox3.Location = new Point(761, 10);
             groupBox3.Name = "groupBox3";
-            groupBox3.Size = new Size(477, 456);
+            groupBox3.Size = new Size(477, 475);
             groupBox3.TabIndex = 44;
             groupBox3.TabStop = false;
             groupBox3.Text = "Tax API";
             // 
+            // ckb_extracao_canceladas
+            // 
+            ckb_extracao_canceladas.AutoSize = true;
+            ckb_extracao_canceladas.Location = new Point(60, 337);
+            ckb_extracao_canceladas.Name = "ckb_extracao_canceladas";
+            ckb_extracao_canceladas.RightToLeft = RightToLeft.Yes;
+            ckb_extracao_canceladas.Size = new Size(147, 19);
+            ckb_extracao_canceladas.TabIndex = 51;
+            ckb_extracao_canceladas.Text = "Extração de canceladas";
+            ckb_extracao_canceladas.UseVisualStyleBackColor = true;
+            // 
+            // ckb_qtd_canceladas
+            // 
+            ckb_qtd_canceladas.AutoSize = true;
+            ckb_qtd_canceladas.Checked = true;
+            ckb_qtd_canceladas.CheckState = CheckState.Checked;
+            ckb_qtd_canceladas.Location = new Point(8, 308);
+            ckb_qtd_canceladas.Name = "ckb_qtd_canceladas";
+            ckb_qtd_canceladas.RightToLeft = RightToLeft.Yes;
+            ckb_qtd_canceladas.Size = new Size(199, 19);
+            ckb_qtd_canceladas.TabIndex = 50;
+            ckb_qtd_canceladas.Text = "Quantidade de notas Canceladas";
+            ckb_qtd_canceladas.UseVisualStyleBackColor = true;
+            // 
+            // ckb_qtd_notas
+            // 
+            ckb_qtd_notas.AutoSize = true;
+            ckb_qtd_notas.Checked = true;
+            ckb_qtd_notas.CheckState = CheckState.Checked;
+            ckb_qtd_notas.Location = new Point(71, 283);
+            ckb_qtd_notas.Name = "ckb_qtd_notas";
+            ckb_qtd_notas.RightToLeft = RightToLeft.Yes;
+            ckb_qtd_notas.Size = new Size(136, 19);
+            ckb_qtd_notas.TabIndex = 49;
+            ckb_qtd_notas.Text = "Quantidade de notas";
+            ckb_qtd_notas.UseVisualStyleBackColor = true;
+            // 
+            // ckb_qtd_itens
+            // 
+            ckb_qtd_itens.AutoSize = true;
+            ckb_qtd_itens.Checked = true;
+            ckb_qtd_itens.CheckState = CheckState.Checked;
+            ckb_qtd_itens.Location = new Point(75, 258);
+            ckb_qtd_itens.Name = "ckb_qtd_itens";
+            ckb_qtd_itens.RightToLeft = RightToLeft.Yes;
+            ckb_qtd_itens.Size = new Size(132, 19);
+            ckb_qtd_itens.TabIndex = 48;
+            ckb_qtd_itens.Text = "Quantidade de itens";
+            ckb_qtd_itens.UseVisualStyleBackColor = true;
+            // 
+            // ckb_notas_sem_item
+            // 
+            ckb_notas_sem_item.AutoSize = true;
+            ckb_notas_sem_item.Location = new Point(98, 233);
+            ckb_notas_sem_item.Name = "ckb_notas_sem_item";
+            ckb_notas_sem_item.RightToLeft = RightToLeft.Yes;
+            ckb_notas_sem_item.Size = new Size(109, 19);
+            ckb_notas_sem_item.TabIndex = 47;
+            ckb_notas_sem_item.Text = "Notas sem item";
+            ckb_notas_sem_item.UseVisualStyleBackColor = true;
+            // 
+            // ckb_icms_resumido
+            // 
+            ckb_icms_resumido.AutoSize = true;
+            ckb_icms_resumido.Location = new Point(97, 208);
+            ckb_icms_resumido.Name = "ckb_icms_resumido";
+            ckb_icms_resumido.RightToLeft = RightToLeft.Yes;
+            ckb_icms_resumido.Size = new Size(110, 19);
+            ckb_icms_resumido.TabIndex = 46;
+            ckb_icms_resumido.Text = "ICMS Resumido";
+            ckb_icms_resumido.UseVisualStyleBackColor = true;
+            // 
+            // ckb_diferenca_capa_item
+            // 
+            ckb_diferenca_capa_item.AutoSize = true;
+            ckb_diferenca_capa_item.Location = new Point(74, 183);
+            ckb_diferenca_capa_item.Name = "ckb_diferenca_capa_item";
+            ckb_diferenca_capa_item.RightToLeft = RightToLeft.Yes;
+            ckb_diferenca_capa_item.Size = new Size(133, 19);
+            ckb_diferenca_capa_item.TabIndex = 45;
+            ckb_diferenca_capa_item.Text = "Diferença capa-item";
+            ckb_diferenca_capa_item.UseVisualStyleBackColor = true;
+            // 
+            // ckb_buraco_notas
+            // 
+            ckb_buraco_notas.AutoSize = true;
+            ckb_buraco_notas.Location = new Point(96, 158);
+            ckb_buraco_notas.Name = "ckb_buraco_notas";
+            ckb_buraco_notas.RightToLeft = RightToLeft.Yes;
+            ckb_buraco_notas.Size = new Size(111, 19);
+            ckb_buraco_notas.TabIndex = 44;
+            ckb_buraco_notas.Text = "Buraco de notas";
+            ckb_buraco_notas.UseVisualStyleBackColor = true;
+            // 
+            // label26
+            // 
+            label26.AutoSize = true;
+            label26.Location = new Point(57, 120);
+            label26.Name = "label26";
+            label26.Size = new Size(55, 15);
+            label26.TabIndex = 43;
+            label26.Text = "Data fim:";
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(46, 91);
+            label25.Name = "label25";
+            label25.Size = new Size(66, 15);
+            label25.TabIndex = 42;
+            label25.Text = "Data início:";
+            // 
+            // dtp_tax_data_fim
+            // 
+            dtp_tax_data_fim.Format = DateTimePickerFormat.Short;
+            dtp_tax_data_fim.Location = new Point(121, 120);
+            dtp_tax_data_fim.Name = "dtp_tax_data_fim";
+            dtp_tax_data_fim.Size = new Size(86, 23);
+            dtp_tax_data_fim.TabIndex = 41;
+            // 
+            // dtp_tax_data_inicio
+            // 
+            dtp_tax_data_inicio.Format = DateTimePickerFormat.Short;
+            dtp_tax_data_inicio.Location = new Point(121, 87);
+            dtp_tax_data_inicio.Name = "dtp_tax_data_inicio";
+            dtp_tax_data_inicio.Size = new Size(86, 23);
+            dtp_tax_data_inicio.TabIndex = 41;
+            // 
+            // label24
+            // 
+            label24.AutoSize = true;
+            label24.Location = new Point(15, 59);
+            label24.Name = "label24";
+            label24.Size = new Size(97, 15);
+            label24.TabIndex = 31;
+            label24.Text = "Estabelecimento:";
+            // 
+            // cb_estab
+            // 
+            cb_estab.FormattingEnabled = true;
+            cb_estab.Items.AddRange(new object[] { "TODAS" });
+            cb_estab.Location = new Point(121, 56);
+            cb_estab.Name = "cb_estab";
+            cb_estab.Size = new Size(86, 23);
+            cb_estab.TabIndex = 30;
+            // 
+            // bt_executar_relatorio
+            // 
+            bt_executar_relatorio.Location = new Point(287, 339);
+            bt_executar_relatorio.Name = "bt_executar_relatorio";
+            bt_executar_relatorio.Size = new Size(75, 23);
+            bt_executar_relatorio.TabIndex = 29;
+            bt_executar_relatorio.Text = "Executar";
+            bt_executar_relatorio.UseVisualStyleBackColor = true;
+            bt_executar_relatorio.Click += bt_executar_relatorio_Click;
+            // 
             // label23
             // 
             label23.AutoSize = true;
-            label23.Location = new Point(12, 82);
+            label23.Location = new Point(252, 55);
             label23.Name = "label23";
             label23.Size = new Size(126, 15);
             label23.TabIndex = 28;
@@ -645,7 +829,7 @@
             // 
             // bt_status_tax_automation
             // 
-            bt_status_tax_automation.Location = new Point(144, 78);
+            bt_status_tax_automation.Location = new Point(384, 51);
             bt_status_tax_automation.Name = "bt_status_tax_automation";
             bt_status_tax_automation.Size = new Size(75, 23);
             bt_status_tax_automation.TabIndex = 27;
@@ -665,7 +849,7 @@
             // tb_cookie
             // 
             tb_cookie.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            tb_cookie.Location = new Point(21, 393);
+            tb_cookie.Location = new Point(21, 412);
             tb_cookie.Multiline = true;
             tb_cookie.Name = "tb_cookie";
             tb_cookie.Size = new Size(441, 52);
@@ -675,7 +859,7 @@
             // label21
             // 
             label21.AutoSize = true;
-            label21.Location = new Point(47, 53);
+            label21.Location = new Point(287, 26);
             label21.Name = "label21";
             label21.Size = new Size(91, 15);
             label21.TabIndex = 24;
@@ -683,7 +867,7 @@
             // 
             // bt_tax_automation
             // 
-            bt_tax_automation.Location = new Point(144, 49);
+            bt_tax_automation.Location = new Point(384, 22);
             bt_tax_automation.Name = "bt_tax_automation";
             bt_tax_automation.Size = new Size(75, 23);
             bt_tax_automation.TabIndex = 23;
@@ -694,29 +878,20 @@
             // cb_empresa_tax_api
             // 
             cb_empresa_tax_api.FormattingEnabled = true;
-            cb_empresa_tax_api.Location = new Point(144, 18);
+            cb_empresa_tax_api.Location = new Point(121, 23);
             cb_empresa_tax_api.Name = "cb_empresa_tax_api";
-            cb_empresa_tax_api.Size = new Size(75, 23);
+            cb_empresa_tax_api.Size = new Size(86, 23);
             cb_empresa_tax_api.TabIndex = 22;
+            cb_empresa_tax_api.SelectedIndexChanged += cb_empresa_tax_api_SelectedIndexChanged;
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(86, 22);
+            label4.Location = new Point(57, 26);
             label4.Name = "label4";
-            label4.Size = new Size(52, 15);
+            label4.Size = new Size(55, 15);
             label4.TabIndex = 21;
-            label4.Text = "Empresa";
-            // 
-            // button1
-            // 
-            button1.Location = new Point(47, 138);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 29;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            label4.Text = "Empresa:";
             // 
             // Form1
             // 
@@ -831,6 +1006,20 @@
         private Button bt_status_tax_automation;
         private Label label23;
         private CheckBox ckb_incluidas_hoje;
-        private Button button1;
+        private Button bt_executar_relatorio;
+        private Label label24;
+        private ComboBox cb_estab;
+        private Label label26;
+        private Label label25;
+        private DateTimePicker dtp_tax_data_fim;
+        private DateTimePicker dtp_tax_data_inicio;
+        private CheckBox ckb_buraco_notas;
+        private CheckBox ckb_diferenca_capa_item;
+        private CheckBox ckb_notas_sem_item;
+        private CheckBox ckb_icms_resumido;
+        private CheckBox ckb_extracao_canceladas;
+        private CheckBox ckb_qtd_canceladas;
+        private CheckBox ckb_qtd_notas;
+        private CheckBox ckb_qtd_itens;
     }
 }

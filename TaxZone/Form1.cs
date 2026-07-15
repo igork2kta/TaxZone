@@ -48,6 +48,9 @@ namespace TaxZone
             dtp_periodo_ini_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, 01);
             dtp_periodo_fin_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, DateTime.DaysInMonth(referenciaAnterior.Year, referenciaAnterior.Month));
 
+            dtp_tax_data_inicio.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, 01);
+            dtp_tax_data_fim.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, DateTime.DaysInMonth(referenciaAnterior.Year, referenciaAnterior.Month));
+
             tb_referenciaBuracoNota.Text = $"{referenciaAnterior.Month}_{referenciaAnterior.Year}";
 
             cb_local_qtd_notas.SelectedIndex = 0;
@@ -331,12 +334,18 @@ namespace TaxZone
             {
                 dtp_periodo_ini_qtd_notas.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 01);
                 dtp_periodo_fin_qtd_notas.Value = DateTime.Now.AddDays(-1);
+
+                dtp_tax_data_inicio.Value = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 01);
+                dtp_tax_data_fim.Value = DateTime.Now.AddDays(-1);
             }
             else
             {
                 DateTime referenciaAnterior = DateTime.Now.AddMonths(-1);
                 dtp_periodo_ini_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, 01);
                 dtp_periodo_fin_qtd_notas.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, DateTime.DaysInMonth(referenciaAnterior.Year, referenciaAnterior.Month));
+
+                dtp_tax_data_inicio.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, 01);
+                dtp_tax_data_fim.Value = new DateTime(referenciaAnterior.Year, referenciaAnterior.Month, DateTime.DaysInMonth(referenciaAnterior.Year, referenciaAnterior.Month));
 
             }
         }
@@ -367,9 +376,34 @@ namespace TaxZone
             else ckb_incluidas_hoje.Visible = false;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void bt_executar_relatorio_Click(object sender, EventArgs e)
         {
-            ApiTax.ProgramarJob("EMR");
+            ApiTax.param_empresa = "*";
+            if (cb_estab.Text == "TODOS")
+                ApiTax.param_estab = "*";
+            else
+                ApiTax.param_estab = cb_estab.Text;
+
+            ApiTax.data_inicio = dtp_tax_data_inicio.Value.ToString("ddMMyyyy000000");
+            ApiTax.data_fim = dtp_tax_data_fim.Value.ToString("ddMMyyyy000000");
+            ApiTax.buraco_nota = ckb_buraco_notas.Checked ? "S" : "N";
+            ApiTax.diferenca_capa_item = ckb_diferenca_capa_item.Checked ? "S" : "N";
+            ApiTax.icms_resumido = ckb_icms_resumido.Checked ? "S" : "N";
+            ApiTax.notas_sem_item = ckb_notas_sem_item.Checked ? "S" : "N";
+            ApiTax.qtd_itens = ckb_qtd_itens.Checked ? "S" : "N";
+            ApiTax.qtd_notas = ckb_qtd_notas.Checked ? "S" : "N";
+            ApiTax.qtd_canceladas = ckb_qtd_canceladas.Checked ? "S" : "N";
+            ApiTax.extracao_canceladas = ckb_extracao_canceladas.Checked ? "S" : "N";
+
+            ApiTax.ProgramarJob(cb_empresa_tax_api.Text);
+        }
+
+        private void cb_empresa_tax_api_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var listEstab = Empresa.GetEstabelecimentos(cb_empresa_tax_api.Text);
+            var datasource = new List<string> { "TODOS" };
+            datasource.AddRange(listEstab.Select(x => x.ToString()));
+            cb_estab.DataSource = datasource;
         }
     }
 }

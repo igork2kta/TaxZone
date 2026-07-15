@@ -57,6 +57,33 @@ namespace TaxZone
             }
         }
 
+        public static string GetEmpresaTax(string empresa)
+        {
+            switch (empresa)
+            {
+                case "EMR":
+                    return "C14_001";
+                case "ESE":
+                    return "C14_003";
+                case "EPB":
+                    return "user_taxone_energisaparaiba";
+                case "ETO":
+                    return "C14_009";
+                case "EMT":
+                    return "C14_004";
+                case "EMS":
+                    return "C14_005";
+                case "ESS":
+                    return "user_taxone_energsulsudeste";
+                case "ERO":
+                    return "C14_006";
+                case "EAC":
+                    return "user_taxone_energisaacre";
+                default:
+                    return null;
+            }
+        }
+
         public static string GetUsuarioTaxAutomation(string empresa)
         {
             switch (empresa)
@@ -106,6 +133,60 @@ namespace TaxZone
                     return 8;
                 case "EAC":
                     return 10;
+                default:
+                    throw new ArgumentException($"Empresa '{empresa}' não reconhecida para indexação do fluxo de automação fiscal.");
+            }
+        }
+
+        public static List<int> GetEstabelecimentos(string empresa)
+        {
+            switch (empresa)
+            {
+                case "EMR":
+                    return [1,78];
+                case "ESE":
+                    return [1];
+                case "EPB":
+                    return [1,28];
+                case "ETO":
+                    return [1];
+                case "EMT":
+                    return [1];
+                case "EMS":
+                    return [1];
+                case "ESS":
+                    return [1,70,81];
+                case "ERO":
+                    return [1];
+                case "EAC":
+                    return [1];
+                default:
+                    throw new ArgumentException($"Não foi encontrado estabelecimento para empresa'{empresa}'");
+            }
+        }
+
+        public static int GetCodEmpresa(string empresa)
+        {
+            switch (empresa)
+            {
+                case "EMR":
+                    return 1;
+                case "ESE":
+                    return 20;
+                case "EPB":
+                    return 27;
+                case "ETO":
+                    return 190;
+                case "EMT":
+                    return 191;
+                case "EMS":
+                    return 193;
+                case "ESS":
+                    return 218;
+                case "ERO":
+                    return 229;
+                case "EAC":
+                    return 226;
                 default:
                     throw new ArgumentException($"Empresa '{empresa}' não reconhecida para indexação do fluxo de automação fiscal.");
             }
