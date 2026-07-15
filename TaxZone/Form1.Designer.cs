@@ -56,6 +56,8 @@
             label12 = new Label();
             tb_mes = new TextBox();
             groupBox2 = new GroupBox();
+            ckb_incluidas_hoje = new CheckBox();
+            ckb_arquivo_temp = new CheckBox();
             ckb_mostrar_na_tela = new CheckBox();
             label20 = new Label();
             bt_qtd_notas = new Button();
@@ -79,9 +81,19 @@
             ckb_codFisJur = new CheckBox();
             label2 = new Label();
             bt_produtos_taxas = new Button();
-            ckb_arquivo_temp = new CheckBox();
+            groupBox3 = new GroupBox();
+            label23 = new Label();
+            bt_status_tax_automation = new Button();
+            label22 = new Label();
+            tb_cookie = new TextBox();
+            label21 = new Label();
+            bt_tax_automation = new Button();
+            cb_empresa_tax_api = new ComboBox();
+            label4 = new Label();
+            button1 = new Button();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
+            groupBox3.SuspendLayout();
             SuspendLayout();
             // 
             // bt_diferenca_capa_item
@@ -126,7 +138,7 @@
             // 
             label5.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label5.AutoSize = true;
-            label5.Location = new Point(34, 440);
+            label5.Location = new Point(34, 459);
             label5.Name = "label5";
             label5.Size = new Size(98, 15);
             label5.TabIndex = 9;
@@ -135,7 +147,7 @@
             // tb_senha_banco_far
             // 
             tb_senha_banco_far.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_senha_banco_far.Location = new Point(142, 440);
+            tb_senha_banco_far.Location = new Point(142, 459);
             tb_senha_banco_far.Name = "tb_senha_banco_far";
             tb_senha_banco_far.PasswordChar = '*';
             tb_senha_banco_far.Size = new Size(100, 23);
@@ -146,7 +158,7 @@
             // 
             label6.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label6.AutoSize = true;
-            label6.Location = new Point(26, 414);
+            label6.Location = new Point(26, 433);
             label6.Name = "label6";
             label6.Size = new Size(106, 15);
             label6.TabIndex = 11;
@@ -155,7 +167,7 @@
             // tb_usuario_banco_far
             // 
             tb_usuario_banco_far.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_usuario_banco_far.Location = new Point(142, 411);
+            tb_usuario_banco_far.Location = new Point(142, 430);
             tb_usuario_banco_far.Name = "tb_usuario_banco_far";
             tb_usuario_banco_far.Size = new Size(100, 23);
             tb_usuario_banco_far.TabIndex = 10;
@@ -174,7 +186,7 @@
             // 
             label9.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label9.AutoSize = true;
-            label9.Location = new Point(275, 411);
+            label9.Location = new Point(275, 430);
             label9.Name = "label9";
             label9.Size = new Size(111, 15);
             label9.TabIndex = 19;
@@ -183,7 +195,7 @@
             // tb_usuario_banco_msa
             // 
             tb_usuario_banco_msa.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_usuario_banco_msa.Location = new Point(390, 408);
+            tb_usuario_banco_msa.Location = new Point(390, 427);
             tb_usuario_banco_msa.Name = "tb_usuario_banco_msa";
             tb_usuario_banco_msa.Size = new Size(100, 23);
             tb_usuario_banco_msa.TabIndex = 18;
@@ -193,7 +205,7 @@
             // 
             label10.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label10.AutoSize = true;
-            label10.Location = new Point(281, 440);
+            label10.Location = new Point(281, 459);
             label10.Name = "label10";
             label10.Size = new Size(103, 15);
             label10.TabIndex = 17;
@@ -202,7 +214,7 @@
             // tb_senha_banco_msa
             // 
             tb_senha_banco_msa.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_senha_banco_msa.Location = new Point(390, 437);
+            tb_senha_banco_msa.Location = new Point(390, 456);
             tb_senha_banco_msa.Name = "tb_senha_banco_msa";
             tb_senha_banco_msa.PasswordChar = '*';
             tb_senha_banco_msa.Size = new Size(100, 23);
@@ -333,6 +345,7 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(ckb_incluidas_hoje);
             groupBox2.Controls.Add(ckb_arquivo_temp);
             groupBox2.Controls.Add(ckb_mostrar_na_tela);
             groupBox2.Controls.Add(label20);
@@ -346,10 +359,34 @@
             groupBox2.Controls.Add(dtp_periodo_ini_qtd_notas);
             groupBox2.Location = new Point(12, 310);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(733, 75);
+            groupBox2.Size = new Size(733, 99);
             groupBox2.TabIndex = 31;
             groupBox2.TabStop = false;
             groupBox2.Text = "Quantidade notas";
+            // 
+            // ckb_incluidas_hoje
+            // 
+            ckb_incluidas_hoje.AutoSize = true;
+            ckb_incluidas_hoje.Checked = true;
+            ckb_incluidas_hoje.CheckState = CheckState.Checked;
+            ckb_incluidas_hoje.Location = new Point(512, 72);
+            ckb_incluidas_hoje.Name = "ckb_incluidas_hoje";
+            ckb_incluidas_hoje.Size = new Size(104, 19);
+            ckb_incluidas_hoje.TabIndex = 40;
+            ckb_incluidas_hoje.Text = "Incluidas hoje?";
+            ckb_incluidas_hoje.UseVisualStyleBackColor = true;
+            // 
+            // ckb_arquivo_temp
+            // 
+            ckb_arquivo_temp.AutoSize = true;
+            ckb_arquivo_temp.Checked = true;
+            ckb_arquivo_temp.CheckState = CheckState.Checked;
+            ckb_arquivo_temp.Location = new Point(512, 47);
+            ckb_arquivo_temp.Name = "ckb_arquivo_temp";
+            ckb_arquivo_temp.Size = new Size(132, 19);
+            ckb_arquivo_temp.TabIndex = 39;
+            ckb_arquivo_temp.Text = "Arquivo Temporário";
+            ckb_arquivo_temp.UseVisualStyleBackColor = true;
             // 
             // ckb_mostrar_na_tela
             // 
@@ -364,7 +401,7 @@
             // label20
             // 
             label20.AutoSize = true;
-            label20.Location = new Point(14, 37);
+            label20.Location = new Point(14, 47);
             label20.Name = "label20";
             label20.Size = new Size(35, 15);
             label20.TabIndex = 37;
@@ -372,7 +409,7 @@
             // 
             // bt_qtd_notas
             // 
-            bt_qtd_notas.Location = new Point(650, 32);
+            bt_qtd_notas.Location = new Point(650, 43);
             bt_qtd_notas.Name = "bt_qtd_notas";
             bt_qtd_notas.Size = new Size(68, 23);
             bt_qtd_notas.TabIndex = 35;
@@ -384,15 +421,16 @@
             // 
             cb_local_qtd_notas.FormattingEnabled = true;
             cb_local_qtd_notas.Items.AddRange(new object[] { "SIFAR", "MSA" });
-            cb_local_qtd_notas.Location = new Point(55, 33);
+            cb_local_qtd_notas.Location = new Point(55, 43);
             cb_local_qtd_notas.Name = "cb_local_qtd_notas";
             cb_local_qtd_notas.Size = new Size(55, 23);
             cb_local_qtd_notas.TabIndex = 36;
+            cb_local_qtd_notas.SelectedIndexChanged += cb_local_qtd_notas_SelectedIndexChanged;
             // 
             // cb_empresa_qtd_notas
             // 
             cb_empresa_qtd_notas.FormattingEnabled = true;
-            cb_empresa_qtd_notas.Location = new Point(436, 33);
+            cb_empresa_qtd_notas.Location = new Point(436, 43);
             cb_empresa_qtd_notas.Name = "cb_empresa_qtd_notas";
             cb_empresa_qtd_notas.Size = new Size(62, 23);
             cb_empresa_qtd_notas.TabIndex = 33;
@@ -400,7 +438,7 @@
             // label17
             // 
             label17.AutoSize = true;
-            label17.Location = new Point(378, 37);
+            label17.Location = new Point(378, 47);
             label17.Name = "label17";
             label17.Size = new Size(52, 15);
             label17.TabIndex = 32;
@@ -409,7 +447,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new Point(265, 37);
+            label16.Location = new Point(265, 47);
             label16.Name = "label16";
             label16.Size = new Size(13, 15);
             label16.TabIndex = 34;
@@ -418,7 +456,7 @@
             // dtp_periodo_fin_qtd_notas
             // 
             dtp_periodo_fin_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_fin_qtd_notas.Location = new Point(284, 33);
+            dtp_periodo_fin_qtd_notas.Location = new Point(284, 43);
             dtp_periodo_fin_qtd_notas.Name = "dtp_periodo_fin_qtd_notas";
             dtp_periodo_fin_qtd_notas.Size = new Size(86, 23);
             dtp_periodo_fin_qtd_notas.TabIndex = 33;
@@ -426,7 +464,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(120, 37);
+            label15.Location = new Point(120, 47);
             label15.Name = "label15";
             label15.Size = new Size(48, 15);
             label15.TabIndex = 32;
@@ -435,7 +473,7 @@
             // dtp_periodo_ini_qtd_notas
             // 
             dtp_periodo_ini_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_ini_qtd_notas.Location = new Point(174, 33);
+            dtp_periodo_ini_qtd_notas.Location = new Point(174, 43);
             dtp_periodo_ini_qtd_notas.Name = "dtp_periodo_ini_qtd_notas";
             dtp_periodo_ini_qtd_notas.Size = new Size(86, 23);
             dtp_periodo_ini_qtd_notas.TabIndex = 31;
@@ -444,7 +482,7 @@
             // 
             ckb_mes_aberto.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             ckb_mes_aberto.AutoSize = true;
-            ckb_mes_aberto.Location = new Point(524, 442);
+            ckb_mes_aberto.Location = new Point(524, 461);
             ckb_mes_aberto.Name = "ckb_mes_aberto";
             ckb_mes_aberto.Size = new Size(85, 19);
             ckb_mes_aberto.TabIndex = 39;
@@ -517,7 +555,7 @@
             ckb_fracionar_valores.AutoSize = true;
             ckb_fracionar_valores.Checked = true;
             ckb_fracionar_valores.CheckState = CheckState.Checked;
-            ckb_fracionar_valores.Location = new Point(635, 408);
+            ckb_fracionar_valores.Location = new Point(635, 427);
             ckb_fracionar_valores.Name = "ckb_fracionar_valores";
             ckb_fracionar_valores.Size = new Size(115, 19);
             ckb_fracionar_valores.TabIndex = 38;
@@ -529,7 +567,7 @@
             // 
             ckb_gerar_arquivo.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             ckb_gerar_arquivo.AutoSize = true;
-            ckb_gerar_arquivo.Location = new Point(524, 407);
+            ckb_gerar_arquivo.Location = new Point(524, 426);
             ckb_gerar_arquivo.Name = "ckb_gerar_arquivo";
             ckb_gerar_arquivo.Size = new Size(99, 19);
             ckb_gerar_arquivo.TabIndex = 39;
@@ -577,23 +615,115 @@
             bt_produtos_taxas.UseVisualStyleBackColor = true;
             bt_produtos_taxas.Click += bt_produtos_taxas_Click;
             // 
-            // ckb_arquivo_temp
+            // groupBox3
             // 
-            ckb_arquivo_temp.AutoSize = true;
-            ckb_arquivo_temp.Checked = true;
-            ckb_arquivo_temp.CheckState = CheckState.Checked;
-            ckb_arquivo_temp.Location = new Point(512, 47);
-            ckb_arquivo_temp.Name = "ckb_arquivo_temp";
-            ckb_arquivo_temp.Size = new Size(132, 19);
-            ckb_arquivo_temp.TabIndex = 39;
-            ckb_arquivo_temp.Text = "Arquivo Temporário";
-            ckb_arquivo_temp.UseVisualStyleBackColor = true;
+            groupBox3.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            groupBox3.Controls.Add(button1);
+            groupBox3.Controls.Add(label23);
+            groupBox3.Controls.Add(bt_status_tax_automation);
+            groupBox3.Controls.Add(label22);
+            groupBox3.Controls.Add(tb_cookie);
+            groupBox3.Controls.Add(label21);
+            groupBox3.Controls.Add(bt_tax_automation);
+            groupBox3.Controls.Add(cb_empresa_tax_api);
+            groupBox3.Controls.Add(label4);
+            groupBox3.Location = new Point(761, 10);
+            groupBox3.Name = "groupBox3";
+            groupBox3.Size = new Size(477, 456);
+            groupBox3.TabIndex = 44;
+            groupBox3.TabStop = false;
+            groupBox3.Text = "Tax API";
+            // 
+            // label23
+            // 
+            label23.AutoSize = true;
+            label23.Location = new Point(12, 82);
+            label23.Name = "label23";
+            label23.Size = new Size(126, 15);
+            label23.TabIndex = 28;
+            label23.Text = "Status Tax Automation";
+            // 
+            // bt_status_tax_automation
+            // 
+            bt_status_tax_automation.Location = new Point(144, 78);
+            bt_status_tax_automation.Name = "bt_status_tax_automation";
+            bt_status_tax_automation.Size = new Size(75, 23);
+            bt_status_tax_automation.TabIndex = 27;
+            bt_status_tax_automation.Text = "Disparar";
+            bt_status_tax_automation.UseVisualStyleBackColor = true;
+            bt_status_tax_automation.Click += bt_status_tax_automation_Click;
+            // 
+            // label22
+            // 
+            label22.AutoSize = true;
+            label22.Location = new Point(21, 375);
+            label22.Name = "label22";
+            label22.Size = new Size(44, 15);
+            label22.TabIndex = 26;
+            label22.Text = "Cookie";
+            // 
+            // tb_cookie
+            // 
+            tb_cookie.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            tb_cookie.Location = new Point(21, 393);
+            tb_cookie.Multiline = true;
+            tb_cookie.Name = "tb_cookie";
+            tb_cookie.Size = new Size(441, 52);
+            tb_cookie.TabIndex = 25;
+            tb_cookie.TextChanged += tb_cookie_TextChanged;
+            // 
+            // label21
+            // 
+            label21.AutoSize = true;
+            label21.Location = new Point(47, 53);
+            label21.Name = "label21";
+            label21.Size = new Size(91, 15);
+            label21.TabIndex = 24;
+            label21.Text = "Tax Automation";
+            // 
+            // bt_tax_automation
+            // 
+            bt_tax_automation.Location = new Point(144, 49);
+            bt_tax_automation.Name = "bt_tax_automation";
+            bt_tax_automation.Size = new Size(75, 23);
+            bt_tax_automation.TabIndex = 23;
+            bt_tax_automation.Text = "Disparar";
+            bt_tax_automation.UseVisualStyleBackColor = true;
+            bt_tax_automation.Click += bt_tax_automation_Click;
+            // 
+            // cb_empresa_tax_api
+            // 
+            cb_empresa_tax_api.FormattingEnabled = true;
+            cb_empresa_tax_api.Location = new Point(144, 18);
+            cb_empresa_tax_api.Name = "cb_empresa_tax_api";
+            cb_empresa_tax_api.Size = new Size(75, 23);
+            cb_empresa_tax_api.TabIndex = 22;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(86, 22);
+            label4.Name = "label4";
+            label4.Size = new Size(52, 15);
+            label4.TabIndex = 21;
+            label4.Text = "Empresa";
+            // 
+            // button1
+            // 
+            button1.Location = new Point(47, 138);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 29;
+            button1.Text = "button1";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(757, 478);
+            ClientSize = new Size(1250, 497);
+            Controls.Add(groupBox3);
             Controls.Add(bt_produtos_taxas);
             Controls.Add(label2);
             Controls.Add(ckb_codFisJur);
@@ -632,6 +762,8 @@
             groupBox1.PerformLayout();
             groupBox2.ResumeLayout(false);
             groupBox2.PerformLayout();
+            groupBox3.ResumeLayout(false);
+            groupBox3.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -679,7 +811,7 @@
         private Button bt_pessoa_fisica_juridica;
         private Label label19;
         private Label label20;
-        private ComboBox comboBox1;
+        private ComboBox cb_empresa_tax_api;
         private MaskedTextBox tb_referenciaBuracoNota;
         private CheckBox ckb_fracionar_valores;
         private ComboBox cb_local_qtd_notas;
@@ -690,5 +822,15 @@
         private Label label2;
         private Button bt_produtos_taxas;
         private CheckBox ckb_arquivo_temp;
+        private GroupBox groupBox3;
+        private Label label4;
+        private Label label21;
+        private Button bt_tax_automation;
+        private Label label22;
+        private TextBox tb_cookie;
+        private Button bt_status_tax_automation;
+        private Label label23;
+        private CheckBox ckb_incluidas_hoje;
+        private Button button1;
     }
 }

@@ -15,6 +15,7 @@ namespace TaxZone
         public string DatabaseUserMsa { get; set; }
         public string DatabasePasswordMsa { get; set; }
         public string Versao { get; set; }
+
     }
 
     public static class ConfigManager
@@ -26,6 +27,7 @@ namespace TaxZone
         public static string DatabasePasswordMsa { get; set; }
         public static string Versao { get; set; }
 
+        public static string Cookie { get; set; }
 
         private static string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), GetAppName(), "config.json");
 

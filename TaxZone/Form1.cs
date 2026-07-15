@@ -33,6 +33,7 @@ namespace TaxZone
             var dataSourceEmpresas = new List<string> { "EMR", "ESE", "EPB", "ETO", "EMT", "EMS", "ESS", "ERO", "EAC" };
             cb_banco.DataSource = dataSourceEmpresas;
             cb_empresa.DataSource = dataSourceEmpresas;
+            cb_empresa_tax_api.DataSource = dataSourceEmpresas;
 
             cb_empresa_qtd_notas.Items.Add("TODAS");
             cb_empresa_qtd_notas.Items.AddRange(dataSourceEmpresas.ToArray());
@@ -54,6 +55,7 @@ namespace TaxZone
             Globais.gerarArquivo = ckb_gerar_arquivo.Checked;
             Globais.fracionarValores = ckb_fracionar_valores.Checked;
             Globais.mesAberto = ckb_mes_aberto.Checked;
+
         }
 
 
@@ -168,7 +170,7 @@ namespace TaxZone
             int taskCount = 1;
             if (cb_empresa_qtd_notas.Text == "TODAS") taskCount = 9;
 
-            
+
             if (!ckb_mostrar_na_tela.Checked && !ckb_arquivo_temp.Checked)
             {
                 salvarDialog.Title = "Salvar arquivo como...";
@@ -182,7 +184,7 @@ namespace TaxZone
 
                 if (salvarDialog.ShowDialog() != DialogResult.OK) return;
             }
-            
+
 
             Task[] tasks = new Task[taskCount];
             DataTable qtd_notas = new();
@@ -202,7 +204,13 @@ namespace TaxZone
                 {
                     banco = Empresa.GetBancoMsa(empresa);
 
-                    query = string.Format(Queries.qtdNotasMsa, Util.ObterCodEmpresa(empresa), empresa, Util.ObterFiliais(empresa), periodoIni.ToString("yyyyMMdd"), periodoFin.ToString("yyyyMMdd"));
+                    string filtroIncluidasHoje = "";
+                    if (!ckb_incluidas_hoje.Checked)
+                    {
+                        filtroIncluidasHoje = $"AND DTH_INCLUSAO < to_date('{DateTime.Now.ToString("dd/MM/yyyy")}', 'DD/MM/YYYY')";
+                    }
+
+                    query = string.Format(Queries.qtdNotasMsa, Util.ObterCodEmpresa(empresa), empresa, Util.ObterFiliais(empresa), periodoIni.ToString("yyyyMMdd"), periodoFin.ToString("yyyyMMdd"), filtroIncluidasHoje);
                     user = tb_usuario_banco_msa.Text;
                     password = tb_senha_banco_msa.Text;
                 }
@@ -336,6 +344,32 @@ namespace TaxZone
         private void bt_produtos_taxas_Click(object sender, EventArgs e)
         {
             FuncoesTax.ImportarProdutos();
+        }
+
+        private void bt_tax_automation_Click(object sender, EventArgs e)
+        {
+            ApiTax.ProgramarTaxAutomation(cb_empresa_tax_api.Text);
+        }
+
+        private void tb_cookie_TextChanged(object sender, EventArgs e)
+        {
+            ConfigManager.Cookie = tb_cookie.Text;
+        }
+
+        private void bt_status_tax_automation_Click(object sender, EventArgs e)
+        {
+            ApiTax.VerificarStatusExecucao(cb_empresa_tax_api.Text);
+        }
+
+        private void cb_local_qtd_notas_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cb_local_qtd_notas.SelectedIndex == 1) ckb_incluidas_hoje.Visible = true;
+            else ckb_incluidas_hoje.Visible = false;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ApiTax.ProgramarJob("EMR");
         }
     }
 }

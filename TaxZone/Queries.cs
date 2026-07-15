@@ -2,7 +2,44 @@
 {
     public static class Queries
     {
-        public const string qtdNotasMsa = @" select '{1}' EMPRESA, 'NOTAS', count(1) TOTAL , COD_ESTAB
+        public const string qtdNotasMsa = @" WITH notas AS (
+                                                SELECT COD_ESTAB,  NUM_DOCFIS, MAX(CASE WHEN SITUACAO = 'S' THEN 1 ELSE 0 END) CANCELADA
+                                                FROM SAFX42
+                                                WHERE DTH_INCLUSAO IS NOT NULL
+                                                  AND COD_EMPRESA = {0}
+                                                  AND COD_ESTAB IN ({2})
+                                                  AND DAT_FISCAL BETWEEN '{3}' and '{4}'
+                                                  {5}
+                                                GROUP BY COD_ESTAB, NUM_DOCFIS
+                                            )
+                                            SELECT '{1}' EMPRESA, 'NOTAS' TIPO, COUNT(*) TOTAL, COD_ESTAB
+                                            FROM notas
+                                            GROUP BY COD_ESTAB
+
+                                            UNION ALL
+
+                                            SELECT '{1}' EMPRESA, 'CANC' TIPO, COUNT(*) TOTAL, COD_ESTAB
+                                            FROM notas
+                                            WHERE CANCELADA = 1
+                                            GROUP BY COD_ESTAB
+
+                                            union all
+
+                                            select '{1}'  EMPRESA,'ITENS', count(1) TOTAL, COD_ESTAB 
+                                            from (  select COD_ESTAB,DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
+                                                    from safx43 
+                                                    where   DTH_INCLUSAO is not null and
+                                                            COD_EMPRESA = {0} and
+                                                            COD_ESTAB in ({2}) and
+                                                            DAT_FISCAL between '{3}' and '{4}'
+                                                            {5}
+                                                    group by COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
+                                            ) 
+                                            group by COD_ESTAB
+                                            order by 4, 2 desc";
+
+
+        public const string qtdNotasMsa_old = @" select '{1}' EMPRESA, 'NOTAS', count(1) TOTAL , COD_ESTAB
                                             from (  SELECT  COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                                     FROM safx42
                                                     where   DTH_INCLUSAO is not null and

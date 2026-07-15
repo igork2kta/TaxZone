@@ -57,5 +57,59 @@ namespace TaxZone
             }
         }
 
+        public static string GetUsuarioTaxAutomation(string empresa)
+        {
+            switch (empresa)
+            {
+                case "EMR":
+                    return "user_taxone_energisa";
+                case "ESE":
+                    return "user_taxone_energisasergipe";
+                case "EPB":
+                    return "user_taxone_energisaparaiba";
+                case "ETO":
+                    return "user_taxone_energisato";
+                case "EMT":
+                    return "user_taxone_energisamt";
+                case "EMS":
+                    return "user_taxone_energisams";
+                case "ESS":
+                    return "user_taxone_energsulsudeste";
+                case "ERO":
+                    return "user_taxone_energisaro";
+                case "EAC":
+                    return "user_taxone_energisaacre";
+                default:
+                    return null;
+            }
+        }
+
+        public static int GetIndexFluxoTaxAutomation(string empresa)
+        {
+            switch (empresa)
+            {
+                case "EMR":
+                    return 10;
+                case "ESE":
+                    return 8;
+                case "EPB":
+                    return 8;
+                case "ETO":
+                    return 10;
+                case "EMT":
+                    return 1;
+                case "EMS":
+                    return 8;
+                case "ESS":
+                    return 8;
+                case "ERO":
+                    return 8;
+                case "EAC":
+                    return 10;
+                default:
+                    throw new ArgumentException($"Empresa '{empresa}' não reconhecida para indexação do fluxo de automação fiscal.");
+            }
+        }
+
     }
 }

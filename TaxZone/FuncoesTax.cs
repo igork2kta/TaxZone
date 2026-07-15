@@ -11,43 +11,60 @@ namespace TaxZone
     {
         public static void DiferencaItens(bool gerarArquivo, bool fracionar)
         {
-            DialogResult resposta = MessageBox.Show("Selecionar arquivo DIFERENÇA CAPA-ITEM?", "Perguntar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             string diferencaCapaItem = string.Empty;
             string notasSemItem = string.Empty;
 
-            if (resposta == DialogResult.Yes)
-                diferencaCapaItem = CsvClass.CopiarNotas(1);  //No arquivo Diferenca_Capa_Item as notas ficam na coluna 2
-
-            resposta = MessageBox.Show("Selecionar arquivo NOTAS SEM ITEM?", "Perguntar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (resposta == DialogResult.Yes)
-                notasSemItem = CsvClass.CopiarNotas(2);  //No arquivo Notas_sem_item as notas ficam na coluna 3
-
-            if (string.IsNullOrEmpty(diferencaCapaItem) && string.IsNullOrEmpty(diferencaCapaItem))
+            using (OpenFileDialog dialog = new OpenFileDialog())
             {
-                MessageBox.Show("Nenhuma nota encontrada.", "Perguntar", MessageBoxButtons.OK);
+                dialog.Title = "Selecione os arquivos";
+                dialog.Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*";
+                dialog.Multiselect = true;
+
+              
+                if (dialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                foreach (string arquivo in dialog.FileNames)
+                {
+                    string nome = Path.GetFileNameWithoutExtension(arquivo).ToUpper();
+
+                    if (nome.Contains("DIFERENCA_CAPA_ITEM"))
+                    {
+                        diferencaCapaItem = CsvClass.CopiarNotas(1, arquivo);
+                    }
+                    else if (nome.Contains("NOTAS_SEM_ITEM"))
+                    {
+                        notasSemItem = CsvClass.CopiarNotas(2, arquivo);
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(diferencaCapaItem) && string.IsNullOrEmpty(notasSemItem))
+            {
+                MessageBox.Show("Nenhuma nota encontrada.");
                 return;
             }
-                
 
             List<int> resultado = diferencaCapaItem
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Concat(notasSemItem.Split(',', StringSplitOptions.RemoveEmptyEntries))
                 .Select(x => x.Trim())
-                .Select(int.Parse)   // converte para int
+                .Select(int.Parse)
                 .Distinct()
                 .ToList();
-
 
             if (gerarArquivo)
             {
                 CsvClass.WriteIntListToCsv(resultado, fracionar);
-                MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
+                MessageBox.Show("Concluído!", "Sucesso!");
             }
             else
+            {
                 Util.DividirValoresAreaTransferencia(resultado, fracionar);
-
+            }
         }
+
+
 
 
         public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota)
