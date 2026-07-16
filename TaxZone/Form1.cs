@@ -1,12 +1,16 @@
 ﻿using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Diagnostics;
+using TaxZone.DTO;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TaxZone
 {
     public partial class Form1 : Form
     {
+
+        List<TaxContext> contextos = new();
+
         private readonly CookieRenewService _cookieRenew = new();
 
         public class ComboValue
@@ -410,7 +414,9 @@ namespace TaxZone
             ApiTax.qtd_canceladas = ckb_qtd_canceladas.Checked ? "S" : "N";
             ApiTax.extracao_canceladas = ckb_extracao_canceladas.Checked ? "S" : "N";
 
-            ApiTax.ProgramarRelatorio(cb_empresa_tax_api.Text);
+            TaxContext context = GetContext(cb_empresa_tax_api.Text);
+
+            ApiTax.ProgramarRelatorio(cb_empresa_tax_api.Text, context, string.IsNullOrEmpty(context.StorageId));
         }
 
         private void cb_empresa_tax_api_SelectedIndexChanged(object sender, EventArgs e)
@@ -423,7 +429,10 @@ namespace TaxZone
 
         private void bt_relatorios_Click(object sender, EventArgs e)
         {
-            ApiTax.ObterRelatorio(cb_empresa_tax_api.Text);
+            
+            F_Relatorios_Executados form = new(GetContext(cb_empresa_tax_api.Text));
+            form.Show();
+            form.BuscarDados(cb_empresa_tax_api.Text);
         }
 
         private async void bt_login_Click(object sender, EventArgs e)
@@ -438,6 +447,22 @@ namespace TaxZone
         {
             if(ckb_renew_task.Checked) _cookieRenew.Start();
             else await _cookieRenew.StopAsync();
+        }
+
+        private TaxContext GetContext(string empresa)
+        {
+            TaxContext context = contextos.FirstOrDefault(x => x.Empresa == empresa);
+
+            if (context == null)
+            {
+                context = new TaxContext
+                {
+                    Empresa = empresa
+                };
+
+                contextos.Add(context);
+            }
+            return context;
         }
     }
 }

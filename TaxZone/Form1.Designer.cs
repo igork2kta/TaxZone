@@ -119,7 +119,7 @@
             // 
             // bt_diferenca_capa_item
             // 
-            bt_diferenca_capa_item.Location = new Point(57, 28);
+            bt_diferenca_capa_item.Location = new Point(105, 11);
             bt_diferenca_capa_item.Name = "bt_diferenca_capa_item";
             bt_diferenca_capa_item.Size = new Size(82, 23);
             bt_diferenca_capa_item.TabIndex = 10;
@@ -130,7 +130,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(19, 32);
+            label1.Location = new Point(67, 13);
             label1.Name = "label1";
             label1.Size = new Size(32, 15);
             label1.TabIndex = 1;
@@ -159,7 +159,7 @@
             // 
             label5.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label5.AutoSize = true;
-            label5.Location = new Point(34, 459);
+            label5.Location = new Point(34, 467);
             label5.Name = "label5";
             label5.Size = new Size(98, 15);
             label5.TabIndex = 9;
@@ -168,7 +168,7 @@
             // tb_senha_banco_far
             // 
             tb_senha_banco_far.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_senha_banco_far.Location = new Point(142, 459);
+            tb_senha_banco_far.Location = new Point(142, 467);
             tb_senha_banco_far.Name = "tb_senha_banco_far";
             tb_senha_banco_far.PasswordChar = '*';
             tb_senha_banco_far.Size = new Size(100, 23);
@@ -179,7 +179,7 @@
             // 
             label6.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label6.AutoSize = true;
-            label6.Location = new Point(26, 433);
+            label6.Location = new Point(26, 441);
             label6.Name = "label6";
             label6.Size = new Size(106, 15);
             label6.TabIndex = 11;
@@ -188,7 +188,7 @@
             // tb_usuario_banco_far
             // 
             tb_usuario_banco_far.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_usuario_banco_far.Location = new Point(142, 430);
+            tb_usuario_banco_far.Location = new Point(142, 438);
             tb_usuario_banco_far.Name = "tb_usuario_banco_far";
             tb_usuario_banco_far.Size = new Size(100, 23);
             tb_usuario_banco_far.TabIndex = 8;
@@ -197,7 +197,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(423, 34);
+            label7.Location = new Point(270, 38);
             label7.Name = "label7";
             label7.Size = new Size(52, 15);
             label7.TabIndex = 13;
@@ -207,7 +207,7 @@
             // 
             label9.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label9.AutoSize = true;
-            label9.Location = new Point(275, 430);
+            label9.Location = new Point(275, 438);
             label9.Name = "label9";
             label9.Size = new Size(111, 15);
             label9.TabIndex = 19;
@@ -216,7 +216,7 @@
             // tb_usuario_banco_msa
             // 
             tb_usuario_banco_msa.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_usuario_banco_msa.Location = new Point(390, 427);
+            tb_usuario_banco_msa.Location = new Point(390, 435);
             tb_usuario_banco_msa.Name = "tb_usuario_banco_msa";
             tb_usuario_banco_msa.Size = new Size(100, 23);
             tb_usuario_banco_msa.TabIndex = 16;
@@ -226,7 +226,7 @@
             // 
             label10.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             label10.AutoSize = true;
-            label10.Location = new Point(281, 459);
+            label10.Location = new Point(281, 467);
             label10.Name = "label10";
             label10.Size = new Size(103, 15);
             label10.TabIndex = 17;
@@ -235,7 +235,7 @@
             // tb_senha_banco_msa
             // 
             tb_senha_banco_msa.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_senha_banco_msa.Location = new Point(390, 456);
+            tb_senha_banco_msa.Location = new Point(390, 464);
             tb_senha_banco_msa.Name = "tb_senha_banco_msa";
             tb_senha_banco_msa.PasswordChar = '*';
             tb_senha_banco_msa.Size = new Size(100, 23);
@@ -245,7 +245,7 @@
             // cb_banco
             // 
             cb_banco.FormattingEnabled = true;
-            cb_banco.Location = new Point(481, 30);
+            cb_banco.Location = new Point(328, 34);
             cb_banco.Name = "cb_banco";
             cb_banco.Size = new Size(59, 23);
             cb_banco.TabIndex = 20;
@@ -253,7 +253,7 @@
             // cb_empresa
             // 
             cb_empresa.FormattingEnabled = true;
-            cb_empresa.Location = new Point(406, 261);
+            cb_empresa.Location = new Point(174, 265);
             cb_empresa.Name = "cb_empresa";
             cb_empresa.Size = new Size(53, 23);
             cb_empresa.TabIndex = 22;
@@ -261,7 +261,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(348, 265);
+            label8.Location = new Point(116, 269);
             label8.Name = "label8";
             label8.Size = new Size(52, 15);
             label8.TabIndex = 21;
@@ -269,7 +269,7 @@
             // 
             // bt_pendencia_processamento
             // 
-            bt_pendencia_processamento.Location = new Point(480, 262);
+            bt_pendencia_processamento.Location = new Point(334, 265);
             bt_pendencia_processamento.Name = "bt_pendencia_processamento";
             bt_pendencia_processamento.Size = new Size(72, 23);
             bt_pendencia_processamento.TabIndex = 23;
@@ -280,7 +280,7 @@
             // label11
             // 
             label11.AutoSize = true;
-            label11.Location = new Point(26, 266);
+            label11.Location = new Point(22, 232);
             label11.Name = "label11";
             label11.Size = new Size(146, 15);
             label11.TabIndex = 24;
@@ -290,7 +290,7 @@
             // 
             cb_pendencia_processamento.FormattingEnabled = true;
             cb_pendencia_processamento.Items.AddRange(new object[] { "Notas", "Itens", "Canceladas" });
-            cb_pendencia_processamento.Location = new Point(178, 262);
+            cb_pendencia_processamento.Location = new Point(174, 228);
             cb_pendencia_processamento.Name = "cb_pendencia_processamento";
             cb_pendencia_processamento.Size = new Size(139, 23);
             cb_pendencia_processamento.TabIndex = 25;
@@ -298,7 +298,7 @@
             // label14
             // 
             label14.AutoSize = true;
-            label14.Location = new Point(27, 80);
+            label14.Location = new Point(27, 75);
             label14.Name = "label14";
             label14.Size = new Size(100, 15);
             label14.TabIndex = 27;
@@ -306,7 +306,7 @@
             // 
             // bt_obter_icms_sifar
             // 
-            bt_obter_icms_sifar.Location = new Point(143, 76);
+            bt_obter_icms_sifar.Location = new Point(143, 71);
             bt_obter_icms_sifar.Name = "bt_obter_icms_sifar";
             bt_obter_icms_sifar.Size = new Size(87, 23);
             bt_obter_icms_sifar.TabIndex = 26;
@@ -326,16 +326,16 @@
             groupBox1.Controls.Add(bt_obter_icms_sifar);
             groupBox1.Controls.Add(cb_banco);
             groupBox1.Controls.Add(label7);
-            groupBox1.Location = new Point(12, 122);
+            groupBox1.Location = new Point(11, 95);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(733, 117);
+            groupBox1.Size = new Size(622, 117);
             groupBox1.TabIndex = 28;
             groupBox1.TabStop = false;
             // 
             // label13
             // 
             label13.AutoSize = true;
-            label13.Location = new Point(530, 75);
+            label13.Location = new Point(377, 75);
             label13.Name = "label13";
             label13.Size = new Size(29, 15);
             label13.TabIndex = 31;
@@ -343,7 +343,7 @@
             // 
             // tb_ano
             // 
-            tb_ano.Location = new Point(565, 72);
+            tb_ano.Location = new Point(412, 71);
             tb_ano.Name = "tb_ano";
             tb_ano.Size = new Size(52, 23);
             tb_ano.TabIndex = 30;
@@ -351,7 +351,7 @@
             // label12
             // 
             label12.AutoSize = true;
-            label12.Location = new Point(445, 75);
+            label12.Location = new Point(292, 75);
             label12.Name = "label12";
             label12.Size = new Size(29, 15);
             label12.TabIndex = 29;
@@ -359,7 +359,7 @@
             // 
             // tb_mes
             // 
-            tb_mes.Location = new Point(480, 72);
+            tb_mes.Location = new Point(327, 71);
             tb_mes.Name = "tb_mes";
             tb_mes.Size = new Size(38, 23);
             tb_mes.TabIndex = 28;
@@ -380,7 +380,7 @@
             groupBox2.Controls.Add(dtp_periodo_ini_qtd_notas);
             groupBox2.Location = new Point(12, 310);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(733, 99);
+            groupBox2.Size = new Size(621, 99);
             groupBox2.TabIndex = 31;
             groupBox2.TabStop = false;
             groupBox2.Text = "Quantidade notas";
@@ -390,7 +390,7 @@
             ckb_incluidas_hoje.AutoSize = true;
             ckb_incluidas_hoje.Checked = true;
             ckb_incluidas_hoje.CheckState = CheckState.Checked;
-            ckb_incluidas_hoje.Location = new Point(512, 72);
+            ckb_incluidas_hoje.Location = new Point(27, 66);
             ckb_incluidas_hoje.Name = "ckb_incluidas_hoje";
             ckb_incluidas_hoje.Size = new Size(104, 19);
             ckb_incluidas_hoje.TabIndex = 40;
@@ -402,7 +402,7 @@
             ckb_arquivo_temp.AutoSize = true;
             ckb_arquivo_temp.Checked = true;
             ckb_arquivo_temp.CheckState = CheckState.Checked;
-            ckb_arquivo_temp.Location = new Point(512, 47);
+            ckb_arquivo_temp.Location = new Point(154, 65);
             ckb_arquivo_temp.Name = "ckb_arquivo_temp";
             ckb_arquivo_temp.Size = new Size(132, 19);
             ckb_arquivo_temp.TabIndex = 39;
@@ -412,7 +412,7 @@
             // ckb_mostrar_na_tela
             // 
             ckb_mostrar_na_tela.AutoSize = true;
-            ckb_mostrar_na_tela.Location = new Point(512, 22);
+            ckb_mostrar_na_tela.Location = new Point(292, 66);
             ckb_mostrar_na_tela.Name = "ckb_mostrar_na_tela";
             ckb_mostrar_na_tela.Size = new Size(105, 19);
             ckb_mostrar_na_tela.TabIndex = 38;
@@ -422,7 +422,7 @@
             // label20
             // 
             label20.AutoSize = true;
-            label20.Location = new Point(14, 47);
+            label20.Location = new Point(14, 33);
             label20.Name = "label20";
             label20.Size = new Size(35, 15);
             label20.TabIndex = 37;
@@ -430,7 +430,7 @@
             // 
             // bt_qtd_notas
             // 
-            bt_qtd_notas.Location = new Point(650, 43);
+            bt_qtd_notas.Location = new Point(436, 62);
             bt_qtd_notas.Name = "bt_qtd_notas";
             bt_qtd_notas.Size = new Size(68, 23);
             bt_qtd_notas.TabIndex = 35;
@@ -442,7 +442,7 @@
             // 
             cb_local_qtd_notas.FormattingEnabled = true;
             cb_local_qtd_notas.Items.AddRange(new object[] { "SIFAR", "MSA" });
-            cb_local_qtd_notas.Location = new Point(55, 43);
+            cb_local_qtd_notas.Location = new Point(55, 29);
             cb_local_qtd_notas.Name = "cb_local_qtd_notas";
             cb_local_qtd_notas.Size = new Size(55, 23);
             cb_local_qtd_notas.TabIndex = 36;
@@ -451,15 +451,15 @@
             // cb_empresa_qtd_notas
             // 
             cb_empresa_qtd_notas.FormattingEnabled = true;
-            cb_empresa_qtd_notas.Location = new Point(436, 43);
+            cb_empresa_qtd_notas.Location = new Point(436, 29);
             cb_empresa_qtd_notas.Name = "cb_empresa_qtd_notas";
-            cb_empresa_qtd_notas.Size = new Size(62, 23);
+            cb_empresa_qtd_notas.Size = new Size(68, 23);
             cb_empresa_qtd_notas.TabIndex = 33;
             // 
             // label17
             // 
             label17.AutoSize = true;
-            label17.Location = new Point(378, 47);
+            label17.Location = new Point(378, 33);
             label17.Name = "label17";
             label17.Size = new Size(52, 15);
             label17.TabIndex = 32;
@@ -468,7 +468,7 @@
             // label16
             // 
             label16.AutoSize = true;
-            label16.Location = new Point(265, 47);
+            label16.Location = new Point(265, 33);
             label16.Name = "label16";
             label16.Size = new Size(13, 15);
             label16.TabIndex = 34;
@@ -477,7 +477,7 @@
             // dtp_periodo_fin_qtd_notas
             // 
             dtp_periodo_fin_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_fin_qtd_notas.Location = new Point(284, 43);
+            dtp_periodo_fin_qtd_notas.Location = new Point(284, 29);
             dtp_periodo_fin_qtd_notas.Name = "dtp_periodo_fin_qtd_notas";
             dtp_periodo_fin_qtd_notas.Size = new Size(86, 23);
             dtp_periodo_fin_qtd_notas.TabIndex = 33;
@@ -485,7 +485,7 @@
             // label15
             // 
             label15.AutoSize = true;
-            label15.Location = new Point(120, 47);
+            label15.Location = new Point(120, 33);
             label15.Name = "label15";
             label15.Size = new Size(48, 15);
             label15.TabIndex = 32;
@@ -494,7 +494,7 @@
             // dtp_periodo_ini_qtd_notas
             // 
             dtp_periodo_ini_qtd_notas.Format = DateTimePickerFormat.Short;
-            dtp_periodo_ini_qtd_notas.Location = new Point(174, 43);
+            dtp_periodo_ini_qtd_notas.Location = new Point(174, 29);
             dtp_periodo_ini_qtd_notas.Name = "dtp_periodo_ini_qtd_notas";
             dtp_periodo_ini_qtd_notas.Size = new Size(86, 23);
             dtp_periodo_ini_qtd_notas.TabIndex = 31;
@@ -503,7 +503,7 @@
             // 
             ckb_mes_aberto.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             ckb_mes_aberto.AutoSize = true;
-            ckb_mes_aberto.Location = new Point(524, 461);
+            ckb_mes_aberto.Location = new Point(524, 473);
             ckb_mes_aberto.Name = "ckb_mes_aberto";
             ckb_mes_aberto.Size = new Size(85, 19);
             ckb_mes_aberto.TabIndex = 39;
@@ -514,7 +514,7 @@
             // label18
             // 
             label18.AutoSize = true;
-            label18.Location = new Point(404, 32);
+            label18.Location = new Point(258, 16);
             label18.Name = "label18";
             label18.Size = new Size(71, 15);
             label18.TabIndex = 32;
@@ -522,7 +522,7 @@
             // 
             // bt_buraco_nota
             // 
-            bt_buraco_nota.Location = new Point(485, 28);
+            bt_buraco_nota.Location = new Point(339, 12);
             bt_buraco_nota.Name = "bt_buraco_nota";
             bt_buraco_nota.Size = new Size(86, 23);
             bt_buraco_nota.TabIndex = 30;
@@ -533,7 +533,7 @@
             // ckb_buraco_notas_hardcore
             // 
             ckb_buraco_notas_hardcore.AutoSize = true;
-            ckb_buraco_notas_hardcore.Location = new Point(577, 30);
+            ckb_buraco_notas_hardcore.Location = new Point(432, 15);
             ckb_buraco_notas_hardcore.Name = "ckb_buraco_notas_hardcore";
             ckb_buraco_notas_hardcore.Size = new Size(110, 19);
             ckb_buraco_notas_hardcore.TabIndex = 40;
@@ -543,7 +543,7 @@
             // 
             // bt_pessoa_fisica_juridica
             // 
-            bt_pessoa_fisica_juridica.Location = new Point(295, 28);
+            bt_pessoa_fisica_juridica.Location = new Point(338, 53);
             bt_pessoa_fisica_juridica.Name = "bt_pessoa_fisica_juridica";
             bt_pessoa_fisica_juridica.Size = new Size(86, 23);
             bt_pessoa_fisica_juridica.TabIndex = 20;
@@ -554,7 +554,7 @@
             // label19
             // 
             label19.AutoSize = true;
-            label19.Location = new Point(166, 32);
+            label19.Location = new Point(209, 57);
             label19.Name = "label19";
             label19.Size = new Size(117, 15);
             label19.TabIndex = 35;
@@ -562,7 +562,7 @@
             // 
             // tb_referenciaBuracoNota
             // 
-            tb_referenciaBuracoNota.Location = new Point(693, 28);
+            tb_referenciaBuracoNota.Location = new Point(548, 13);
             tb_referenciaBuracoNota.Mask = "00_0000";
             tb_referenciaBuracoNota.Name = "tb_referenciaBuracoNota";
             tb_referenciaBuracoNota.Size = new Size(52, 23);
@@ -576,7 +576,7 @@
             ckb_fracionar_valores.AutoSize = true;
             ckb_fracionar_valores.Checked = true;
             ckb_fracionar_valores.CheckState = CheckState.Checked;
-            ckb_fracionar_valores.Location = new Point(635, 427);
+            ckb_fracionar_valores.Location = new Point(524, 446);
             ckb_fracionar_valores.Name = "ckb_fracionar_valores";
             ckb_fracionar_valores.Size = new Size(115, 19);
             ckb_fracionar_valores.TabIndex = 38;
@@ -588,7 +588,7 @@
             // 
             ckb_gerar_arquivo.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             ckb_gerar_arquivo.AutoSize = true;
-            ckb_gerar_arquivo.Location = new Point(524, 426);
+            ckb_gerar_arquivo.Location = new Point(524, 421);
             ckb_gerar_arquivo.Name = "ckb_gerar_arquivo";
             ckb_gerar_arquivo.Size = new Size(99, 19);
             ckb_gerar_arquivo.TabIndex = 39;
@@ -599,7 +599,7 @@
             // ckb_arq_temporario
             // 
             ckb_arq_temporario.AutoSize = true;
-            ckb_arq_temporario.Location = new Point(563, 265);
+            ckb_arq_temporario.Location = new Point(334, 232);
             ckb_arq_temporario.Name = "ckb_arq_temporario";
             ckb_arq_temporario.Size = new Size(182, 19);
             ckb_arq_temporario.TabIndex = 40;
@@ -610,7 +610,7 @@
             // ckb_codFisJur
             // 
             ckb_codFisJur.AutoSize = true;
-            ckb_codFisJur.Location = new Point(166, 50);
+            ckb_codFisJur.Location = new Point(432, 55);
             ckb_codFisJur.Name = "ckb_codFisJur";
             ckb_codFisJur.Size = new Size(131, 19);
             ckb_codFisJur.TabIndex = 41;
@@ -620,7 +620,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(19, 95);
+            label2.Location = new Point(11, 57);
             label2.Name = "label2";
             label2.Size = new Size(88, 15);
             label2.TabIndex = 42;
@@ -628,9 +628,9 @@
             // 
             // bt_produtos_taxas
             // 
-            bt_produtos_taxas.Location = new Point(113, 91);
+            bt_produtos_taxas.Location = new Point(105, 53);
             bt_produtos_taxas.Name = "bt_produtos_taxas";
-            bt_produtos_taxas.Size = new Size(75, 23);
+            bt_produtos_taxas.Size = new Size(82, 23);
             bt_produtos_taxas.TabIndex = 5;
             bt_produtos_taxas.Text = "Obter";
             bt_produtos_taxas.UseVisualStyleBackColor = true;
@@ -638,7 +638,7 @@
             // 
             // groupBox3
             // 
-            groupBox3.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            groupBox3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
             groupBox3.Controls.Add(ckb_renew_task);
             groupBox3.Controls.Add(label28);
             groupBox3.Controls.Add(label27);
@@ -669,9 +669,9 @@
             groupBox3.Controls.Add(bt_tax_automation);
             groupBox3.Controls.Add(cb_empresa_tax_api);
             groupBox3.Controls.Add(label4);
-            groupBox3.Location = new Point(761, 10);
+            groupBox3.Location = new Point(639, 10);
             groupBox3.Name = "groupBox3";
-            groupBox3.Size = new Size(477, 475);
+            groupBox3.Size = new Size(477, 482);
             groupBox3.TabIndex = 44;
             groupBox3.TabStop = false;
             groupBox3.Text = "Tax API";
@@ -708,8 +708,8 @@
             // 
             // tb_usuario_tax
             // 
-            tb_usuario_tax.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_usuario_tax.Location = new Point(358, 85);
+            tb_usuario_tax.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            tb_usuario_tax.Location = new Point(358, 83);
             tb_usuario_tax.Name = "tb_usuario_tax";
             tb_usuario_tax.Size = new Size(100, 23);
             tb_usuario_tax.TabIndex = 55;
@@ -717,8 +717,8 @@
             // 
             // tb_senha_tax
             // 
-            tb_senha_tax.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            tb_senha_tax.Location = new Point(358, 114);
+            tb_senha_tax.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            tb_senha_tax.Location = new Point(358, 112);
             tb_senha_tax.Name = "tb_senha_tax";
             tb_senha_tax.PasswordChar = '*';
             tb_senha_tax.Size = new Size(100, 23);
@@ -737,7 +737,7 @@
             // 
             // bt_relatorios
             // 
-            bt_relatorios.Location = new Point(240, 375);
+            bt_relatorios.Location = new Point(229, 362);
             bt_relatorios.Name = "bt_relatorios";
             bt_relatorios.Size = new Size(75, 23);
             bt_relatorios.TabIndex = 53;
@@ -893,7 +893,7 @@
             // 
             // bt_executar_relatorio
             // 
-            bt_executar_relatorio.Location = new Point(132, 375);
+            bt_executar_relatorio.Location = new Point(132, 362);
             bt_executar_relatorio.Name = "bt_executar_relatorio";
             bt_executar_relatorio.Size = new Size(75, 23);
             bt_executar_relatorio.TabIndex = 52;
@@ -922,8 +922,9 @@
             // 
             // label22
             // 
+            label22.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             label22.AutoSize = true;
-            label22.Location = new Point(21, 394);
+            label22.Location = new Point(21, 397);
             label22.Name = "label22";
             label22.Size = new Size(44, 15);
             label22.TabIndex = 26;
@@ -932,7 +933,7 @@
             // tb_cookie
             // 
             tb_cookie.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            tb_cookie.Location = new Point(21, 412);
+            tb_cookie.Location = new Point(21, 419);
             tb_cookie.Multiline = true;
             tb_cookie.Name = "tb_cookie";
             tb_cookie.Size = new Size(441, 52);
@@ -980,7 +981,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1250, 497);
+            ClientSize = new Size(1128, 505);
             Controls.Add(groupBox3);
             Controls.Add(bt_produtos_taxas);
             Controls.Add(label2);

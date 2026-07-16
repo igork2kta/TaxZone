@@ -1,10 +1,7 @@
 ﻿using Microsoft.Playwright;
-
 using System.Text;
 using System.Text.Json.Nodes;
-using System.Xml;
 using TaxZone.DTO;
-using static System.Net.WebRequestMethods;
 
 namespace TaxZone
 {
@@ -12,20 +9,20 @@ namespace TaxZone
     {
         private static readonly HttpClient _client = new HttpClient();
 
-        public static string param_empresa = "*";
-        public static string param_estab = "*";
-        public static string data_inicio = "01072026000000";
-        public static string data_fim = "13072026000000";
-        public static string buraco_nota = "N";
-        public static string diferenca_capa_item = "N";
-        public static string icms_resumido = "N";
-        public static string notas_sem_item = "N";
-        public static string qtd_itens = "N";
-        public static string qtd_notas = "N";
-        public static string qtd_canceladas = "N";
-        public static string extracao_canceladas = "N";
+        public static string param_empresa;
+        public static string param_estab;
+        public static string data_inicio;
+        public static string data_fim;
+        public static string buraco_nota;
+        public static string diferenca_capa_item;
+        public static string icms_resumido;
+        public static string notas_sem_item;
+        public static string qtd_itens;
+        public static string qtd_notas;
+        public static string qtd_canceladas;
+        public static string extracao_canceladas;
 
-        public static TaxContext context = new();
+        //public static TaxContext context = new();
 
         public ApiTax()
         {
@@ -45,8 +42,8 @@ namespace TaxZone
                 new BrowserTypeLaunchOptions
                 {
                     Channel = "msedge",
-                    //Headless = false
-                    Headless = true
+                    Headless = false
+                    //Headless = true
                 });
 
             var context = await browser.NewContextAsync();
@@ -79,6 +76,8 @@ namespace TaxZone
                 // Ignora caso não apareça
             }
 
+            Thread.Sleep(3000);
+
             var cookies = await context.CookiesAsync();
 
             foreach (var cookie in cookies)
@@ -108,6 +107,9 @@ namespace TaxZone
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
+
+                if(content == "false") 
+                    MessageBox.Show("Erro na renovação dos cookies", "Erro na renovação dos cookies", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch(Exception ex) 
             {
@@ -281,6 +283,7 @@ namespace TaxZone
             }
             catch(Exception ex)
             {
+                MessageBox.Show($"Falha ao obter storageId:\n{ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
             
@@ -468,9 +471,11 @@ namespace TaxZone
             return true;
         }
 
-        public static async Task ProgramarRelatorio(string empresa)
+        public static async Task ProgramarRelatorio(string empresa, TaxContext context, bool novo_contexto)
         {
-            TaxContext context = new();
+            //TaxContext context = new();
+            bool sucesso;
+
             context.Empresa = empresa;
 
             if (string.IsNullOrEmpty(ConfigManager.Cookie))
@@ -481,11 +486,15 @@ namespace TaxZone
 
             try
             {
-                bool sucesso = await ObterStorageId(context);
-                if (!sucesso) return;
+                if (novo_contexto)
+                {
+                    sucesso = await ObterStorageId(context);
+                    if (!sucesso) return;
 
-                sucesso = await SelecionaEmpresaEModulo(context);
-                if (!sucesso) return;
+                    sucesso = await SelecionaEmpresaEModulo(context);
+                    if (!sucesso) return;
+                }
+                
 
                 sucesso = await AbrirTelaProcessosCustomizados(context);
                 if (!sucesso) return;
@@ -537,40 +546,54 @@ namespace TaxZone
             }
         }
 
-        public static async Task ObterRelatorio(string empresa)
+        public static async Task<bool> ObterRelatorio(F_Relatorios_Executados form, string empresa, TaxContext context, bool novo_contexto)
         {
-            TaxContext context = new();
+            form.UpdateLoadingPercentage("0%");
+            bool sucesso;
+            string url, json_content;
+            JsonNode? root;                
             context.Empresa = empresa;
 
             if (string.IsNullOrEmpty(ConfigManager.Cookie))
             {
                 MessageBox.Show("Cookie não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return false;
             }
 
             try
             {
-                bool sucesso = await ObterStorageId(context);
-                if (!sucesso) return;
+                if (novo_contexto)
+                {
+                    form.UpdateLoadingPercentage("15%");
 
-                sucesso = await SelecionaEmpresaEModulo(context);
-                if (!sucesso) return;
+                    sucesso = await ObterStorageId(context);
+                    if (!sucesso) return false;
+
+                    form.UpdateLoadingPercentage("30%");
+
+                    sucesso = await SelecionaEmpresaEModulo(context);
+                    if (!sucesso) return false;
+
+                }
+
+                form.UpdateLoadingPercentage("50%");
 
                 sucesso = await AbrirTelaProcessosCustomizados(context);
-                if (!sucesso) return;
+                if (!sucesso) return false;
 
-                
-                string url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
+                form.UpdateLoadingPercentage("65%");
 
-                string json_content = $$$"""
-                    {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":2},
-                    "dirty":{"tab_framework#{{{context.NewViews2}}}":{"selectedTabIndex":2}},
-                    "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
-                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.T1}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
-                    "storageID":"{{{context.StorageId}}}"}
-                    """;
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
 
-                var root = await PostAsync(empresa, url, json_content);
+                json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":2},
+                        "dirty":{"tab_framework#{{{context.NewViews2}}}":{"selectedTabIndex":2}},
+                        "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.T1}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+
+                root = await PostAsync(empresa, url, json_content);
 
                 string? id = root["MD"]?
                         .AsArray()
@@ -580,15 +603,20 @@ namespace TaxZone
                         .GetValue<string>()?
                         .Split('#')
                         .LastOrDefault();
-                
+
+                form.UpdateLoadingPercentage("80%");
+
                 //obter relatorios
-                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=5&dataManagerId={context.PbAbrir}&start=1";
+                //url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=5&dataManagerId={context.PbAbrir}&start=1";
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=5&dataManagerId={id}&start=1";
 
                 json_content = $$$"""
                     {"storageID":"{{{context.StorageId}}}"}
                     """;
 
                 root = await PostAsync(empresa, url, json_content);
+
+                form.UpdateLoadingPercentage("100%");
 
                 List<ProcessoRelatorio> processos = new();
 
@@ -609,13 +637,13 @@ namespace TaxZone
                     });
                 }
 
-                F_Relatorios_Executados form = new(processos, context);
-                form.Show();
-
+                form.PopulaDataGrid(context, processos);
+                return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Falha catastrófica ao executar HTTP POST: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
         }
 
@@ -1110,7 +1138,7 @@ namespace TaxZone
             request.Content = new StringContent(json_content, Encoding.UTF8, "application/json");
 
             response = await _client.SendAsync(request);
-            a = await response.Content.ReadAsStringAsync();
+            //a = await response.Content.ReadAsStringAsync();
 
         }
 
@@ -1120,29 +1148,5 @@ namespace TaxZone
            // _playwright?.Dispose();
         }
 
-        public class TaxContext
-        {
-            public string Empresa { get; set; }
-
-            public string StorageId { get; set; }
-
-            public string NewViews { get; set; }
-
-            public string UniqueId { get; set; }
-
-            public string NewViews2 { get; set; }
-
-            public string ControlNumber { get; set; }
-
-            public string DataManagerId { get; set; }
-
-            public string ProcId_t { get; set; }
-
-            public string PbAbrir { get; set; }
-
-            public string T1 { get; set; }
-
-            public string Id { get; set; }
-        }
     }
 }

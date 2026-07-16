@@ -39,7 +39,7 @@ namespace TaxZone
 
         private async Task RenewLoopAsync(CancellationToken token)
         {
-            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(0.5));
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(3));
 
             try
             {
