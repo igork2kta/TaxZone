@@ -7,6 +7,7 @@ namespace TaxZone
 {
     public partial class Form1 : Form
     {
+        private readonly CookieRenewService _cookieRenew = new();
 
         public class ComboValue
         {
@@ -29,6 +30,8 @@ namespace TaxZone
             tb_senha_banco_far.Text = ConfigManager.DatabasePasswordFar;
             tb_usuario_banco_msa.Text = ConfigManager.DatabaseUserMsa;
             tb_senha_banco_msa.Text = ConfigManager.DatabasePasswordMsa;
+            tb_usuario_tax.Text = ConfigManager.UsuarioTax;
+            tb_senha_tax.Text = ConfigManager.SenhaTax;
 
             var dataSourceEmpresas = new List<string> { "EMR", "ESE", "EPB", "ETO", "EMT", "EMS", "ESS", "ERO", "EAC" };
             cb_banco.DataSource = dataSourceEmpresas;
@@ -365,6 +368,18 @@ namespace TaxZone
             ConfigManager.Cookie = tb_cookie.Text;
         }
 
+        private void tb_usuario_tax_TextChanged(object sender, EventArgs e)
+        {
+            ConfigManager.UsuarioTax = tb_usuario_tax.Text;
+            ConfigManager.Save();
+        }
+
+        private void tb_senha_tax_TextChanged(object sender, EventArgs e)
+        {
+            ConfigManager.SenhaTax = tb_senha_tax.Text;
+            ConfigManager.Save();
+        }
+
         private void bt_status_tax_automation_Click(object sender, EventArgs e)
         {
             ApiTax.VerificarStatusExecucao(cb_empresa_tax_api.Text);
@@ -395,7 +410,7 @@ namespace TaxZone
             ApiTax.qtd_canceladas = ckb_qtd_canceladas.Checked ? "S" : "N";
             ApiTax.extracao_canceladas = ckb_extracao_canceladas.Checked ? "S" : "N";
 
-            ApiTax.ProgramarJob(cb_empresa_tax_api.Text);
+            ApiTax.ProgramarRelatorio(cb_empresa_tax_api.Text);
         }
 
         private void cb_empresa_tax_api_SelectedIndexChanged(object sender, EventArgs e)
@@ -404,6 +419,25 @@ namespace TaxZone
             var datasource = new List<string> { "TODOS" };
             datasource.AddRange(listEstab.Select(x => x.ToString()));
             cb_estab.DataSource = datasource;
+        }
+
+        private void bt_relatorios_Click(object sender, EventArgs e)
+        {
+            ApiTax.ObterRelatorio(cb_empresa_tax_api.Text);
+        }
+
+        private async void bt_login_Click(object sender, EventArgs e)
+        {
+            string cookie = await ApiTax.GetCookie(tb_usuario_tax.Text, tb_senha_tax.Text);
+            tb_cookie.Text = cookie;
+
+            ckb_renew_task.Checked = true;
+        }
+
+        private async void ckb_renew_task_CheckedChanged(object sender, EventArgs e)
+        {
+            if(ckb_renew_task.Checked) _cookieRenew.Start();
+            else await _cookieRenew.StopAsync();
         }
     }
 }

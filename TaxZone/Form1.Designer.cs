@@ -82,6 +82,13 @@
             label2 = new Label();
             bt_produtos_taxas = new Button();
             groupBox3 = new GroupBox();
+            ckb_renew_task = new CheckBox();
+            label28 = new Label();
+            label27 = new Label();
+            tb_usuario_tax = new TextBox();
+            tb_senha_tax = new TextBox();
+            bt_login = new Button();
+            bt_relatorios = new Button();
             ckb_extracao_canceladas = new CheckBox();
             ckb_qtd_canceladas = new CheckBox();
             ckb_qtd_notas = new CheckBox();
@@ -115,7 +122,7 @@
             bt_diferenca_capa_item.Location = new Point(57, 28);
             bt_diferenca_capa_item.Name = "bt_diferenca_capa_item";
             bt_diferenca_capa_item.Size = new Size(82, 23);
-            bt_diferenca_capa_item.TabIndex = 0;
+            bt_diferenca_capa_item.TabIndex = 10;
             bt_diferenca_capa_item.Text = "Obter notas";
             bt_diferenca_capa_item.UseVisualStyleBackColor = true;
             bt_diferenca_capa_item.Click += bt_diferenca_capa_item_Click;
@@ -165,7 +172,7 @@
             tb_senha_banco_far.Name = "tb_senha_banco_far";
             tb_senha_banco_far.PasswordChar = '*';
             tb_senha_banco_far.Size = new Size(100, 23);
-            tb_senha_banco_far.TabIndex = 8;
+            tb_senha_banco_far.TabIndex = 10;
             tb_senha_banco_far.TextChanged += tb_senha_banco_TextChanged;
             // 
             // label6
@@ -184,7 +191,7 @@
             tb_usuario_banco_far.Location = new Point(142, 430);
             tb_usuario_banco_far.Name = "tb_usuario_banco_far";
             tb_usuario_banco_far.Size = new Size(100, 23);
-            tb_usuario_banco_far.TabIndex = 10;
+            tb_usuario_banco_far.TabIndex = 8;
             tb_usuario_banco_far.TextChanged += tb_usuario_banco_TextChanged;
             // 
             // label7
@@ -212,7 +219,7 @@
             tb_usuario_banco_msa.Location = new Point(390, 427);
             tb_usuario_banco_msa.Name = "tb_usuario_banco_msa";
             tb_usuario_banco_msa.Size = new Size(100, 23);
-            tb_usuario_banco_msa.TabIndex = 18;
+            tb_usuario_banco_msa.TabIndex = 16;
             tb_usuario_banco_msa.TextChanged += tb_usuario_banco_msa_TextChanged;
             // 
             // label10
@@ -232,7 +239,7 @@
             tb_senha_banco_msa.Name = "tb_senha_banco_msa";
             tb_senha_banco_msa.PasswordChar = '*';
             tb_senha_banco_msa.Size = new Size(100, 23);
-            tb_senha_banco_msa.TabIndex = 16;
+            tb_senha_banco_msa.TabIndex = 18;
             tb_senha_banco_msa.TextChanged += tb_senha_banco_msa_TextChanged;
             // 
             // cb_banco
@@ -518,7 +525,7 @@
             bt_buraco_nota.Location = new Point(485, 28);
             bt_buraco_nota.Name = "bt_buraco_nota";
             bt_buraco_nota.Size = new Size(86, 23);
-            bt_buraco_nota.TabIndex = 33;
+            bt_buraco_nota.TabIndex = 30;
             bt_buraco_nota.Text = "Obter notas";
             bt_buraco_nota.UseVisualStyleBackColor = true;
             bt_buraco_nota.Click += bt_buraco_nota_Click;
@@ -529,7 +536,7 @@
             ckb_buraco_notas_hardcore.Location = new Point(577, 30);
             ckb_buraco_notas_hardcore.Name = "ckb_buraco_notas_hardcore";
             ckb_buraco_notas_hardcore.Size = new Size(110, 19);
-            ckb_buraco_notas_hardcore.TabIndex = 34;
+            ckb_buraco_notas_hardcore.TabIndex = 40;
             ckb_buraco_notas_hardcore.Text = "Modo Hardcore";
             ckb_buraco_notas_hardcore.UseVisualStyleBackColor = true;
             ckb_buraco_notas_hardcore.CheckedChanged += ckb_buraco_notas_hardcore_CheckedChanged;
@@ -539,7 +546,7 @@
             bt_pessoa_fisica_juridica.Location = new Point(295, 28);
             bt_pessoa_fisica_juridica.Name = "bt_pessoa_fisica_juridica";
             bt_pessoa_fisica_juridica.Size = new Size(86, 23);
-            bt_pessoa_fisica_juridica.TabIndex = 36;
+            bt_pessoa_fisica_juridica.TabIndex = 20;
             bt_pessoa_fisica_juridica.Text = "Obter";
             bt_pessoa_fisica_juridica.UseVisualStyleBackColor = true;
             bt_pessoa_fisica_juridica.Click += bt_pessoa_fisica_juridica_Click;
@@ -559,7 +566,7 @@
             tb_referenciaBuracoNota.Mask = "00_0000";
             tb_referenciaBuracoNota.Name = "tb_referenciaBuracoNota";
             tb_referenciaBuracoNota.Size = new Size(52, 23);
-            tb_referenciaBuracoNota.TabIndex = 37;
+            tb_referenciaBuracoNota.TabIndex = 3;
             tb_referenciaBuracoNota.ValidatingType = typeof(DateTime);
             tb_referenciaBuracoNota.Visible = false;
             // 
@@ -624,7 +631,7 @@
             bt_produtos_taxas.Location = new Point(113, 91);
             bt_produtos_taxas.Name = "bt_produtos_taxas";
             bt_produtos_taxas.Size = new Size(75, 23);
-            bt_produtos_taxas.TabIndex = 43;
+            bt_produtos_taxas.TabIndex = 5;
             bt_produtos_taxas.Text = "Obter";
             bt_produtos_taxas.UseVisualStyleBackColor = true;
             bt_produtos_taxas.Click += bt_produtos_taxas_Click;
@@ -632,6 +639,13 @@
             // groupBox3
             // 
             groupBox3.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            groupBox3.Controls.Add(ckb_renew_task);
+            groupBox3.Controls.Add(label28);
+            groupBox3.Controls.Add(label27);
+            groupBox3.Controls.Add(tb_usuario_tax);
+            groupBox3.Controls.Add(tb_senha_tax);
+            groupBox3.Controls.Add(bt_login);
+            groupBox3.Controls.Add(bt_relatorios);
             groupBox3.Controls.Add(ckb_extracao_canceladas);
             groupBox3.Controls.Add(ckb_qtd_canceladas);
             groupBox3.Controls.Add(ckb_qtd_notas);
@@ -661,6 +675,75 @@
             groupBox3.TabIndex = 44;
             groupBox3.TabStop = false;
             groupBox3.Text = "Tax API";
+            // 
+            // ckb_renew_task
+            // 
+            ckb_renew_task.AutoSize = true;
+            ckb_renew_task.Location = new Point(350, 187);
+            ckb_renew_task.Name = "ckb_renew_task";
+            ckb_renew_task.RightToLeft = RightToLeft.Yes;
+            ckb_renew_task.Size = new Size(112, 19);
+            ckb_renew_task.TabIndex = 58;
+            ckb_renew_task.Text = "Renovar cookies";
+            ckb_renew_task.UseVisualStyleBackColor = true;
+            ckb_renew_task.CheckedChanged += ckb_renew_task_CheckedChanged;
+            // 
+            // label28
+            // 
+            label28.AutoSize = true;
+            label28.Location = new Point(286, 120);
+            label28.Name = "label28";
+            label28.Size = new Size(66, 15);
+            label28.TabIndex = 57;
+            label28.Text = "Senha TAX:";
+            // 
+            // label27
+            // 
+            label27.AutoSize = true;
+            label27.Location = new Point(281, 89);
+            label27.Name = "label27";
+            label27.Size = new Size(74, 15);
+            label27.TabIndex = 56;
+            label27.Text = "Usuario TAX:";
+            // 
+            // tb_usuario_tax
+            // 
+            tb_usuario_tax.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            tb_usuario_tax.Location = new Point(358, 85);
+            tb_usuario_tax.Name = "tb_usuario_tax";
+            tb_usuario_tax.Size = new Size(100, 23);
+            tb_usuario_tax.TabIndex = 55;
+            tb_usuario_tax.TextChanged += tb_usuario_tax_TextChanged;
+            // 
+            // tb_senha_tax
+            // 
+            tb_senha_tax.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            tb_senha_tax.Location = new Point(358, 114);
+            tb_senha_tax.Name = "tb_senha_tax";
+            tb_senha_tax.PasswordChar = '*';
+            tb_senha_tax.Size = new Size(100, 23);
+            tb_senha_tax.TabIndex = 56;
+            tb_senha_tax.TextChanged += tb_senha_tax_TextChanged;
+            // 
+            // bt_login
+            // 
+            bt_login.Location = new Point(383, 150);
+            bt_login.Name = "bt_login";
+            bt_login.Size = new Size(75, 23);
+            bt_login.TabIndex = 57;
+            bt_login.Text = "Login";
+            bt_login.UseVisualStyleBackColor = true;
+            bt_login.Click += bt_login_Click;
+            // 
+            // bt_relatorios
+            // 
+            bt_relatorios.Location = new Point(240, 375);
+            bt_relatorios.Name = "bt_relatorios";
+            bt_relatorios.Size = new Size(75, 23);
+            bt_relatorios.TabIndex = 53;
+            bt_relatorios.Text = "Relatorios";
+            bt_relatorios.UseVisualStyleBackColor = true;
+            bt_relatorios.Click += bt_relatorios_Click;
             // 
             // ckb_extracao_canceladas
             // 
@@ -780,7 +863,7 @@
             dtp_tax_data_fim.Location = new Point(121, 120);
             dtp_tax_data_fim.Name = "dtp_tax_data_fim";
             dtp_tax_data_fim.Size = new Size(86, 23);
-            dtp_tax_data_fim.TabIndex = 41;
+            dtp_tax_data_fim.TabIndex = 42;
             // 
             // dtp_tax_data_inicio
             // 
@@ -810,10 +893,10 @@
             // 
             // bt_executar_relatorio
             // 
-            bt_executar_relatorio.Location = new Point(287, 339);
+            bt_executar_relatorio.Location = new Point(132, 375);
             bt_executar_relatorio.Name = "bt_executar_relatorio";
             bt_executar_relatorio.Size = new Size(75, 23);
-            bt_executar_relatorio.TabIndex = 29;
+            bt_executar_relatorio.TabIndex = 52;
             bt_executar_relatorio.Text = "Executar";
             bt_executar_relatorio.UseVisualStyleBackColor = true;
             bt_executar_relatorio.Click += bt_executar_relatorio_Click;
@@ -821,7 +904,7 @@
             // label23
             // 
             label23.AutoSize = true;
-            label23.Location = new Point(252, 55);
+            label23.Location = new Point(251, 55);
             label23.Name = "label23";
             label23.Size = new Size(126, 15);
             label23.TabIndex = 28;
@@ -829,7 +912,7 @@
             // 
             // bt_status_tax_automation
             // 
-            bt_status_tax_automation.Location = new Point(384, 51);
+            bt_status_tax_automation.Location = new Point(383, 51);
             bt_status_tax_automation.Name = "bt_status_tax_automation";
             bt_status_tax_automation.Size = new Size(75, 23);
             bt_status_tax_automation.TabIndex = 27;
@@ -840,7 +923,7 @@
             // label22
             // 
             label22.AutoSize = true;
-            label22.Location = new Point(21, 375);
+            label22.Location = new Point(21, 394);
             label22.Name = "label22";
             label22.Size = new Size(44, 15);
             label22.TabIndex = 26;
@@ -859,7 +942,7 @@
             // label21
             // 
             label21.AutoSize = true;
-            label21.Location = new Point(287, 26);
+            label21.Location = new Point(286, 26);
             label21.Name = "label21";
             label21.Size = new Size(91, 15);
             label21.TabIndex = 24;
@@ -867,7 +950,7 @@
             // 
             // bt_tax_automation
             // 
-            bt_tax_automation.Location = new Point(384, 22);
+            bt_tax_automation.Location = new Point(383, 22);
             bt_tax_automation.Name = "bt_tax_automation";
             bt_tax_automation.Size = new Size(75, 23);
             bt_tax_automation.TabIndex = 23;
@@ -1021,5 +1104,13 @@
         private CheckBox ckb_qtd_canceladas;
         private CheckBox ckb_qtd_notas;
         private CheckBox ckb_qtd_itens;
+        private Button bt_relatorios;
+        private Button button1;
+        private Button bt_login;
+        private Label label27;
+        private TextBox tb_usuario_tax;
+        private TextBox tb_senha_tax;
+        private Label label28;
+        private CheckBox ckb_renew_task;
     }
 }

@@ -66,7 +66,7 @@ namespace TaxZone
                 case "ESE":
                     return "C14_003";
                 case "EPB":
-                    return "user_taxone_energisaparaiba";
+                    return "C14_002";
                 case "ETO":
                     return "C14_009";
                 case "EMT":
@@ -74,11 +74,11 @@ namespace TaxZone
                 case "EMS":
                     return "C14_005";
                 case "ESS":
-                    return "user_taxone_energsulsudeste";
+                    return "C14_007";
                 case "ERO":
                     return "C14_006";
                 case "EAC":
-                    return "user_taxone_energisaacre";
+                    return "C14_008";
                 default:
                     return null;
             }

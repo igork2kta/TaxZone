@@ -14,6 +14,8 @@ namespace TaxZone
         public string DatabasePasswordFar { get; set; }
         public string DatabaseUserMsa { get; set; }
         public string DatabasePasswordMsa { get; set; }
+        public string UsuarioTax { get; set; }
+        public string SenhaTax { get; set; }
         public string Versao { get; set; }
 
     }
@@ -25,6 +27,8 @@ namespace TaxZone
         public static string DatabasePasswordFar { get; set; }
         public static string DatabaseUserMsa{ get; set; }
         public static string DatabasePasswordMsa { get; set; }
+        public static string UsuarioTax { get; set; }
+        public static string SenhaTax { get; set; }
         public static string Versao { get; set; }
 
         public static string Cookie { get; set; }
@@ -50,6 +54,8 @@ namespace TaxZone
                     DatabasePasswordMsa = config.DatabasePasswordMsa;
                     DatabaseUserFar = config.DatabaseUserFar;
                     DatabasePasswordFar = config.DatabasePasswordFar;
+                    UsuarioTax = config.UsuarioTax;
+                    SenhaTax = config.SenhaTax;
                     Versao = config.Versao;
                 }
             }
@@ -65,6 +71,8 @@ namespace TaxZone
                 DatabasePasswordFar = DatabasePasswordFar,
                 DatabaseUserMsa = DatabaseUserMsa,
                 DatabasePasswordMsa = DatabasePasswordMsa,
+                UsuarioTax = UsuarioTax,
+                SenhaTax = SenhaTax,
                 Versao = Versao
             };
 
