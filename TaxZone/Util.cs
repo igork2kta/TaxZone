@@ -158,41 +158,5 @@ namespace TaxZone
             return string.Join("", split);
         }
 
-
-        public static string ObterCodEmpresa(string siglaEmpresa)
-        {
-           return siglaEmpresa switch
-            {
-                "EMR" => "1",
-                "ESE" => "20",
-                "EPB" => "27",
-                "ETO" => "190",
-                "EMT" => "191",
-                "EMS" => "193",
-                "ESS" => "218",
-                "EAC" => "226",
-                "ERO" => "229",
-                _ => throw new ArgumentException("Empresa desconhecida")
-            };
-        }
-
-        public static string ObterFiliais(string siglaEmpresa)
-        {
-            switch (siglaEmpresa)
-            {
-                case "EMR":
-                    return "1, 78";
-
-                case "EPB":
-                    return "1, 28";
-
-                case "ESS":
-                    return "1, 70, 81";
-
-                default: //todo o resto so tem 1
-                    return "1";
-            }
-        }
-
     }
 }

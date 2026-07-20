@@ -70,6 +70,11 @@ namespace TaxZone
                     .ClickAsync(new() { Timeout = 5000 });
 
                 await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+                await page.GetByRole(AriaRole.Listitem, new() { Name = "001 - EMR" })
+                    .ClickAsync(new() { Timeout = 5000 });
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
             }
             catch
             {
@@ -473,7 +478,7 @@ namespace TaxZone
 
         public static async Task ProgramarRelatorio(string empresa, TaxContext context, bool novo_contexto)
         {
-            //TaxContext context = new();
+
             bool sucesso;
 
             context.Empresa = empresa;
@@ -484,6 +489,10 @@ namespace TaxZone
                 return;
             }
 
+            NotificationService.AtualizarStatusTax(
+                            $"Programando relatório para {empresa}",
+                            1);
+
             try
             {
                 if (novo_contexto)
@@ -491,13 +500,26 @@ namespace TaxZone
                     sucesso = await ObterStorageId(context);
                     if (!sucesso) return;
 
+                    NotificationService.AtualizarStatusTax(
+                            $"Programando relatório para {empresa}",
+                            15);
+
                     sucesso = await SelecionaEmpresaEModulo(context);
                     if (!sucesso) return;
+
+                    
                 }
-                
+
+                NotificationService.AtualizarStatusTax(
+                            $"Programando relatório para {empresa}",
+                            30);
 
                 sucesso = await AbrirTelaProcessosCustomizados(context);
                 if (!sucesso) return;
+
+                NotificationService.AtualizarStatusTax(
+                           $"Programando relatório para {empresa}",
+                           45);
 
                 //ConfigurarParâmetros
 
@@ -505,7 +527,12 @@ namespace TaxZone
                 await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 4, param_estab);
                 await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 5, data_inicio);
                 await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 6, data_fim);
-                if(buraco_nota == "S")
+
+                NotificationService.AtualizarStatusTax(
+                           $"Programando relatório para {empresa}",
+                           60);
+
+                if (buraco_nota == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 9, buraco_nota, 7);
                 if (diferenca_capa_item == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 11, diferenca_capa_item, 9);
@@ -522,6 +549,9 @@ namespace TaxZone
                 if (extracao_canceladas == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 21, extracao_canceladas, 19);
 
+                NotificationService.AtualizarStatusTax(
+                           $"Programando relatório para {empresa}",
+                           80);
 
                 //Executar
                 //safobfww_lib_proctab_frameworktabpage_parametrosdw_parametros_headerbuttonclicked
@@ -534,15 +564,25 @@ namespace TaxZone
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
+                NotificationService.AtualizarStatusTax(
+                           $"Programando relatório para {empresa}",
+                           95);
+
                 var root = await PostAsync(empresa, url, json_content);
                 string? retorno = root["VD"]?["Commands"]?[0]?["parameters"]?["text"]?.GetValue<string>();
 
-                MessageBox.Show(retorno, "Atenção",  MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show($"{retorno} \n\nEmpresa: {empresa}", "Atenção",  MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                                    
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Falha catastrófica ao executar HTTP POST: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                NotificationService.AtualizarStatusTax(
+                           $"Finalizado",
+                           100);
             }
         }
 

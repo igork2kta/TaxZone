@@ -1,6 +1,7 @@
 ﻿using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using System.Data;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -64,112 +65,97 @@ namespace TaxZone
             }
         }
 
-
-
-
         public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota)
         {
             if (modeloHardcore && (string.IsNullOrEmpty(referenciaBuracoNota) || referenciaBuracoNota.Length < 7))
                 MessageBox.Show("Preencha a referencia para o modo hardcore!");
 
-            using (OpenFileDialog openFileDialog = new()
+            using OpenFileDialog openFileDialog = new()
             {
                 Title = "Selecione um arquivo PDF",
                 Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
-            })
+            };
+
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
+            string allText = "";
+
+            for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+                allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
+            
+            var regex = new Regex(@"\|\s*(\d{6,})\s*\|\s*(\d{6,})\s*\|", RegexOptions.Multiline);
+            var pairs = new List<(int NumDocfis, int Proximo)>();
+            int totalNotas = 0;
+
+            foreach (Match match in regex.Matches(allText))
             {
-                if (openFileDialog.ShowDialog() != DialogResult.OK)
-                    return;
-
-                using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
-                string allText = "";
-                for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
-                {
-                    allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
-                }
-
-                var regex = new Regex(@"\|\s*(\d{6,})\s*\|\s*(\d{6,})\s*\|", RegexOptions.Multiline);
-
-                var pairs = new List<(int NumDocfis, int Proximo)>();
-                int totalNotas = 0;
-
-                foreach (Match match in regex.Matches(allText))
-                {
-                    int numDocfis = int.Parse(match.Groups[1].Value);
-                    int proximo = int.Parse(match.Groups[2].Value);
-                    pairs.Add((numDocfis, proximo));
-                    totalNotas += (proximo - 1) - numDocfis; //precisa do -1, confia em mim
-                }
-
-                F_buraco_nota buraco = new F_buraco_nota(ref pairs);
-                var a = buraco.ShowDialog();
-                if (a == DialogResult.Cancel) 
-                    return;
-
-                var buffer = new StringBuilder();
-                int linhasParciais = 0;
-                int linhasTotais = 0;
-                foreach (var (inicio, fim) in pairs)
-                {
-
-                    string n;
-
-                    if (modeloHardcore)
-                    {
-                        if (fim - 1 > inicio + 1)
-                        {
-                            n = $"update capa_nf_sped_{referenciaBuracoNota} set datgrv = null where numdoc_fsc between {inicio + 1} and {fim - 1};";
-                        }
-                        else if (inicio + 1 == fim - 1)
-                        {
-                            n = $"update capa_nf_sped_{referenciaBuracoNota} set datgrv = null where numdoc_fsc = {inicio};";
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                        buffer.Append(n).Append('\n');
-                        linhasParciais++;
-                        linhasTotais++;
-                    }
-
-                    else
-                    {
-                        // Garante que fim seja maior que inicio
-                        if (fim <= inicio) continue;
-
-                        for (int i = inicio + 1; i < fim; i++)
-                        {
-                            buffer.Append(i).Append(',');
-                            linhasParciais++;
-                        }
-
-                    }
-                }
-
-                List<string> resultado = buffer.ToString()
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Concat(buffer.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries))
-                        .Select(x => x.Trim())
-                        .Distinct()
-                        .ToList();
-
-
-                if (Globais.gerarArquivo)
-                {
-                    CsvClass.WriteListToCsv(resultado, Globais.fracionarValores);
-                    MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
-                }
-                else
-                    Util.DividirValoresAreaTransferencia(resultado, Globais.fracionarValores);
-
-       
-                    
-
+                int numDocfis = int.Parse(match.Groups[1].Value);
+                int proximo = int.Parse(match.Groups[2].Value);
+                pairs.Add((numDocfis, proximo));
+                totalNotas += (proximo - 1) - numDocfis; //precisa do -1, confia em mim
             }
-        }
 
+            F_buraco_nota buraco = new (ref pairs);
+            var a = buraco.ShowDialog();
+            if (a == DialogResult.Cancel)
+                return;
+
+            var buffer = new StringBuilder();
+            int linhasParciais = 0;
+            int linhasTotais = 0;
+            foreach (var (inicio, fim) in pairs)
+            {
+                string n;
+
+                if (modeloHardcore)
+                {
+                    if (fim - 1 > inicio + 1)
+                        n = $"update capa_nf_sped_{referenciaBuracoNota} set datgrv = null where numdoc_fsc between {inicio + 1} and {fim - 1};";
+                    
+                    else if (inicio + 1 == fim - 1)
+                        n = $"update capa_nf_sped_{referenciaBuracoNota} set datgrv = null where numdoc_fsc = {inicio};";
+                 
+                    else
+                        continue;
+                    
+                    buffer.Append(n).Append('\n');
+                    linhasParciais++;
+                    linhasTotais++;
+                }
+
+                else
+                {
+                    // Garante que fim seja maior que inicio
+                    if (fim <= inicio) continue;
+
+                    for (int i = inicio + 1; i < fim; i++)
+                    {
+                        buffer.Append(i).Append(',');
+                        linhasParciais++;
+                    }
+
+                }
+            }
+
+            List<string> resultado = buffer.ToString()
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Concat(buffer.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    .Select(x => x.Trim())
+                    .Distinct()
+                    .ToList();
+
+
+            if (Globais.gerarArquivo)
+            {
+                CsvClass.WriteListToCsv(resultado, Globais.fracionarValores);
+                MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
+            }
+            else
+                Util.DividirValoresAreaTransferencia(resultado, Globais.fracionarValores);
+        }
 
 
         public static void PendenciaProcessamento(string tipoPendencia, string empresa, bool arq_temporario)
@@ -280,116 +266,103 @@ namespace TaxZone
 
         public static void ImportarProdutos()
         {
-            using (OpenFileDialog openFileDialog = new()
+            using OpenFileDialog openFileDialog = new()
             {
                 Title = "Selecione um arquivo PDF",
                 Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
                 InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
-            })
+            };
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
+
+            string allText = "";
+            for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
             {
-                if (openFileDialog.ShowDialog() != DialogResult.OK)
-                    return;
+                allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
+            }
 
-                using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
+            // Captura valores que aparecem após "Conteúdo do Campo"
+            // Exemplo: F1910005128733 F.T0003603
+            var regex = new Regex(@"F.T\d{7}", RegexOptions.Multiline);
+            var taxas = regex.Matches(allText);
 
-                string allText = "";
-                for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
-                {
-                    allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
-                }
+            regex = new Regex(@"F.P\d{7}", RegexOptions.Multiline);
+            var produtos = regex.Matches(allText);
 
-                // Captura valores que aparecem após "Conteúdo do Campo"
-                // Exemplo: F1910005128733 F.T0003603
-                var regex = new Regex(@"F.T\d{7}", RegexOptions.Multiline);
-                var taxas = regex.Matches(allText);
+            var listaTaxas = new List<string>();
+            var listaProdutos = new List<string>();
 
-                regex = new Regex(@"F.P\d{7}", RegexOptions.Multiline);
-                var produtos = regex.Matches(allText);
+            //Encontra as taxas no pdf
+            foreach (Match match in taxas)
+            {
+                string valor = match.Value;
 
-                var listaTaxas = new List<string>();
-                var listaProdutos = new List<string>();
+                if (valor.Length >= 7)
+                    listaTaxas.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
+            }
 
-                //Encontra as taxas no pdf
-                foreach (Match match in taxas)
-                {
-                    string valor = match.Value;
+            //Encontra os produtos no pdf
+            foreach (Match match in produtos)
+            {
+                string valor = match.Value;
 
-                    if (valor.Length >= 7)
-                        listaTaxas.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
-                }
+                if (valor.Length >= 7)
+                    listaProdutos.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
+            }
 
-                //Encontra os produtos no pdf
-                foreach (Match match in produtos)
-                {
-                    string valor = match.Value;
+            if (listaTaxas.Count == 0 && listaProdutos.Count == 0)
+            {
+                MessageBox.Show("Nenhum valor encontrado no PDF.",
+                    "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
-                    if (valor.Length >= 7)
-                        listaProdutos.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
-                }
-
-                if (listaTaxas.Count == 0 && listaProdutos.Count == 0)
-                {
-                    MessageBox.Show("Nenhum valor encontrado no PDF.",
-                        "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                //Remove as duplicatas
-                listaTaxas = listaTaxas.Distinct().ToList();
-                listaProdutos = listaProdutos.Distinct().ToList();
+            //Remove as duplicatas
+            listaTaxas = listaTaxas.Distinct().ToList();
+            listaProdutos = listaProdutos.Distinct().ToList();
 
 
-                var buffer = new StringBuilder();
+            var buffer = new StringBuilder();
 
-                //Monta sql das taxas
-                if (listaTaxas.Count > 0) {
+            //Monta sql das taxas
+            if (listaTaxas.Count > 0)
+            {
 
-                    //buffer.AppendLine("update taxa set IND_SINCRONISMO_FISCAL = 'S' where codtaxa_tab in (");
+                //buffer.AppendLine("update taxa set IND_SINCRONISMO_FISCAL = 'S' where codtaxa_tab in (");
 
-                    foreach (var v in listaTaxas)
-                    {
-                        buffer.Append($"{v},");
+                foreach (var v in listaTaxas)
+                    buffer.Append($"{v},");
 
-                    }
+                buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
+                                                     
 
-                    buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
-                    //buffer.AppendLine(");");
-
-                    Clipboard.SetText(buffer.ToString());
-
-                    MessageBox.Show($"{listaTaxas.Count} taxas copiadas para área de transferência.",
-                        "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                }
-                
-                //Monta sql dos produtos
-                if (listaProdutos.Count > 0)
-                {
-
-                    //buffer.AppendLine("update TIPO_ITEM_CONTA set IND_SINCRONISMO_FISCAL = 'S' where COD_TIPO_ITEM in (");
-
-                    foreach (var v in listaProdutos)
-                    {
-                      buffer.Append($"{v},");
-                    }
-
-                    buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
-                    // buffer.AppendLine(");");
-
-                    Clipboard.SetText(buffer.ToString());
-
-                    MessageBox.Show($"Finalizado! {listaProdutos.Count} produtos copiados para área de transferência.",
-                        "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                }
-                /*
                 Clipboard.SetText(buffer.ToString());
 
-                MessageBox.Show($"Finalizado! {listaTaxas.Count} taxas e {listaProdutos.Count} copiados para área de transferência.",
+                MessageBox.Show($"{listaTaxas.Count} taxas copiadas para área de transferência.",
                     "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                */
 
             }
+
+            //Monta sql dos produtos
+            if (listaProdutos.Count > 0)
+            {
+
+                //buffer.AppendLine("update TIPO_ITEM_CONTA set IND_SINCRONISMO_FISCAL = 'S' where COD_TIPO_ITEM in (");
+
+                foreach (var v in listaProdutos)
+                    buffer.Append($"{v},");
+                
+                buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
+                                                    
+                Clipboard.SetText(buffer.ToString());
+
+                MessageBox.Show($"Finalizado! {listaProdutos.Count} produtos copiados para área de transferência.",
+                    "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            }
+
         }
 
 
@@ -411,6 +384,7 @@ namespace TaxZone
                 return;
             }
 
+
             string query = string.Empty;
 
             if (mes_aberto)
@@ -425,8 +399,6 @@ namespace TaxZone
                     ano
                 );
             }
-
-
 
             DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(ConfigManager.DatabaseUserFar, ConfigManager.DatabasePasswordFar, banco.database, banco.owner, query);
 
@@ -476,6 +448,163 @@ namespace TaxZone
             }
             else
                 Util.DividirValoresAreaTransferencia(faltando, fracionar);
+
+        }
+
+        public static async void GetQuantidadeNotas(DateTime periodoIni, DateTime periodoFin, string empresa, bool mostrarNaTela, 
+            bool arquivoTemporario, string local, bool incluidasHoje, bool mesAberto)
+        {
+            try
+            {
+                SaveFileDialog salvarDialog = new SaveFileDialog();
+
+
+                int taskCount = 1;
+                if (empresa == "TODAS") taskCount = 9;
+
+                if (!mostrarNaTela && !arquivoTemporario)
+                {
+                    salvarDialog.Title = "Salvar arquivo como...";
+                    salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
+                    salvarDialog.DefaultExt = "csv";
+                    salvarDialog.AddExtension = true;
+                    if (taskCount == 1)
+                        salvarDialog.FileName = $"qtd_notas_{empresa}.csv"; // Nome padrão
+                    else
+                        salvarDialog.FileName = $"qtd_notas.csv"; // Nome padrão
+
+                    if (salvarDialog.ShowDialog() != DialogResult.OK) return;
+                }
+
+                NotificationService.AtualizarStatusQtdNotas(
+                            $"Iniciando consulta...",
+                            1);
+
+                int tarefasConcluidas = 0;
+
+                var tasks = new List<Task<DataTable>>();
+
+                for (int i = 0; i < taskCount; i++)
+                {
+                    Banco banco = null;
+                    string query = "", user = "", password = "";
+
+                    if (taskCount > 1)
+                        empresa = Empresa.ListaEmpresas[i].ToString();
+
+                    if (local == "MSA")
+                    {
+                        banco = Empresa.GetBancoMsa(empresa);
+                        user = ConfigManager.DatabaseUserMsa;
+                        password = ConfigManager.DatabasePasswordMsa;
+
+                        string filtroIncluidasHoje = "";
+                        if (incluidasHoje)
+                        {
+                            filtroIncluidasHoje = $"AND DTH_INCLUSAO < to_date('{DateTime.Now.ToString("dd/MM/yyyy")}', 'DD/MM/YYYY')";
+                        }
+                        string estabelecimentos = string.Join(",", Empresa.GetEstabelecimentos(empresa));
+                        query = string.Format(Queries.qtdNotasMsa, Empresa.GetCodEmpresa(empresa), empresa, estabelecimentos, periodoIni.ToString("yyyyMMdd"), periodoFin.ToString("yyyyMMdd"), filtroIncluidasHoje);
+
+                    }
+                    else if (local == "SIFAR")
+                    {
+                        banco = Empresa.GetBancoFar(empresa);
+
+                        if (mesAberto)
+                            query = string.Format(Queries.qtdNotasFarMesAberto, periodoIni.ToString("dd/MM/yyyy"), periodoFin.ToString("dd/MM/yyyy"), empresa);
+                        else
+                            query = string.Format(Queries.qtdNotasFarMesFechado, periodoIni.Month.ToString("00"), periodoFin.Year, empresa);
+
+
+
+
+                        user = ConfigManager.DatabaseUserFar;
+                        password = ConfigManager.DatabasePasswordFar;
+                    }
+
+                    if (banco is null) return;
+
+                    string serviceName = banco.database;
+                    string session = banco.owner;
+
+                    tasks.Add(Task.Run(() =>
+                    {
+                        DataTable resultado = DataAccess.ExecuteQuery(
+                            user,
+                            password,
+                            serviceName,
+                            session,
+                            query);
+
+                        int concluidas = Interlocked.Increment(ref tarefasConcluidas);
+                        int progresso = concluidas * 100 / taskCount;
+
+                        NotificationService.AtualizarStatusQtdNotas(
+                            $"Consultando {concluidas}/{taskCount}",
+                            progresso);
+
+                        return resultado;
+                    }));
+                }
+
+                DataTable qtd_notas = new();
+
+                DataTable[] resultados = await Task.WhenAll(tasks);
+
+                foreach (var tabela in resultados)
+                {
+                    if (tabela != null)
+                        qtd_notas.Merge(tabela);
+                }
+
+                if (qtd_notas.Rows.Count == 0)
+                {
+                    MessageBox.Show("Falha ao consultar dados!", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (local == "SIFAR")
+                {
+                    qtd_notas.Columns["'NOTAS'"].MaxLength = 20;
+                    DataRow linha = qtd_notas.NewRow();
+                    linha["EMPRESA"] = "DAT";
+                    linha["'NOTAS'"] = DateTime.Now.ToString();
+                    linha["TOTAL"] = 0;
+                    linha["CODFIL"] = 0;
+                    qtd_notas.Rows.Add(linha);
+                }
+
+
+                if (mostrarNaTela)
+                {
+                    Util.MostrarDataTable(qtd_notas);
+                }
+                else
+                {
+                    string filename;
+                    if (arquivoTemporario)
+                        filename = salvarDialog.FileName;
+                    else
+                        filename = "C:\\Temp\\qtd_notas_{cb_empresa_qtd_notas.Text}.csv";
+
+                    CsvClass.WriteDataTableToCsv(qtd_notas, filename);
+
+                    var resposta = MessageBox.Show("Extração Finalizada! Deseja abrir o arquivo?", "Pronto!", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                    if (resposta == DialogResult.Yes)
+                    {
+                        Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+                    }
+                }
+            }
+            finally
+            {
+                //Encerra a notificação
+                NotificationService.AtualizarStatusQtdNotas(
+                            $"Finalizado",
+                            100);
+            }
+            
 
         }
     }
