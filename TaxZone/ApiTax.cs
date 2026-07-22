@@ -174,7 +174,7 @@ namespace TaxZone
         /// <summary>
         /// Dispara o processo de automação fiscal baseado em uma string de entrada utilizando a sessão persistida.
         /// </summary>
-        public static async Task ProgramarTaxAutomation(string empresa)
+        public static async Task<TaxApiResponse> ProgramarTaxAutomation(string empresa)
         {
             int index_fluxo = Empresa.GetIndexFluxoTaxAutomation(empresa);
 
@@ -182,36 +182,33 @@ namespace TaxZone
 
             var request = new HttpRequestMessage(HttpMethod.Put, url);
 
-            if (string.IsNullOrEmpty(ConfigManager.Cookie))
-            {
-                MessageBox.Show("Cookie não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            AddHeaders(request, empresa);
-
             try
             {
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
+
+                AddHeaders(request, empresa);
+
                 HttpResponseMessage response = await _client.SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
                 {
                     string respostaTexto = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Requisição enviada! Resposta: {respostaTexto}", "Sucesso!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return new TaxApiResponse(true, $"{empresa} - Job programado com sucesso", empresa);
 
                 }
                 else
                 {
-                    MessageBox.Show($"Erro na requisição: {response.StatusCode} - {response.ReasonPhrase}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return new TaxApiResponse(true, $"Erro na requisição: {response.StatusCode} - {response.ReasonPhrase}", empresa);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Falha catastrófica ao executar HTTP POST: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new TaxApiResponse(false, $"Falha ao executar HTTP POST: {ex.Message}", empresa);
             }
         }
 
-        public static async Task VerificarStatusExecucao(string empresa)
+        public static async Task<TaxApiResponse> VerificarStatusExecucao(string empresa)
         {
             int index_fluxo = Empresa.GetIndexFluxoTaxAutomation(empresa);
 
@@ -219,16 +216,13 @@ namespace TaxZone
 
             var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-            if (string.IsNullOrEmpty(ConfigManager.Cookie))
-            {
-                MessageBox.Show("Cookie não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            AddHeaders(request, empresa);
-
             try
             {
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
+
+                AddHeaders(request, empresa);
+
                 HttpResponseMessage response = await _client.SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
@@ -244,10 +238,8 @@ namespace TaxZone
                         .FirstOrDefault();
 
                     if (fluxoMaisRecente == null)
-                    {
-                        MessageBox.Show("Última execução não encontrada.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                        return new TaxApiResponse(false, "Última execução não encontrada.", empresa);
+                    
                         
 
                     var execucoes = fluxoMaisRecente["execucoes"]!.AsArray();
@@ -256,23 +248,23 @@ namespace TaxZone
                         execucao!["status"]?.ToString() == "COMPLETED");
 
                     if(todasConcluidas)
-                        MessageBox.Show("Última execução concluída com sucesso!", "Sucesso!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return new TaxApiResponse(true, "Última execução concluída com sucesso!", empresa);
                     else
-                        MessageBox.Show("A última execução ainda não foi concluída. Verifique novamente mais tarde.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return new TaxApiResponse(true, "A última execução ainda não foi concluída. Verifique novamente mais tarde.", empresa);
 
                 }
                 else
                 {
-                    MessageBox.Show($"Erro na requisição: {response.StatusCode} - {response.ReasonPhrase}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return new TaxApiResponse(false, $"Erro na requisição: {response.StatusCode} - {response.ReasonPhrase}", empresa);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Falha catastrófica ao executar HTTP POST: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new TaxApiResponse(false, $"Falha ao executar HTTP POST: {ex.Message}", empresa);
             }
         }
 
-        public static async Task<bool> ObterStorageId(TaxContext context)
+        public static async Task ObterStorageId(TaxContext context)
         {
             try
             {
@@ -284,22 +276,25 @@ namespace TaxZone
 
                 context.StorageId = root["storageID"].ToString();
 
-                return !string.IsNullOrEmpty(context.StorageId);
+                if(string.IsNullOrEmpty(context.StorageId))
+                    throw new Exception("Erro ao obter storageId");
+
             }
             catch(Exception ex)
             {
-                MessageBox.Show($"Falha ao obter storageId:\n{ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                throw new Exception($"Falha ao obter storageId:\n{ex.Message}", ex);
             }
             
         }
 
-        public static async Task<bool> SelecionaEmpresaEModulo(TaxContext context)
+        public static async Task SelecionaEmpresaEModulo(TaxContext context)
         {
-            //configuration/empEstabConfig
-            string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/configuration/empEstabConfig";
+            try
+            {
+                //configuration/empEstabConfig
+                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/configuration/empEstabConfig";
 
-            string json_content = $$"""
+                string json_content = $$"""
                     {   "empresa":"{{Empresa.GetCodEmpresa(context.Empresa).ToString("000")}}",
                         "client":"{{Empresa.GetEmpresaTax(context.Empresa)}}",
                         "estabelecimento":"",
@@ -307,215 +302,219 @@ namespace TaxZone
                         "storageID":"{{context.StorageId}}"}
                     """;
 
-            var root = await PostAsync(context.Empresa, url, json_content);
+                var root = await PostAsync(context.Empresa, url, json_content);
 
-            //Abrir módulo
-            //safcp/safcpsafcpopen
-            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp/safcp/safcpsafcpopen";
+                //Abrir módulo
+                //safcp/safcpsafcpopen
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp/safcp/safcpsafcpopen";
 
-            json_content = $$"""
+                json_content = $$"""
                     { "storageID":"{{context.StorageId}}"}
                     """;
 
-            root = await PostAsync(context.Empresa, url, json_content);
+                root = await PostAsync(context.Empresa, url, json_content);
 
-            context.StorageId = root["storageID"].ToString();
-            string? mensagemErro = root["Commands"]?
-                .AsArray()
-                .Select(c => c?["parameters"]?["text"]?.GetValue<string>())
-                .LastOrDefault(t => !string.IsNullOrEmpty(t));
+                context.StorageId = root["storageID"].ToString();
+                string? mensagemErro = root["Commands"]?
+                    .AsArray()
+                    .Select(c => c?["parameters"]?["text"]?.GetValue<string>())
+                    .LastOrDefault(t => !string.IsNullOrEmpty(t));
 
-            if (!string.IsNullOrEmpty(mensagemErro))
-            {
-                MessageBox.Show(mensagemErro, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                if (!string.IsNullOrEmpty(mensagemErro))
+                    throw new Exception($"Erro ao selecionar empresa e módulo: {mensagemErro}");
+
             }
-            else return !string.IsNullOrEmpty(context.StorageId);
+            catch (Exception ex)
+            {
+                throw new Exception($"Erro ao selecionar empresa e módulo. {ex.Message}", ex);
+            }
+            
 
         }
 
-        public static async Task<bool> AbrirTelaProcessosCustomizados(TaxContext context)
+        public static async Task AbrirTelaProcessosCustomizados(TaxContext context)
         {
-            //Abrir tela de processos customizados
-            //safcp/m_processoscustomizadosclicked
-            string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp1/m_mdi_safcp_taxbr/m_processoscustomizadosclicked";
+            try
+            {
+                //Abrir tela de processos customizados
+                //safcp/m_processoscustomizadosclicked
+                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp1/m_mdi_safcp_taxbr/m_processoscustomizadosclicked";
 
-            string json_content = $$$"""
+                string json_content = $$$"""
                     {   "vm":"a",
                         "menuPath":"Processos Customizados > Execução dos Processos Customizados",
                         "moduleExe":"safcp","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}}],
                         "storageID":"{{{context.StorageId}}}"}
                     """;
 
-            //Precisa chamar duas vezes para funcionar?
-            var root = await PostAsync(context.Empresa, url, json_content);
-            root = await PostAsync(context.Empresa, url, json_content);
+                //Precisa chamar duas vezes para funcionar? 
+                var root = await PostAsync(context.Empresa, url, json_content);
+                //root = await PostAsync(context.Empresa, url, json_content);
 
-            context.NewViews = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
+                context.NewViews = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
 
-            if (string.IsNullOrEmpty(context.NewViews)){
-                MessageBox.Show("Erro ao obter NewViews 'm_processoscustomizadosclicked'", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
+                if (string.IsNullOrEmpty(context.NewViews))
+                    throw new Exception("Erro ao obter NewViews 'm_processoscustomizadosclicked'");
 
-            //PerformMultiOperation
-            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
+                /*
+                //PerformMultiOperation
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
 
-            json_content = $$$"""
+                json_content = $$$"""
                     {"menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"targetName":"safcp","args":[["safcp2/w_processos_customizados/safgnfw1w_sheet_dw_simplesdw_sheetgetfocus",
-                    "{\"vm\":\"{{{context.NewViews}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"64\",\"currentRow\":1,\"currentControlName\":\"compute_1\",\"displayedRowCount\":10,\"currentPage\":1}}]}","61","safcp"]]},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"64","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],"storageID":"ed8bfa4a-6a47-4d09-b23e-1f1235bdca4d"}{"menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"targetName":"safcp","args":[["safcp2/w_processos_customizados/safgnfw1w_sheet_dw_simplesdw_sheetgetfocus","{\"vm\":\"3d\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"64\",\"currentRow\":1,\"currentControlName\":\"compute_1\",\"displayedRowCount\":10,\"currentPage\":1}}]}","61","safcp"]]},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"64","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],
+                    "{\"vm\":\"{{{context.NewViews}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"37\",\"currentRow\":1,\"currentControlName\":\"compute_1\",\"displayedRowCount\":10,\"currentPage\":1}}]}","61","safcp"]]},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"37","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],"storageID":"ed8bfa4a-6a47-4d09-b23e-1f1235bdca4d"}{"menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"targetName":"safcp","args":[["safcp2/w_processos_customizados/safgnfw1w_sheet_dw_simplesdw_sheetgetfocus","{\"vm\":\"3d\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"64\",\"currentRow\":1,\"currentControlName\":\"compute_1\",\"displayedRowCount\":10,\"currentPage\":1}}]}","61","safcp"]]},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"64","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
-            root = await PostAsync(context.Empresa, url, json_content);
+                root = await PostAsync(context.Empresa, url, json_content);
+                
+                
+                if(root["ErrorOcurred"]?.GetValue<string>() == "true")
+                {
+                    string? mensagemErro = root["ExMessage"]?.GetValue<string>();
 
-            //safcp2w_processos_customizadosdw_sheetclicked
-            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadosdw_sheetclicked";
+                    if (!string.IsNullOrEmpty(mensagemErro))
+                        throw new Exception($"Erro ao selecionar empresa e módulo: {mensagemErro}");
+                }
 
-            json_content = $$$"""
+                */
+
+                //safcp2w_processos_customizadosdw_sheetclicked
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadosdw_sheetclicked";
+
+                json_content = $$$"""
                     {"vm":"{{{context.NewViews}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"xpos":0,"ypos":0,"row":1,"dwo":""},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}}],
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
-            root = await PostAsync(context.Empresa, url, json_content);
+                root = await PostAsync(context.Empresa, url, json_content);
 
-            context.UniqueId = root["MD"]?[1]?["UniqueID"]?.GetValue<string>();
+                context.UniqueId = root["MD"]?[1]?["UniqueID"]?.GetValue<string>();
 
-            if (string.IsNullOrEmpty(context.UniqueId))
-            {
-                MessageBox.Show("Erro ao obter UniqueId 'safcp2w_processos_customizadosdw_sheetclicked'", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
+                if (string.IsNullOrEmpty(context.UniqueId))
+                    throw new Exception("Erro ao obter UniqueId 'safcp2w_processos_customizadosdw_sheetclicked'");
+               
+                
+                //safcp2w_processos_customizadosdw_sheetclicked -2
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadosdw_sheetclicked";
 
-
-            //safcp2w_processos_customizadosdw_sheetclicked -2
-            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadosdw_sheetclicked";
-
-            json_content = $$$"""
+                json_content = $$$"""
                     {"vm":"{{{context.NewViews}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp",
                     "parameters":{"xpos":0,"ypos":0,"row":1,"dwo":"compute_1#{{{context.UniqueId}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}}],
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
-            root = await PostAsync(context.Empresa, url, json_content);
+                root = await PostAsync(context.Empresa, url, json_content);
 
-            //w_processos_customizadoscb_executarclicked
-            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadoscb_executarclicked";
+                //w_processos_customizadoscb_executarclicked
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadoscb_executarclicked";
 
-            json_content = $$$"""
+                json_content = $$$"""
                     {"vm":"{{{context.NewViews}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL",
                     "data":{"dataManagerId":"{{{context.UniqueId}}}","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
-            root = await PostAsync(context.Empresa, url, json_content);
+                root = await PostAsync(context.Empresa, url, json_content);
 
-            context.NewViews2 = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
-            context.DataManagerId = root["VD"]?["Commands"]?[0]?["parameters"]?["dataManagerId"]?.GetValue<string>();
-            string controlId = root["VD"]?["Commands"]?[2]?["parameters"]?["controlId"]?.GetValue<string>();
-            
-            context.ControlNumber = root["VD"]?["Commands"]?[2]?["parameters"]?["controlId"]?
-                    .GetValue<string>()
-                    .Split('#')[1];
+                context.NewViews2 = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
+                context.DataManagerId = root["VD"]?["Commands"]?[0]?["parameters"]?["dataManagerId"]?.GetValue<string>();
+                string controlId = root["VD"]?["Commands"]?[2]?["parameters"]?["controlId"]?.GetValue<string>();
 
-            string uniqueId2 = root["MD"]?[2]?["UniqueID"]?.GetValue<string>();
-            context.Id = uniqueId2?.Split('#').LastOrDefault();
-            context.ProcId_t = root["MD"]?
+                context.ControlNumber = root["VD"]?["Commands"]?[2]?["parameters"]?["controlId"]?
+                        .GetValue<string>()
+                        .Split('#')[1];
+
+                string uniqueId2 = root["MD"]?[2]?["UniqueID"]?.GetValue<string>();
+                context.Id = uniqueId2?.Split('#').LastOrDefault();
+                context.ProcId_t = root["MD"]?
+                            .AsArray()
+                            .FirstOrDefault(x => x?["UniqueID"]?
+                                .GetValue<string>()?
+                                .StartsWith("proc_id_t#") == true)?["UniqueID"]?
+                            .GetValue<string>()?
+                            .Split('#')
+                            .LastOrDefault();
+
+                context.T1 = root["MD"]?
                         .AsArray()
                         .FirstOrDefault(x => x?["UniqueID"]?
                             .GetValue<string>()?
-                            .StartsWith("proc_id_t#") == true)?["UniqueID"]?
+                            .StartsWith("t_1#") == true)?["UniqueID"]?
                         .GetValue<string>()?
                         .Split('#')
                         .LastOrDefault();
 
+                if (string.IsNullOrEmpty(context.NewViews2))
+                    throw new Exception("Erro ao obter NewViews2 'w_processos_customizadoscb_executarclicked'");
+ 
+                //safobfww_lib_proctab_frameworkselectionchangedd
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
 
-            context.T1 = root["MD"]?
-                    .AsArray()
-                    .FirstOrDefault(x => x?["UniqueID"]?
-                        .GetValue<string>()?
-                        .StartsWith("t_1#") == true)?["UniqueID"]?
-                    .GetValue<string>()?
-                    .Split('#')
-                    .LastOrDefault();
-
-            if (string.IsNullOrEmpty(context.NewViews2))
-            {
-                MessageBox.Show("Erro ao obter NewViews2 'w_processos_customizadoscb_executarclicked'", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
-            //safobfww_lib_proctab_frameworkselectionchangedd
-            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
-
-            json_content = $$$"""
+                json_content = $$$"""
                     {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":1},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
                     {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"c6","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
                     "storageID":"{{{context.StorageId}}}"}
                         
                     """;
 
+                root = await PostAsync(context.Empresa, url, json_content);
 
-            root = await PostAsync(context.Empresa, url, json_content);
-
-            context.PbAbrir = root["MD"]?
-                    .AsArray()
-                    .FirstOrDefault(x => x?["UniqueID"]?
+                context.PbAbrir = root["MD"]?
+                        .AsArray()
+                        .FirstOrDefault(x => x?["UniqueID"]?
+                            .GetValue<string>()?
+                            .StartsWith("pb_abrir#") == true)?["UniqueID"]?
                         .GetValue<string>()?
-                        .StartsWith("pb_abrir#") == true)?["UniqueID"]?
-                    .GetValue<string>()?
-                    .Split('#')
-                    .LastOrDefault();
+                        .Split('#')
+                        .LastOrDefault();
 
-            if (string.IsNullOrEmpty(context.PbAbrir))
-            {
-                MessageBox.Show("Erro ao obter NewViews2 'safobfww_lib_proctab_frameworkselectionchangedd'", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
+                if (string.IsNullOrEmpty(context.PbAbrir))
+                    throw new Exception("Erro ao obter PbAbrir 'safobfww_lib_proctab_frameworkselectionchangedd'");
 
-            return true;
-        }
 
-        public static async Task ProgramarRelatorio(string empresa, TaxContext context, bool novo_contexto)
-        {
-
-            bool sucesso;
-
-            context.Empresa = empresa;
-
-            if (string.IsNullOrEmpty(ConfigManager.Cookie))
-            {
-                MessageBox.Show("Cookie não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
+        }
 
-            NotificationService.AtualizarStatusTax(
-                            $"Programando relatório para {empresa}",
-                            1);
+        public static async Task<TaxApiResponse> ProgramarRelatorio(string empresa, TaxContext context)
+        {
+            context.Empresa = empresa;
 
             try
             {
-                if (novo_contexto)
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
+
+                NotificationService.AtualizarStatusTax(
+                                $"Programando relatório para {empresa}",
+                                1);
+
+                if (string.IsNullOrEmpty(context.StorageId))
                 {
-                    sucesso = await ObterStorageId(context);
-                    if (!sucesso) return;
+                    await ObterStorageId(context);
+                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", empresa);
 
                     NotificationService.AtualizarStatusTax(
                             $"Programando relatório para {empresa}",
                             15);
 
-                    sucesso = await SelecionaEmpresaEModulo(context);
-                    if (!sucesso) return;
+                    await SelecionaEmpresaEModulo(context);
+                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", empresa); ;
 
-                    
                 }
 
                 NotificationService.AtualizarStatusTax(
                             $"Programando relatório para {empresa}",
                             30);
 
-                sucesso = await AbrirTelaProcessosCustomizados(context);
-                if (!sucesso) return;
+                await AbrirTelaProcessosCustomizados(context);
+
 
                 NotificationService.AtualizarStatusTax(
                            $"Programando relatório para {empresa}",
@@ -540,11 +539,11 @@ namespace TaxZone
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 14, icms_resumido, 12);
                 if (notas_sem_item == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 15, notas_sem_item, 13);
-                qtd_itens = "S";
+                if (qtd_itens == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 16, qtd_itens, 14);
-                qtd_notas = "S";
+                if (qtd_notas == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 18, qtd_notas, 16);
-                qtd_canceladas = "S";
+                if (qtd_canceladas == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 19, qtd_canceladas, 17);
                 if (extracao_canceladas == "S")
                     await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 21, extracao_canceladas, 19);
@@ -571,12 +570,11 @@ namespace TaxZone
                 var root = await PostAsync(empresa, url, json_content);
                 string? retorno = root["VD"]?["Commands"]?[0]?["parameters"]?["text"]?.GetValue<string>();
 
-                MessageBox.Show($"{retorno} \n\nEmpresa: {empresa}", "Atenção",  MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                                   
+                return new TaxApiResponse(true, $"{retorno}", empresa);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Falha catastrófica ao executar HTTP POST: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new TaxApiResponse(false, $"Falha ao executar HTTP POST: {ex.Message}", empresa);
             }
             finally
             {
@@ -594,32 +592,26 @@ namespace TaxZone
             JsonNode? root;                
             context.Empresa = empresa;
 
-            if (string.IsNullOrEmpty(ConfigManager.Cookie))
-            {
-                MessageBox.Show("Cookie não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
             try
             {
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
+
                 if (novo_contexto)
                 {
                     form.UpdateLoadingPercentage("15%");
 
-                    sucesso = await ObterStorageId(context);
-                    if (!sucesso) return false;
+                    await ObterStorageId(context);
 
                     form.UpdateLoadingPercentage("30%");
 
-                    sucesso = await SelecionaEmpresaEModulo(context);
-                    if (!sucesso) return false;
+                    await SelecionaEmpresaEModulo(context);
 
                 }
 
                 form.UpdateLoadingPercentage("50%");
 
-                sucesso = await AbrirTelaProcessosCustomizados(context);
-                if (!sucesso) return false;
+                await AbrirTelaProcessosCustomizados(context);
 
                 form.UpdateLoadingPercentage("65%");
 
@@ -687,19 +679,84 @@ namespace TaxZone
             }
         }
 
-        public static async Task<bool> BaixarRelatorio(TaxContext context, int row)
+        public static async Task<bool> VerificaUltimoRelatorioConcluido(string empresa, TaxContext context, bool novo_contexto)
         {
+            bool sucesso;
+            string url, json_content;
+            JsonNode? root;
+            context.Empresa = empresa;
 
-            if (string.IsNullOrEmpty(ConfigManager.Cookie))
+            try
             {
-                MessageBox.Show("Cookie não encontrado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
+
+                if (novo_contexto)
+                {
+                    await ObterStorageId(context);
+                    await SelecionaEmpresaEModulo(context);
+                }
+
+                await AbrirTelaProcessosCustomizados(context);
+
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
+
+                json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":2},
+                        "dirty":{"tab_framework#{{{context.NewViews2}}}":{"selectedTabIndex":2}},
+                        "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.T1}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+
+                root = await PostAsync(empresa, url, json_content);
+
+                string? id = root["MD"]?
+                        .AsArray()
+                        .FirstOrDefault(x => x?["UniqueID"]?
+                            .GetValue<string>()?
+                            .StartsWith("pb_abrir#") == true)?["UniqueID"]?
+                        .GetValue<string>()?
+                        .Split('#')
+                        .LastOrDefault();
+
+                //obter relatorios
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=5&dataManagerId={id}&start=1";
+
+                json_content = $$$"""
+                    {"storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                root = await PostAsync(empresa, url, json_content);
+
+                List<ProcessoRelatorio> processos = new();
+
+                JsonArray registros = root[3]!.AsArray();
+
+                if (registros[1]![9]!.GetValue<string>().ToUpper() == "ENCERRADO")
+                    return true;
+                else
+                    return false;
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Falha catastrófica ao executar HTTP POST: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
+        }
 
-            //safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked
-            string url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked";
+        public static async Task<bool> BaixarRelatorio(TaxContext context, int row, string path = null)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
 
-            string json_content = $$$"""
+                //safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked
+                string url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked";
+
+                string json_content = $$$"""
                 {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp",
                 "parameters":{"row":{{{row}}},"dwo":"pb_abrir#{{{context.PbAbrir}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
                 {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.PbAbrir}}}","currentRow":1,"currentControlName":"pb_abrir","displayedRowCount":10,"currentPage":1}},
@@ -707,131 +764,144 @@ namespace TaxZone
                 "storageID":"{{{context.StorageId}}}"}
                 """;
 
-            var root = await PostAsync(context.Empresa, url, json_content);
+                var root = await PostAsync(context.Empresa, url, json_content);
 
-            var md = root["MD"]!.AsArray();
+                var md = root["MD"]!.AsArray();
 
-            using FolderBrowserDialog dialog = new FolderBrowserDialog();
+                if (string.IsNullOrEmpty(path))
+                {
+                    using FolderBrowserDialog dialog = new FolderBrowserDialog();
 
-            dialog.Description = "Selecione a pasta para salvar os PDFs";
+                    dialog.Description = "Selecione a pasta para salvar os PDFs";
 
-            if (dialog.ShowDialog() != DialogResult.OK)
-                return false;
+                    if (dialog.ShowDialog() != DialogResult.OK)
+                        return false;
 
-            string pasta = dialog.SelectedPath;
+                    path = dialog.SelectedPath;
+                }
 
-            try
-            {
-                // Índice do objeto que contém o texto
-                int indice_buraco = md
+
+                var downloads = new List<Task>();
+
+                try
+                {
+                    // Índice do objeto que contém o texto
+                    int indice_buraco = md
+                        .Select((item, index) => new { Item = item, Index = index })
+                        .First(x => x.Item?["text"]?.GetValue<string>() == "Buraco Nota")
+                        .Index;
+
+                    // Primeiro group1# após esse objeto
+                    string? id_buraco = md
+                        .Skip(indice_buraco + 1)
+                        .Select(x => x?["UniqueID"]?.GetValue<string>())
+                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
+                        .Split('#')
+                        .LastOrDefault();
+
+                    string urlBuraco = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_buraco}&storageID={context.StorageId}";
+                    string arquivoBuraco = Path.Combine(path, $"BURACO_{context.Empresa}.pdf");
+                    downloads.Add(BaixarPdfAsync(context.Empresa, urlBuraco, arquivoBuraco));
+
+                }
+                catch (Exception ex) { }
+
+                try
+                {
+                    // Índice do objeto que contém o texto
+                    int indice_itens = md
+                        .Select((item, index) => new { Item = item, Index = index })
+                        .First(x => x.Item?["text"]?.GetValue<string>() == "Itens por Estabelecimento")
+                        .Index;
+
+                    // Primeiro group1# após esse objeto
+                    string? id_itens = md
+                        .Skip(indice_itens + 1)
+                        .Select(x => x?["UniqueID"]?.GetValue<string>())
+                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
+                        .Split('#')
+                        .LastOrDefault();
+
+                    string urlItens = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_itens}&storageID={context.StorageId}";
+                    string arquivoItens = Path.Combine(path, $"ITENS_{context.Empresa}.pdf");
+                    downloads.Add(BaixarPdfAsync(context.Empresa, urlItens, arquivoItens));
+
+                }
+
+                catch (Exception ex) { }
+
+                try
+                {
+                    int indice_notas = md
                     .Select((item, index) => new { Item = item, Index = index })
-                    .First(x => x.Item?["text"]?.GetValue<string>() == "Buraco Nota")
+                    .First(x => x.Item?["text"]?.GetValue<string>() == "Notas Estabelecimento")
                     .Index;
 
-                // Primeiro group1# após esse objeto
-                string? id_buraco = md
-                    .Skip(indice_buraco + 1)
-                    .Select(x => x?["UniqueID"]?.GetValue<string>())
-                    .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                    .Split('#')
-                    .LastOrDefault();
+                    string? id_notas = md
+                        .Skip(indice_notas + 1)
+                        .Select(x => x?["UniqueID"]?.GetValue<string>())
+                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
+                        .Split('#')
+                        .LastOrDefault();
 
-                string urlBuraco = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_buraco}&storageID={context.StorageId}";
-                string arquivoBuraco = Path.Combine(pasta, $"BURACO_{context.Empresa}.pdf");
-                BaixarPdfAsync(context.Empresa, urlBuraco, arquivoBuraco);
+                    string urlNotas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_notas}&storageID={context.StorageId}";
+                    string arquivoNotas = Path.Combine(path, $"NOTAS_{context.Empresa}.pdf");
 
-            }
-            catch (Exception ex) { }
+                    downloads.Add(BaixarPdfAsync(context.Empresa, urlNotas, arquivoNotas));
 
-            try
-            {
-                // Índice do objeto que contém o texto
-                int indice_itens = md
+                }
+                catch (Exception ex) { }
+
+                try
+                {
+                    int indice_canceladas = md
                     .Select((item, index) => new { Item = item, Index = index })
-                    .First(x => x.Item?["text"]?.GetValue<string>() == "Itens por Estabelecimento")
+                    .First(x => x.Item?["text"]?.GetValue<string>() == "Notas Canceladas")
                     .Index;
 
-                // Primeiro group1# após esse objeto
-                string? id_itens = md
-                    .Skip(indice_itens + 1)
-                    .Select(x => x?["UniqueID"]?.GetValue<string>())
-                    .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                    .Split('#')
-                    .LastOrDefault();
+                    string? id_canceladas = md
+                        .Skip(indice_canceladas + 1)
+                        .Select(x => x?["UniqueID"]?.GetValue<string>())
+                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
+                        .Split('#')
+                        .LastOrDefault();
 
-                string urlItens = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_itens}&storageID={context.StorageId}";
-                string arquivoItens = Path.Combine(pasta, $"ITENS_{context.Empresa}.pdf");
-                BaixarPdfAsync(context.Empresa, urlItens, arquivoItens);
+                    string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_canceladas}&storageID={context.StorageId}";
+                    string arquivoCanceladas = Path.Combine(path, $"CANC_{context.Empresa}.pdf");
 
+                    downloads.Add(BaixarPdfAsync(context.Empresa, urlCanceladas, arquivoCanceladas));
+                }
+                catch (Exception ex) { }
+
+                try
+                {
+                    int indice_icms = md
+                    .Select((item, index) => new { Item = item, Index = index })
+                    .First(x => x.Item?["text"]?.GetValue<string>() == "Mont. ICMS Res. Estab.")
+                    .Index;
+
+                    string? id_icms = md
+                        .Skip(indice_icms + 1)
+                        .Select(x => x?["UniqueID"]?.GetValue<string>())
+                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
+                        .Split('#')
+                        .LastOrDefault();
+
+                    string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_icms}&storageID={context.StorageId}";
+                    string arquivoCanceladas = Path.Combine(path, $"ICMS_{context.Empresa}.pdf");
+
+                    downloads.Add(BaixarPdfAsync(context.Empresa, urlCanceladas, arquivoCanceladas))    ;
+                }
+                catch (Exception ex) { }
+
+                await Task.WhenAll(downloads);
+
+                return true;
             }
-
-            catch (Exception ex) { }
-
-            try
+            catch(Exception ex)
             {
-                int indice_notas = md
-                .Select((item, index) => new { Item = item, Index = index })
-                .First(x => x.Item?["text"]?.GetValue<string>() == "Notas Estabelecimento")
-                .Index;
-
-                string? id_notas = md
-                    .Skip(indice_notas + 1)
-                    .Select(x => x?["UniqueID"]?.GetValue<string>())
-                    .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                    .Split('#')
-                    .LastOrDefault();
-                
-                string urlNotas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_notas}&storageID={context.StorageId}";
-                string arquivoNotas = Path.Combine(pasta, $"NOTAS_{context.Empresa}.pdf");
-
-                BaixarPdfAsync(context.Empresa, urlNotas, arquivoNotas);
-
+                throw ex;
             }
-            catch (Exception ex) { }
-
-            try
-            {
-                int indice_canceladas = md
-                .Select((item, index) => new { Item = item, Index = index })
-                .First(x => x.Item?["text"]?.GetValue<string>() == "Notas Canceladas")
-                .Index;
-
-                string? id_canceladas = md
-                    .Skip(indice_canceladas + 1)
-                    .Select(x => x?["UniqueID"]?.GetValue<string>())
-                    .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                    .Split('#')
-                    .LastOrDefault();
-
-                string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_canceladas}&storageID={context.StorageId}";
-                string arquivoCanceladas = Path.Combine(pasta, $"CANCELADAS_{context.Empresa}.pdf");
-
-                BaixarPdfAsync(context.Empresa, urlCanceladas, arquivoCanceladas);
-            }
-            catch (Exception ex) { }
-
-            try
-            {
-                int indice_icms = md
-                .Select((item, index) => new { Item = item, Index = index })
-                .First(x => x.Item?["text"]?.GetValue<string>() == "Mont. ICMS Res. Estab.")
-                .Index;
-
-                string? id_icms = md
-                    .Skip(indice_icms + 1)
-                    .Select(x => x?["UniqueID"]?.GetValue<string>())
-                    .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                    .Split('#')
-                    .LastOrDefault();
-
-                string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_icms}&storageID={context.StorageId}";
-                string arquivoCanceladas = Path.Combine(pasta, $"ICMS_{context.Empresa}.pdf");
-
-                BaixarPdfAsync(context.Empresa, urlCanceladas, arquivoCanceladas);
-            }
-            catch (Exception ex) { }
-
-            return true;
 
         }
 

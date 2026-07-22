@@ -19,10 +19,20 @@ namespace TaxZone
                     "Atenção!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
+            Banco.CriarBanco();
 
-                // To customize application configuration such as set high DPI settings or default font,
-                // see https://aka.ms/applicationconfiguration.
-                ApplicationConfiguration.Initialize();
+            //Limpar pasta de arquivos temporários
+            if (Directory.Exists(Config.PathArquivoTemporario))
+            {
+                foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
+                {
+                    File.Delete(arquivo);
+                }
+            }
+
+            // To customize application configuration such as set high DPI settings or default font,
+            // see https://aka.ms/applicationconfiguration.
+            ApplicationConfiguration.Initialize();
             Application.Run(new Form1());
         }
     }

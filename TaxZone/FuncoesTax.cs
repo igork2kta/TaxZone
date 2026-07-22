@@ -4,7 +4,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 
 namespace TaxZone
 {
@@ -160,7 +159,7 @@ namespace TaxZone
 
         public static void PendenciaProcessamento(string tipoPendencia, string empresa, bool arq_temporario)
         {
-            Banco banco = Empresa.GetBancoMsa(empresa);
+            BancoDTO banco = Empresa.GetBancoMsa(empresa);
             if (banco is null) return;
                        
             string notas = "", query = "", condicao = "";
@@ -169,7 +168,7 @@ namespace TaxZone
                 case "Notas":
                 case "Canceladas":
                     if(arq_temporario)
-                        notas = CsvClass.CopiarNotas(0, Config.PathScriptTemporario);
+                        notas = CsvClass.CopiarNotas(0, Config.PathArquivoTemporario + "\\scriptTemporario.csv");
                     else
                         notas = CsvClass.CopiarNotas(0);
 
@@ -178,7 +177,7 @@ namespace TaxZone
                     break;
                 case "Itens":
                     if (arq_temporario)
-                        notas = CsvClass.CopiarNotas(0, Config.PathScriptTemporario);
+                        notas = CsvClass.CopiarNotas(0, Config.PathArquivoTemporario + "\\scriptTemporario.csv");
                     else
                         notas = CsvClass.CopiarNotas(0);
 
@@ -368,7 +367,7 @@ namespace TaxZone
 
         public static void GetDiferencaCanceladas(string ano, string mes, string empresa, bool mes_aberto, bool gerarArquivo, bool fracionar)
         {
-            Banco banco = Empresa.GetBancoFar(empresa);
+            BancoDTO banco = Empresa.GetBancoFar(empresa);
 
             if (banco is null)
             {
@@ -451,8 +450,8 @@ namespace TaxZone
 
         }
 
-        public static async void GetQuantidadeNotas(DateTime periodoIni, DateTime periodoFin, string empresa, bool mostrarNaTela, 
-            bool arquivoTemporario, string local, bool incluidasHoje, bool mesAberto)
+        public static async Task GetQuantidadeNotas(DateTime periodoIni, DateTime periodoFin, string empresa, bool mostrarNaTela, 
+            bool arquivoTemporario, bool popularTabela, string local, bool incluidasHoje, bool mesAberto)
         {
             try
             {
@@ -462,6 +461,7 @@ namespace TaxZone
                 int taskCount = 1;
                 if (empresa == "TODAS") taskCount = 9;
 
+                /*
                 if (!mostrarNaTela && !arquivoTemporario)
                 {
                     salvarDialog.Title = "Salvar arquivo como...";
@@ -475,7 +475,7 @@ namespace TaxZone
 
                     if (salvarDialog.ShowDialog() != DialogResult.OK) return;
                 }
-
+                */
                 NotificationService.AtualizarStatusQtdNotas(
                             $"Iniciando consulta...",
                             1);
@@ -486,7 +486,7 @@ namespace TaxZone
 
                 for (int i = 0; i < taskCount; i++)
                 {
-                    Banco banco = null;
+                    BancoDTO banco = null;
                     string query = "", user = "", password = "";
 
                     if (taskCount > 1)
@@ -499,7 +499,7 @@ namespace TaxZone
                         password = ConfigManager.DatabasePasswordMsa;
 
                         string filtroIncluidasHoje = "";
-                        if (incluidasHoje)
+                        if (!incluidasHoje)
                         {
                             filtroIncluidasHoje = $"AND DTH_INCLUSAO < to_date('{DateTime.Now.ToString("dd/MM/yyyy")}', 'DD/MM/YYYY')";
                         }
@@ -564,6 +564,7 @@ namespace TaxZone
                     return;
                 }
 
+                /*
                 if (local == "SIFAR")
                 {
                     qtd_notas.Columns["'NOTAS'"].MaxLength = 20;
@@ -573,20 +574,24 @@ namespace TaxZone
                     linha["TOTAL"] = 0;
                     linha["CODFIL"] = 0;
                     qtd_notas.Rows.Add(linha);
-                }
+                }*/
 
 
                 if (mostrarNaTela)
                 {
                     Util.MostrarDataTable(qtd_notas);
                 }
+                else if (popularTabela)
+                {
+                    Banco.AtualizarQtdSifar(qtd_notas, periodoIni.Year, periodoIni.Month);
+                }
                 else
                 {
                     string filename;
-                    if (arquivoTemporario)
+                    if (!arquivoTemporario)
                         filename = salvarDialog.FileName;
                     else
-                        filename = "C:\\Temp\\qtd_notas_{cb_empresa_qtd_notas.Text}.csv";
+                        filename = "C:\\Temp\\TaxZone\\qtd_notas.csv";
 
                     CsvClass.WriteDataTableToCsv(qtd_notas, filename);
 

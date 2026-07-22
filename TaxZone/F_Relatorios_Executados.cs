@@ -78,11 +78,20 @@ namespace TaxZone
 
             if (dgv_relatorios.Columns[e.ColumnIndex].Name == "btnBaixar")
             {
-                bool sucesso = await ApiTax.BaixarRelatorio(taxContext, e.RowIndex + 1);
-                if (sucesso)
-                    MessageBox.Show("Arquivos baixados com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                else
-                    MessageBox.Show("Falha ao baixar arquivos!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                try
+                {
+                    bool sucesso = await ApiTax.BaixarRelatorio(taxContext, e.RowIndex + 1);
+                    if (sucesso)
+                        MessageBox.Show("Arquivos baixados com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    else
+                        MessageBox.Show("Falha ao baixar arquivos!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show($"Erro ao baixar relatório: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
             }
         }
 

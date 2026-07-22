@@ -1,12 +1,12 @@
 ﻿
 namespace TaxZone
 {
-    public class Banco
+    public class BancoDTO
     {
         public string database;
         public string owner;
 
-        public Banco(string database, string owner)
+        public BancoDTO(string database, string owner)
         {
             this.database = database;
             this.owner = owner;
