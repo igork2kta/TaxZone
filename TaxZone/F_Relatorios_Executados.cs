@@ -80,7 +80,7 @@ namespace TaxZone
             {
                 try
                 {
-                    bool sucesso = await ApiTax.BaixarRelatorio(taxContext, e.RowIndex + 1);
+                    bool sucesso = await ApiTax.BaixarRelatorio(taxContext, e.RowIndex + 1, Convert.ToInt32(dgv_relatorios.CurrentRow.Cells["NumProcesso"].Value));
                     if (sucesso)
                         MessageBox.Show("Arquivos baixados com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     else

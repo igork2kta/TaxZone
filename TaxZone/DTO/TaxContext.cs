@@ -22,12 +22,16 @@ namespace TaxZone.DTO
 
         public string DataManagerId { get; set; }
 
-        public string ProcId_t { get; set; }
+        //DataManagerId da tela de processos customizados
+        public string d_lib_proc_processos { get; set; }
 
-        public string PbAbrir { get; set; }
+        //DataManagerId 2 da tela de lista de arquivos customizados
+        public string d_lib_proc_lista_arquivos { get; set; }
 
-        public string T1 { get; set; }
+        public string d_lib_proc_lista_arquivos_header_taxbr { get; set; }
 
         public string Id { get; set; }
+
+        public string UniqueIdListaArquivos { get; set; }
     }
 }

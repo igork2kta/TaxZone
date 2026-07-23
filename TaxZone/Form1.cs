@@ -843,6 +843,7 @@ namespace TaxZone
                             await ApiTax.BaixarRelatorio(
                                 context,
                                 1,
+                                0,
                                 Config.PathArquivoTemporario);
                         }
                         else

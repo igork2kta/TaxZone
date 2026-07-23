@@ -1,4 +1,6 @@
 ﻿using Microsoft.Playwright;
+using System.Configuration;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json.Nodes;
 using TaxZone.DTO;
@@ -22,8 +24,6 @@ namespace TaxZone
         public static string qtd_canceladas;
         public static string extracao_canceladas;
 
-        //public static TaxContext context = new();
-
         public ApiTax()
         {
  
@@ -32,9 +32,6 @@ namespace TaxZone
         public static async Task<string> GetCookie(string usuario, string senha)
         {
             var url = "https://www.onesourcetax.com/";
-
-            REMOVIDO
-            REMOVIDO
 
             using var playwright = await Playwright.CreateAsync();
 
@@ -156,7 +153,7 @@ namespace TaxZone
             return JsonNode.Parse(content)!;
         }
 
-        public static async Task BaixarPdfAsync(string empresa, string url, string caminhoArquivo)
+        public static async Task BaixarArquivoAsync(string empresa, string url, string caminhoArquivo)
         {
             using HttpClient client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -356,28 +353,6 @@ namespace TaxZone
                 if (string.IsNullOrEmpty(context.NewViews))
                     throw new Exception("Erro ao obter NewViews 'm_processoscustomizadosclicked'");
 
-                /*
-                //PerformMultiOperation
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
-
-                json_content = $$$"""
-                    {"menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"targetName":"safcp","args":[["safcp2/w_processos_customizados/safgnfw1w_sheet_dw_simplesdw_sheetgetfocus",
-                    "{\"vm\":\"{{{context.NewViews}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"37\",\"currentRow\":1,\"currentControlName\":\"compute_1\",\"displayedRowCount\":10,\"currentPage\":1}}]}","61","safcp"]]},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"37","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],"storageID":"ed8bfa4a-6a47-4d09-b23e-1f1235bdca4d"}{"menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"targetName":"safcp","args":[["safcp2/w_processos_customizados/safgnfw1w_sheet_dw_simplesdw_sheetgetfocus","{\"vm\":\"3d\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"64\",\"currentRow\":1,\"currentControlName\":\"compute_1\",\"displayedRowCount\":10,\"currentPage\":1}}]}","61","safcp"]]},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"64","currentRow":1,"currentControlName":"compute_1","displayedRowCount":10,"currentPage":1}}],
-                    "storageID":"{{{context.StorageId}}}"}
-                    """;
-
-                root = await PostAsync(context.Empresa, url, json_content);
-                
-                
-                if(root["ErrorOcurred"]?.GetValue<string>() == "true")
-                {
-                    string? mensagemErro = root["ExMessage"]?.GetValue<string>();
-
-                    if (!string.IsNullOrEmpty(mensagemErro))
-                        throw new Exception($"Erro ao selecionar empresa e módulo: {mensagemErro}");
-                }
-
-                */
 
                 //safcp2w_processos_customizadosdw_sheetclicked
                 url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadosdw_sheetclicked";
@@ -427,7 +402,8 @@ namespace TaxZone
 
                 string uniqueId2 = root["MD"]?[2]?["UniqueID"]?.GetValue<string>();
                 context.Id = uniqueId2?.Split('#').LastOrDefault();
-                context.ProcId_t = root["MD"]?
+
+                /*context.ProcId_t = root["MD"]?
                             .AsArray()
                             .FirstOrDefault(x => x?["UniqueID"]?
                                 .GetValue<string>()?
@@ -435,8 +411,12 @@ namespace TaxZone
                             .GetValue<string>()?
                             .Split('#')
                             .LastOrDefault();
+                */
+                context.d_lib_proc_processos = root["MD"]?[35]?[0]?.GetValue<string>();
 
-                context.T1 = root["MD"]?
+                context.d_lib_proc_lista_arquivos = root["MD"]?[56]?[0]?.GetValue<string>();
+                /*
+                context.ProcessosId = root["MD"]?
                         .AsArray()
                         .FirstOrDefault(x => x?["UniqueID"]?
                             .GetValue<string>()?
@@ -444,36 +424,20 @@ namespace TaxZone
                         .GetValue<string>()?
                         .Split('#')
                         .LastOrDefault();
+                */
+                context.UniqueIdListaArquivos = root["MD"][185][0].GetValue<string>();
+
+                context.d_lib_proc_lista_arquivos_header_taxbr = root["MD"]?[169]?[0]?.GetValue<string>();
+
+                //context.AbaProcessosId = context.d_lib_proc_processos;
+
 
                 if (string.IsNullOrEmpty(context.NewViews2))
                     throw new Exception("Erro ao obter NewViews2 'w_processos_customizadoscb_executarclicked'");
  
-                //safobfww_lib_proctab_frameworkselectionchangedd
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
-
-                json_content = $$$"""
-                    {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":1},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
-                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"c6","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
-                    "storageID":"{{{context.StorageId}}}"}
-                        
-                    """;
-
-                root = await PostAsync(context.Empresa, url, json_content);
-
-                context.PbAbrir = root["MD"]?
-                        .AsArray()
-                        .FirstOrDefault(x => x?["UniqueID"]?
-                            .GetValue<string>()?
-                            .StartsWith("pb_abrir#") == true)?["UniqueID"]?
-                        .GetValue<string>()?
-                        .Split('#')
-                        .LastOrDefault();
-
-                if (string.IsNullOrEmpty(context.PbAbrir))
-                    throw new Exception("Erro ao obter PbAbrir 'safobfww_lib_proctab_frameworkselectionchangedd'");
-
-
+               
                 return;
+
             }
             catch (Exception ex)
             {
@@ -532,21 +496,21 @@ namespace TaxZone
                            60);
 
                 if (buraco_nota == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 9, buraco_nota, 7);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 9, buraco_nota, 7);
                 if (diferenca_capa_item == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 11, diferenca_capa_item, 9);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 11, diferenca_capa_item, 9);
                 if (icms_resumido == "S") 
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 14, icms_resumido, 12);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 14, icms_resumido, 12);
                 if (notas_sem_item == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 15, notas_sem_item, 13);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 15, notas_sem_item, 13);
                 if (qtd_itens == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 16, qtd_itens, 14);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 16, qtd_itens, 14);
                 if (qtd_notas == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 18, qtd_notas, 16);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 18, qtd_notas, 16);
                 if (qtd_canceladas == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 19, qtd_canceladas, 17);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 19, qtd_canceladas, 17);
                 if (extracao_canceladas == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.ProcId_t, context.PbAbrir, context.T1, context.StorageId, 21, extracao_canceladas, 19);
+                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 21, extracao_canceladas, 19);
 
                 NotificationService.AtualizarStatusTax(
                            $"Programando relatório para {empresa}",
@@ -620,8 +584,8 @@ namespace TaxZone
                 json_content = $$$"""
                         {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":2},
                         "dirty":{"tab_framework#{{{context.NewViews2}}}":{"selectedTabIndex":2}},
-                        "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
-                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.T1}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
+                        "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_processos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
                         "storageID":"{{{context.StorageId}}}"}
                         """;
 
@@ -704,8 +668,8 @@ namespace TaxZone
                 json_content = $$$"""
                         {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp","parameters":{"oldindex":1,"newindex":2},
                         "dirty":{"tab_framework#{{{context.NewViews2}}}":{"selectedTabIndex":2}},
-                        "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.ProcId_t}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
-                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.T1}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
+                        "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_processos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
                         "storageID":"{{{context.StorageId}}}"}
                         """;
 
@@ -746,7 +710,7 @@ namespace TaxZone
             }
         }
 
-        public static async Task<bool> BaixarRelatorio(TaxContext context, int row, string path = null)
+        public static async Task<bool> BaixarRelatorio(TaxContext context, int row, int procId, string path = null)
         {
             try
             {
@@ -758,15 +722,16 @@ namespace TaxZone
 
                 string json_content = $$$"""
                 {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp",
-                "parameters":{"row":{{{row}}},"dwo":"pb_abrir#{{{context.PbAbrir}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
-                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.PbAbrir}}}","currentRow":1,"currentControlName":"pb_abrir","displayedRowCount":10,"currentPage":1}},
-                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.T1}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
+                "parameters":{"row":{{{row}}},"dwo":"pb_abrir#{{{context.d_lib_proc_processos}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_processos}}}","currentRow":1,"currentControlName":"pb_abrir","displayedRowCount":10,"currentPage":1}},
+                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
                 "storageID":"{{{context.StorageId}}}"}
                 """;
 
                 var root = await PostAsync(context.Empresa, url, json_content);
 
                 var md = root["MD"]!.AsArray();
+
 
                 if (string.IsNullOrEmpty(path))
                 {
@@ -801,7 +766,7 @@ namespace TaxZone
 
                     string urlBuraco = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_buraco}&storageID={context.StorageId}";
                     string arquivoBuraco = Path.Combine(path, $"BURACO_{context.Empresa}.pdf");
-                    downloads.Add(BaixarPdfAsync(context.Empresa, urlBuraco, arquivoBuraco));
+                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlBuraco, arquivoBuraco));
 
                 }
                 catch (Exception ex) { }
@@ -824,7 +789,7 @@ namespace TaxZone
 
                     string urlItens = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_itens}&storageID={context.StorageId}";
                     string arquivoItens = Path.Combine(path, $"ITENS_{context.Empresa}.pdf");
-                    downloads.Add(BaixarPdfAsync(context.Empresa, urlItens, arquivoItens));
+                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlItens, arquivoItens));
 
                 }
 
@@ -847,7 +812,7 @@ namespace TaxZone
                     string urlNotas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_notas}&storageID={context.StorageId}";
                     string arquivoNotas = Path.Combine(path, $"NOTAS_{context.Empresa}.pdf");
 
-                    downloads.Add(BaixarPdfAsync(context.Empresa, urlNotas, arquivoNotas));
+                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlNotas, arquivoNotas));
 
                 }
                 catch (Exception ex) { }
@@ -869,7 +834,7 @@ namespace TaxZone
                     string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_canceladas}&storageID={context.StorageId}";
                     string arquivoCanceladas = Path.Combine(path, $"CANC_{context.Empresa}.pdf");
 
-                    downloads.Add(BaixarPdfAsync(context.Empresa, urlCanceladas, arquivoCanceladas));
+                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlCanceladas, arquivoCanceladas));
                 }
                 catch (Exception ex) { }
 
@@ -890,11 +855,158 @@ namespace TaxZone
                     string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_icms}&storageID={context.StorageId}";
                     string arquivoCanceladas = Path.Combine(path, $"ICMS_{context.Empresa}.pdf");
 
-                    downloads.Add(BaixarPdfAsync(context.Empresa, urlCanceladas, arquivoCanceladas))    ;
+                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlCanceladas, arquivoCanceladas))    ;
                 }
                 catch (Exception ex) { }
 
                 await Task.WhenAll(downloads);
+
+                //Se o procid for informado, baixa os arquivos zip da área de transferencia do tax
+                if(procId > 0)
+                {
+
+                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=10&dataManagerId={context.d_lib_proc_lista_arquivos}&start=1";
+
+                    json_content = $$$"""
+                         {
+                          "storageID": "{{{context.StorageId}}}"
+                        }
+                        """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+                    int total_itens = root[0]?[0]?.GetValue<int>() ?? 0;
+
+                    if (total_itens == 0) return true;
+
+                    bool jaExisteAreaTransferencia = await BaixarAreaTransferenciaPorProcId(context, procId, path);
+
+                    if (jaExisteAreaTransferencia) return true;
+
+                    //trocar para aba ARQUIVOS
+                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
+
+                    
+                    json_content = $$$"""
+                    { "vm": "{{{context.NewViews2}}}",
+                      "menuPath": "Processos Customizados > Execução dos Processos Customizados","moduleExe": "safcp",
+                      "parameters": {"oldindex": 2,"newindex": 4},"dirty": {"tab_framework#{{{context.NewViews2}}}": {"selectedTabIndex": 4}},"commands": [{"command": "UPDATE_CURRENT_KEY","data": {"key": "none"} },
+                      {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lib_proc_processos}}}","currentRow": 1,"currentControlName": "pb_abrir","displayedRowCount": 10,"currentPage": 1}},
+                      {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}","currentRow": 1,"currentControlName": "","displayedRowCount": 10,"currentPage": 1}}],
+                      "storageID": "{{{context.StorageId}}}"}
+                    """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+            
+                
+                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
+
+                    json_content = $$$"""
+                    {
+                      "menuPath": "Processos Customizados > Execução dos Processos Customizados",
+                      "moduleExe": "safcp",
+                      "parameters": {
+                        "targetName": "safcp",
+                        "args": [
+                          [
+                            "safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headerclicked",
+                            "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"parameters\":{\"ypos\":0,\"row\":1,\"dwo\":\"todos#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_processos}}}\",\"currentRow\":1,\"currentControlName\":\"pb_abrir\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_lista_arquivos}}}\",\"currentRow\":1,\"currentControlName\":\"c_selecionar\",\"displayedRowCount\":10,\"currentPage\":1}}]}",
+                            "{{{context.NewViews2}}}",
+                            "safcp"
+                          ],
+                          [
+                            "safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headeritemchanged",
+                            "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"parameters\":{\"row\":1,\"dwo\":\"todos#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_BUNDLE_CURRENT_ROW_DELAYED\",\"data\":{\"dataManagerId\":\"4e\",\"bundle\":[{\"0\":\"char(500)\",\"1\":\"char(1)\",\"2\":\"number\",\"3\":\"char(1)\",\"4\":\"char(1)\"},{},[[{\"WM$%S\":3,\"WM$%CS\":\"11011\",\"computed\":{}},\"TAXONEDIR_ENERGISA\",\"S\",0,\"N\",\"1\"]],[\"diretorio\",\"localizacao\",\"max_size\",\"gera_sem_num_processo\",\"todos\"]],\"updatedColumns\":[5]}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_processos}}}\",\"currentRow\":1,\"currentControlName\":\"pb_abrir\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_lista_arquivos}}}\",\"currentRow\":1,\"currentControlName\":\"c_selecionar\",\"displayedRowCount\":10,\"currentPage\":1}}]}",
+                            "{{{context.NewViews2}}}",
+                            "safcp"
+                          ]
+                        ]
+                      },
+                      "commands": [
+                        {
+                          "command": "UPDATE_CURRENT_KEY",
+                          "data": {
+                            "key": "none"
+                          }
+                        },
+                        {
+                          "command": "UPDATE_DM_ROW_AND_COL",
+                          "data": {
+                            "dataManagerId": "{{{context.d_lib_proc_processos}}}",
+                            "currentRow": 1,
+                            "currentControlName": "pb_abrir",
+                            "displayedRowCount": 10,
+                            "currentPage": 1
+                          }
+                        },
+                        {
+                          "command": "UPDATE_DM_ROW_AND_COL",
+                          "data": {
+                            "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
+                            "currentRow": 1,
+                            "currentControlName": "c_selecionar",
+                            "displayedRowCount": 10,
+                            "currentPage": 1
+                          }
+                        }
+                      ],
+                      "storageID": "{{{context.StorageId}}}"
+                    }
+                    """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+                    //SALVAR ARQUIVOS SELECIONADOS
+                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headerbuttonclicked";
+
+                    json_content = $$$"""
+                    {
+                      "vm": "{{{context.NewViews2}}}",
+                      "menuPath": "Processos Customizados > Execução dos Processos Customizados",
+                      "moduleExe": "safcp",
+                      "parameters": {
+                        "row": 1,
+                        "dwo": "pb_salvar#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}"
+                      },
+                      "commands": [
+                        {
+                          "command": "UPDATE_CURRENT_KEY",
+                          "data": {
+                            "key": "none"
+                          }
+                        },
+                        {
+                          "command": "UPDATE_DM_ROW_AND_COL",
+                          "data": {
+                            "dataManagerId": "{{{context.d_lib_proc_processos}}}",
+                            "currentRow": 1,
+                            "currentControlName": "pb_abrir",
+                            "displayedRowCount": 10,
+                            "currentPage": 1
+                          }
+                        },
+                        {
+                          "command": "UPDATE_DM_ROW_AND_COL",
+                          "data": {
+                            "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
+                            "currentRow": 1,
+                            "currentControlName": "c_selecionar",
+                            "displayedRowCount": 10,
+                            "currentPage": 1
+                          }
+                        }
+                      ],
+                     "storageID": "{{{context.StorageId}}}"
+                    }
+                    """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+                    if (root[2]?[0]?[0]?[0]?["text"].GetValue<string>() != "Operação realizada com sucesso.")
+                        return false;
+
+                    await BaixarAreaTransferenciaPorProcId(context, procId, path); jaExisteAreaTransferencia = await BaixarAreaTransferenciaPorProcId(context, procId, path);
+                }
 
                 return true;
             }
@@ -905,6 +1017,55 @@ namespace TaxZone
 
         }
 
+        public static async Task<bool> BaixarAreaTransferenciaPorProcId(TaxContext context, int procId, string path)
+        {
+            try
+            {
+                //ACESSAR ÁREA DE TRANSFERENCIA DE ARQUIVOS
+                using HttpClient client = new HttpClient();
+                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/NAS/fileTransfer/files?isZipFileOnly=true";
+
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                AddHeaders(request, context.Empresa);
+                using HttpResponseMessage response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                var jsonArray = JsonNode.Parse(content)?.AsArray();
+
+                var resultado = jsonArray?
+                    .Where(node => node["name"]?.ToString().Contains(procId.ToString()) == true)
+                    .GroupBy(node => node["name"]?.ToString()) // 1. Agrupa pelo nome do arquivo
+                    .Select(group => group.First())            // 2. Pega apenas o primeiro de cada grupo
+                    .Select(node => new
+                    {
+                        Name = node["name"]?.ToString(),
+                        HashPath = node["hashPath"]?.GetValue<long>()
+                    })
+                    .ToList();
+
+                var downloads = new List<Task>();
+
+                if (resultado.Count == 0) return false;
+
+                foreach (var item in resultado)
+                {
+                    string path_ = Path.Combine(path, item.Name);
+                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/NAS/fileTransfer/files/download?hash={item.HashPath}&path=Download%5C{item.Name}";
+                    downloads.Add(BaixarArquivoAsync(context.Empresa, url, path_));
+                    //Console.WriteLine($"Nome: {item.Name} | HashPath: {item.HashPath}");
+                }
+                await Task.WhenAll(downloads);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
 
         //Chama o itemchanged para os parametros Empresa/Estabelecimento/DataInicio/DataFim
         public static async Task<string> ParametrosRelatorio(string empresa, string controlNumber, string dataManagerId, string storageID, int coluna, string valor)
