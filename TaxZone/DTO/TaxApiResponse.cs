@@ -11,6 +11,10 @@ namespace TaxZone.DTO
         public bool Success { get; set; }
         public string Message { get; set; }
         public string Empresa { get; set; }
+        public bool Completed {  get; set; }
+
+        public List<ProcessoImportacao> ProcessosImportacao {  get; set; }
+        public List<ProcessoRelatorio> ProcessosRelatorio { get; set; }
 
         public TaxApiResponse(bool sucess, string message, string empresa)
         {

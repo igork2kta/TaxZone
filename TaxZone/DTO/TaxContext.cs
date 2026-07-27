@@ -10,6 +10,8 @@ namespace TaxZone.DTO
     {
         public string Empresa { get; set; }
 
+        public string Modulo {  get; set; }
+
         public string StorageId { get; set; }
 
         public string NewViews { get; set; }
@@ -33,5 +35,7 @@ namespace TaxZone.DTO
         public string Id { get; set; }
 
         public string UniqueIdListaArquivos { get; set; }
+
+        public string d_consulta_rel_proc_imp_grid { get; set; }
     }
 }

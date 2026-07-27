@@ -87,6 +87,7 @@
             label2 = new Label();
             bt_produtos_taxas = new Button();
             groupBox3 = new GroupBox();
+            button2 = new Button();
             lbox_empresas = new ListBox();
             lbl_status_tax = new Label();
             ckb_renew_task = new CheckBox();
@@ -119,7 +120,7 @@
             label4 = new Label();
             bt_atualizar_valores_tax = new Button();
             groupBox4 = new GroupBox();
-            label31 = new Label();
+            label24 = new Label();
             bt_atualizar_comparacao = new Button();
             cb_status = new ComboBox();
             bt_alterar_status = new Button();
@@ -689,6 +690,7 @@
             // 
             // groupBox3
             // 
+            groupBox3.Controls.Add(button2);
             groupBox3.Controls.Add(lbox_empresas);
             groupBox3.Controls.Add(lbl_status_tax);
             groupBox3.Controls.Add(ckb_renew_task);
@@ -725,6 +727,16 @@
             groupBox3.TabIndex = 44;
             groupBox3.TabStop = false;
             groupBox3.Text = "Tax API";
+            // 
+            // button2
+            // 
+            button2.Location = new Point(294, 357);
+            button2.Name = "button2";
+            button2.Size = new Size(75, 23);
+            button2.TabIndex = 60;
+            button2.Text = "button2";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
             // 
             // lbox_empresas
             // 
@@ -818,7 +830,7 @@
             // 
             // bt_relatorios
             // 
-            bt_relatorios.Location = new Point(230, 357);
+            bt_relatorios.Location = new Point(213, 357);
             bt_relatorios.Name = "bt_relatorios";
             bt_relatorios.Size = new Size(75, 23);
             bt_relatorios.TabIndex = 53;
@@ -1033,18 +1045,18 @@
             // 
             // bt_atualizar_valores_tax
             // 
-            bt_atualizar_valores_tax.Location = new Point(18, 204);
+            bt_atualizar_valores_tax.Location = new Point(6, 26);
             bt_atualizar_valores_tax.Name = "bt_atualizar_valores_tax";
-            bt_atualizar_valores_tax.Size = new Size(75, 23);
+            bt_atualizar_valores_tax.Size = new Size(110, 23);
             bt_atualizar_valores_tax.TabIndex = 59;
-            bt_atualizar_valores_tax.Text = "Atualizar";
+            bt_atualizar_valores_tax.Text = "Buscar Valores Tax";
             bt_atualizar_valores_tax.UseVisualStyleBackColor = true;
             bt_atualizar_valores_tax.Click += bt_atualizar_valores_tax_Click;
             // 
             // groupBox4
             // 
             groupBox4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            groupBox4.Controls.Add(label31);
+            groupBox4.Controls.Add(label24);
             groupBox4.Controls.Add(bt_atualizar_valores_tax);
             groupBox4.Controls.Add(bt_atualizar_comparacao);
             groupBox4.Controls.Add(cb_status);
@@ -1056,23 +1068,23 @@
             groupBox4.Controls.Add(dgv_comparativo_notas);
             groupBox4.Location = new Point(1089, 8);
             groupBox4.Name = "groupBox4";
-            groupBox4.Size = new Size(720, 524);
+            groupBox4.Size = new Size(680, 524);
             groupBox4.TabIndex = 46;
             groupBox4.TabStop = false;
             groupBox4.Text = "Comparação Quantidades";
             // 
-            // label31
+            // label24
             // 
-            label31.AutoSize = true;
-            label31.Location = new Point(6, 183);
-            label31.Name = "label31";
-            label31.Size = new Size(71, 15);
-            label31.TabIndex = 60;
-            label31.Text = "Valores TAX:";
+            label24.AutoSize = true;
+            label24.Location = new Point(376, 30);
+            label24.Name = "label24";
+            label24.Size = new Size(42, 15);
+            label24.TabIndex = 61;
+            label24.Text = "Status:";
             // 
             // bt_atualizar_comparacao
             // 
-            bt_atualizar_comparacao.Location = new Point(639, 28);
+            bt_atualizar_comparacao.Location = new Point(600, 26);
             bt_atualizar_comparacao.Name = "bt_atualizar_comparacao";
             bt_atualizar_comparacao.Size = new Size(75, 23);
             bt_atualizar_comparacao.TabIndex = 53;
@@ -1084,25 +1096,25 @@
             // 
             cb_status.FormattingEnabled = true;
             cb_status.Items.AddRange(new object[] { "EM ANDAMENTO", "LIBERADO" });
-            cb_status.Location = new Point(400, 27);
+            cb_status.Location = new Point(420, 26);
             cb_status.Name = "cb_status";
             cb_status.Size = new Size(121, 23);
             cb_status.TabIndex = 52;
             // 
             // bt_alterar_status
             // 
-            bt_alterar_status.Location = new Point(527, 27);
+            bt_alterar_status.Location = new Point(545, 26);
             bt_alterar_status.Name = "bt_alterar_status";
-            bt_alterar_status.Size = new Size(88, 23);
+            bt_alterar_status.Size = new Size(50, 23);
             bt_alterar_status.TabIndex = 51;
-            bt_alterar_status.Text = "Alterar Status";
+            bt_alterar_status.Text = "Alterar";
             bt_alterar_status.UseVisualStyleBackColor = true;
             bt_alterar_status.Click += bt_alterar_status_Click;
             // 
             // label29
             // 
             label29.AutoSize = true;
-            label29.Location = new Point(245, 31);
+            label29.Location = new Point(267, 30);
             label29.Name = "label29";
             label29.Size = new Size(13, 15);
             label29.TabIndex = 50;
@@ -1111,15 +1123,15 @@
             // dtp_fim_comparativo_notas
             // 
             dtp_fim_comparativo_notas.Format = DateTimePickerFormat.Short;
-            dtp_fim_comparativo_notas.Location = new Point(264, 27);
+            dtp_fim_comparativo_notas.Location = new Point(286, 26);
             dtp_fim_comparativo_notas.Name = "dtp_fim_comparativo_notas";
-            dtp_fim_comparativo_notas.Size = new Size(86, 23);
+            dtp_fim_comparativo_notas.Size = new Size(84, 23);
             dtp_fim_comparativo_notas.TabIndex = 49;
             // 
             // label30
             // 
             label30.AutoSize = true;
-            label30.Location = new Point(100, 31);
+            label30.Location = new Point(122, 30);
             label30.Name = "label30";
             label30.Size = new Size(48, 15);
             label30.TabIndex = 48;
@@ -1128,9 +1140,9 @@
             // dtp_inicio_comparativo_notas
             // 
             dtp_inicio_comparativo_notas.Format = DateTimePickerFormat.Short;
-            dtp_inicio_comparativo_notas.Location = new Point(154, 27);
+            dtp_inicio_comparativo_notas.Location = new Point(176, 26);
             dtp_inicio_comparativo_notas.Name = "dtp_inicio_comparativo_notas";
-            dtp_inicio_comparativo_notas.Size = new Size(86, 23);
+            dtp_inicio_comparativo_notas.Size = new Size(85, 23);
             dtp_inicio_comparativo_notas.TabIndex = 47;
             // 
             // dgv_comparativo_notas
@@ -1150,10 +1162,10 @@
             dataGridViewCellStyle1.WrapMode = DataGridViewTriState.False;
             dgv_comparativo_notas.DefaultCellStyle = dataGridViewCellStyle1;
             dgv_comparativo_notas.EditMode = DataGridViewEditMode.EditOnEnter;
-            dgv_comparativo_notas.Location = new Point(99, 59);
+            dgv_comparativo_notas.Location = new Point(6, 59);
             dgv_comparativo_notas.Name = "dgv_comparativo_notas";
             dgv_comparativo_notas.RowHeadersVisible = false;
-            dgv_comparativo_notas.Size = new Size(615, 456);
+            dgv_comparativo_notas.Size = new Size(668, 456);
             dgv_comparativo_notas.TabIndex = 46;
             dgv_comparativo_notas.CellEndEdit += dgv_comparativo_notas_CellEndEdit;
             dgv_comparativo_notas.CellFormatting += dgv_comparativo_notas_CellFormatting;
@@ -1173,7 +1185,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1821, 546);
+            ClientSize = new Size(1781, 546);
             Controls.Add(ckb_always_on_top);
             Controls.Add(groupBox4);
             Controls.Add(groupBox3);
@@ -1326,7 +1338,8 @@
         private Button bt_atualizar_comparacao;
         private CheckBox ckb_always_on_top;
         private Button bt_atualizar_valores_tax;
-        private Label label31;
         private ListBox lbox_empresas;
+        private Label label24;
+        private Button button2;
     }
 }

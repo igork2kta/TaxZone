@@ -168,8 +168,6 @@ namespace TaxZone
                 FuncoesTax.GetQuantidadeNotas(periodoIni, periodoFin, empresa, mostrarNaTela, arquivoTemporario, popularTabela, local, incluidasHoje, mesAberto);
             }
 
-
-
         }
 
         private void bt_pessoa_fisica_juridica_Click(object sender, EventArgs e)
@@ -215,7 +213,7 @@ namespace TaxZone
             {
                 if (resultado.Success)
                     empresasSucesso += resultado.Empresa + "/";
-                else 
+                else
                     empresasComFalha += resultado.Empresa + "/";
             }
 
@@ -268,9 +266,9 @@ namespace TaxZone
                     empresasPendentes += resultado.Empresa + "/";
                 else
                     empresasComFalha += resultado.Empresa + "/";
-            }   
+            }
 
-            MessageBox.Show($"Cooncluídos: {empresasSucesso}\nPendentes: {empresasPendentes}\nErro: {empresasComFalha}", "Status Tax Automation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"Concluídos: {empresasSucesso}\nPendentes: {empresasPendentes}\nErro: {empresasComFalha}", "Status Tax Automation", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         }
 
@@ -344,6 +342,27 @@ namespace TaxZone
 
             ckb_renew_task.Checked = true;
         }
+
+        private void bt_alterar_status_Click(object sender, EventArgs e)
+        {
+
+            string status = cb_status.Text;
+
+            foreach (DataGridViewRow row in dgv_comparativo_notas.Rows)
+            {
+                int id = Convert.ToInt32(row.Cells["id"].Value);
+                Banco.AtualizarStatus(status, id);
+            }
+            AtualizarComparativoNotas();
+
+        }
+
+        private void bt_atualizar_valores_tax_Click(object sender, EventArgs e)
+        => AtualizarValoresTax();
+
+
+        private void bt_atualizar_comparacao_Click(object sender, EventArgs e)
+            => AtualizarComparativoNotas();
 
 
         #endregion
@@ -456,19 +475,88 @@ namespace TaxZone
             else ckb_incluidas_hoje.Visible = false;
         }
 
-        /*
-        private void cb_empresa_tax_api_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var listEstab = Empresa.GetEstabelecimentos(cb_empresa_tax_api.Text);
-            var datasource = new List<string> { "TODOS" };
-            datasource.AddRange(listEstab.Select(x => x.ToString()));
-            //cb_estab.DataSource = datasource;
-        }
-        */
         private async void ckb_renew_task_CheckedChanged(object sender, EventArgs e)
         {
             if (ckb_renew_task.Checked) _cookieRenew.Start();
             else await _cookieRenew.StopAsync();
+        }
+
+        private void ckb_always_on_top_CheckedChanged(object sender, EventArgs e)
+            => TopMost = ckb_always_on_top.Checked;
+
+
+        private void dgv_comparativo_notas_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            int id = Convert.ToInt32(dgv_comparativo_notas.Rows[e.RowIndex].Cells["id"].Value);
+
+            var value_sifar = dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_SIFAR"].Value;
+            if (value_sifar == DBNull.Value)
+                dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_SIFAR"].Value = 0;
+            int qtdSifar = Convert.ToInt32(dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_SIFAR"].Value);
+
+            var value_tax = dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_TAX"].Value;
+            if (value_tax == DBNull.Value)
+                dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_TAX"].Value = 0;
+            int qtdTax = Convert.ToInt32(dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_TAX"].Value);
+
+            Banco.AtualizarRegistro(qtdSifar, qtdTax, id);
+
+        }
+
+        private void lbox_empresas_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!_formCarregado) return;
+            AtualizarComparativoNotas();
+        }
+
+        private void dgv_comparativo_notas_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.Value == DBNull.Value) return;
+
+            string coluna = dgv_comparativo_notas.Columns[e.ColumnIndex].Name;
+
+            // Coluna STATUS
+            if (coluna == "STATUS")
+            {
+                if (e.Value?.ToString() == "LIBERADO")
+                {
+                    e.CellStyle.BackColor = Color.LightGreen;
+                    e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+                }
+                else if (e.Value?.ToString() == "EM ANDAMENTO")
+                {
+                    e.CellStyle.BackColor = Color.LightYellow;
+                    e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+                }
+            }
+
+            //Coluna DIFERENÇA
+            if (coluna == "DIFERENÇA")
+            {
+
+                var status = dgv_comparativo_notas.Rows[e.RowIndex]
+                    .Cells["STATUS"].Value?.ToString();
+
+                if (status == "LIBERADO")
+                {
+                    e.CellStyle.BackColor = Color.LightGreen;
+                    e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+                }
+                else
+                {
+                    if (e.Value != null && Convert.ToInt32(e.Value) != 0)
+                    {
+                        e.CellStyle.BackColor = Color.Salmon;
+                        e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+                    }
+                    else
+                    {
+                        e.CellStyle.BackColor = Color.LightGreen;
+                        e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+
+                    }
+                }
+            }
         }
 
         #endregion
@@ -524,32 +612,6 @@ namespace TaxZone
 
         }
 
-        private void dgv_comparativo_notas_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            int id = Convert.ToInt32(dgv_comparativo_notas.Rows[e.RowIndex].Cells["id"].Value);
-
-            var value_sifar = dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_SIFAR"].Value;
-            if (value_sifar == DBNull.Value)
-                dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_SIFAR"].Value = 0;
-            int qtdSifar = Convert.ToInt32(dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_SIFAR"].Value);
-
-            var value_tax = dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_TAX"].Value;
-            if (value_tax == DBNull.Value)
-                dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_TAX"].Value = 0;
-            int qtdTax = Convert.ToInt32(dgv_comparativo_notas.Rows[e.RowIndex].Cells["QTD_TAX"].Value);
-
-
-
-            Banco.AtualizarRegistro(qtdSifar, qtdTax, id);
-
-        }
-
-        private void lbox_empresas_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (!_formCarregado) return;
-            AtualizarComparativoNotas();
-        }
-
         private void AtualizarComparativoNotas()
         {
             int ano = dtp_inicio_comparativo_notas.Value.Year;
@@ -589,20 +651,6 @@ namespace TaxZone
                 dgv_comparativo_notas.Columns["STATUS"].DisplayIndex;
         }
 
-        private void bt_alterar_status_Click(object sender, EventArgs e)
-        {
-
-            string status = cb_status.Text;
-
-            foreach (DataGridViewRow row in dgv_comparativo_notas.Rows)
-            {
-                int id = Convert.ToInt32(row.Cells["id"].Value);
-                Banco.AtualizarStatus(status, id);
-            }
-            AtualizarComparativoNotas();
-
-        }
-
         private void InserirReferenciaBanco()
         {
             int ano = dtp_inicio_comparativo_notas.Value.Year;
@@ -619,67 +667,74 @@ namespace TaxZone
             }
         }
 
-        private void dgv_comparativo_notas_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        private async Task BuscarRelatoriosAsync(List<string> empresas)
         {
-            if (e.Value == DBNull.Value) return;
+            int total = empresas.Count;
+            int concluidas = 0;
 
-            string coluna = dgv_comparativo_notas.Columns[e.ColumnIndex].Name;
+            AtualizarStatusTax(
+                $"Aguardando conclusão dos relatórios. Concluído 0/{total}",
+                0);
 
-            // Coluna STATUS
-            if (coluna == "STATUS")
+            var tasks = empresas.Select(async empresa =>
             {
-                if (e.Value?.ToString() == "LIBERADO")
-                {
-                    e.CellStyle.BackColor = Color.LightGreen;
-                    e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
-                }
-                else if (e.Value?.ToString() == "EM ANDAMENTO")
-                {
-                    e.CellStyle.BackColor = Color.LightYellow;
-                    e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
-                }
-            }
+                bool finalizado = false;
 
-            //Coluna DIFERENÇA
-            if (coluna == "DIFERENÇA")
-            {
-
-                var status = dgv_comparativo_notas.Rows[e.RowIndex]
-                    .Cells["STATUS"].Value?.ToString();
-
-                if (status == "LIBERADO")
+                while (!finalizado)
                 {
-                    e.CellStyle.BackColor = Color.LightGreen;
-                    e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
-                }
-                else
-                {
-                    if (e.Value != null && Convert.ToInt32(e.Value) != 0)
+                    TaxContext context = GetContext(empresa);
+
+                    var response = await ApiTax.VerificaUltimoRelatorioConcluido(
+                        empresa,
+                        context,
+                        string.IsNullOrEmpty(context.StorageId));
+
+                    finalizado = response.Completed;
+
+                    try
                     {
-                        e.CellStyle.BackColor = Color.Salmon;
-                        e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+                        if (finalizado)
+                        {
+                            await ApiTax.BaixarRelatorio(
+                                context,
+                                1,
+                                0,
+                                Config.PathArquivoTemporario);
+                        }
+                        else
+                        {
+                            await Task.Delay(5000); // Nunca use Thread.Sleep em código async
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        e.CellStyle.BackColor = Color.LightGreen;
-                        e.CellStyle.Font = new Font(dgv_comparativo_notas.Font, FontStyle.Bold);
+                        MessageBox.Show(
+                            $"Erro ao baixar relatório da empresa {empresa}: {ex.Message}",
+                            "Erro",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
 
+                        finalizado = true;
                     }
                 }
-            }
+
+                int qtd = Interlocked.Increment(ref concluidas);
+                int porcentagem = (int)((double)qtd / total * 100);
+
+                AtualizarStatusTax(
+                    $"Aguardando conclusão dos relatórios. {qtd}/{total}",
+                    porcentagem);
+            });
+
+            await Task.WhenAll(tasks);
+
+            AtualizarStatusTax(
+                "Busca concluída",
+                100);
+
         }
 
-        private void bt_atualizar_comparacao_Click(object sender, EventArgs e)
-        {
-            AtualizarComparativoNotas();
-        }
-
-        private void ckb_always_on_top_CheckedChanged(object sender, EventArgs e)
-        {
-            this.TopMost = ckb_always_on_top.Checked;
-        }
-
-        private async void bt_atualizar_valores_tax_Click(object sender, EventArgs e)
+        private async Task AtualizarValoresTax()
         {
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
@@ -691,7 +746,11 @@ namespace TaxZone
             ApiTax.data_fim = dtp_fim_comparativo_notas.Value.ToString("ddMMyyyy000000");
             ApiTax.buraco_nota = "N";
             ApiTax.diferenca_capa_item = "N";
-            ApiTax.icms_resumido = "S";
+            //Não busca icms em mÊs aberto porque ainda não tem no sifar
+            if (dtp_inicio_comparativo_notas.Value.Month != DateTime.Now.Month && dtp_inicio_comparativo_notas.Value.Year != DateTime.Now.Year)
+                ApiTax.icms_resumido = "S";
+            else
+                ApiTax.icms_resumido = "N";
             ApiTax.notas_sem_item = "N";
             ApiTax.qtd_itens = "S";
             ApiTax.qtd_notas = "S";
@@ -797,7 +856,6 @@ namespace TaxZone
                             estabelecimento = int.Parse(match.Groups[1].Value);
                             quantidade = int.Parse(match.Groups[2].Value);
 
-
                         }
                         Thread.Sleep(1000);
                         Banco.AtualizarQtdTax(ano, mes, empresa, tipo, estabelecimento, quantidade, con, transaction);
@@ -812,76 +870,32 @@ namespace TaxZone
 
             transaction.Commit();
             AtualizarComparativoNotas();
-        }
-
-        private async Task BuscarRelatoriosAsync(List<string> empresas)
-        {
-            int total = empresas.Count;
-            int concluidas = 0;
-
-            AtualizarStatusTax(
-                $"Aguardando conclusão dos relatórios. Concluído 0/{total}",
-                0);
-
-            var tasks = empresas.Select(async empresa =>
-            {
-                bool finalizado = false;
-
-                while (!finalizado)
-                {
-                    TaxContext context = GetContext(empresa);
-
-                    finalizado = await ApiTax.VerificaUltimoRelatorioConcluido(
-                        empresa,
-                        context,
-                        string.IsNullOrEmpty(context.StorageId));
-
-                    try
-                    {
-                        if (finalizado)
-                        {
-                            await ApiTax.BaixarRelatorio(
-                                context,
-                                1,
-                                0,
-                                Config.PathArquivoTemporario);
-                        }
-                        else
-                        {
-                            await Task.Delay(5000); // Nunca use Thread.Sleep em código async
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(
-                            $"Erro ao baixar relatório da empresa {empresa}: {ex.Message}",
-                            "Erro",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-
-                        finalizado = true;
-                    }
-                }
-
-                int qtd = Interlocked.Increment(ref concluidas);
-                int porcentagem = (int)((double)qtd / total * 100);
-
-                AtualizarStatusTax(
-                    $"Aguardando conclusão dos relatórios. {qtd}/{total}",
-                    porcentagem);
-            });
-
-            await Task.WhenAll(tasks);
-
-            AtualizarStatusTax(
-                "Busca concluída",
-                100);
 
             MessageBox.Show(
                 "Dados do TAX atualizados com sucesso.",
                 "Informação",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
+            if (lbox_empresas.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Selecione pelo menos uma empresa para visualizar os relatórios executados.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            else if (lbox_empresas.SelectedItems.Count > 1)
+            {
+                MessageBox.Show("Selecione apenas uma empresa para visualizar os relatórios executados.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string empresa = lbox_empresas.SelectedItem!.ToString()!;
+
+            F_Relatorio_Importacao form = new(GetContext(empresa));
+            form.Show();
         }
     }
 }

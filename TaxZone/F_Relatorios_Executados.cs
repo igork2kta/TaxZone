@@ -17,14 +17,27 @@ namespace TaxZone
 
         public async void BuscarDados(string empresa)
         {
+            var progresso = new Progress<Progresso>(p =>
+            {
+                lbl_loading_percentage.Text = p.Mensagem;
+                if (p.Valor == 100)
+                {
+                    pb_loading.Visible = false;
+                    lbl_loading_percentage.Visible = false;
+                }
+            });
 
-            bool sucesso = await ApiTax.ObterRelatorio(this, empresa, taxContext, string.IsNullOrEmpty(taxContext.StorageId));
-            if (!sucesso) this.Close();
+            var retorno = await ApiTax.ObterRelatorio(taxContext, progresso);
+            if (!retorno.Success) this.Close();
+
+            PopulaDataGrid(retorno.ProcessosRelatorio);
         }
 
-        public void PopulaDataGrid(TaxContext taxContext, List<ProcessoRelatorio> processos)
+        public void PopulaDataGrid(List<ProcessoRelatorio> processos)
         {
             Text = "Relatórios " + taxContext.Empresa;
+            if (processos.Count <= 0) return;
+
             this.processos = processos;
 
             lbl_loading_percentage.Visible = false;
@@ -61,7 +74,7 @@ namespace TaxZone
             
 
             
-            this.taxContext = taxContext;
+            //this.taxContext = taxContext;
         }
 
         private async void dgv_relatorios_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -97,16 +110,25 @@ namespace TaxZone
 
         private async void bt_atualizar_Click(object sender, EventArgs e)
         {
+            var progresso = new Progress<Progresso>(p =>
+            {
+                lbl_loading_percentage.Text = p.Mensagem;
+                if (p.Valor == 100)
+                {
+                    pb_loading.Visible = false;
+                    lbl_loading_percentage.Visible = false;
+                }
+            });
+
             lbl_loading_percentage.Visible = true;
             pb_loading.Visible = true;
             dgv_relatorios.Visible = false;
-            bool sucesso = await ApiTax.ObterRelatorio(this, taxContext.Empresa, taxContext, false);
-            if (!sucesso) this.Close();
+            var retorno = await ApiTax.ObterRelatorio(taxContext, progresso);
+            if (!retorno.Success) this.Close();
+
+            PopulaDataGrid(retorno.ProcessosRelatorio);
         }
 
-        public void UpdateLoadingPercentage(string percentage)
-        {
-            lbl_loading_percentage.Text = percentage;
-        }
+        
     }
 }
