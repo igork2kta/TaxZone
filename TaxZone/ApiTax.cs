@@ -175,6 +175,7 @@ namespace TaxZone
             await System.IO.File.WriteAllBytesAsync(caminhoArquivo, bytes);
         }
 
+        #region TAX AUTOMATION
         public static async Task<TaxApiResponse> ProgramarTaxAutomation(string empresa)
         {
             int index_fluxo = Empresa.GetIndexFluxoTaxAutomation(empresa);
@@ -265,6 +266,9 @@ namespace TaxZone
             }
         }
 
+        #endregion
+
+        #region COMUM
         public static async Task ObterStorageId(TaxContext context)
         {
             try
@@ -334,6 +338,9 @@ namespace TaxZone
 
         }
 
+        #endregion
+
+        #region PROCESSOS CUSTOMIZADOS
         public static async Task AbrirTelaProcessosCustomizados(TaxContext context)
         {
             try
@@ -461,9 +468,8 @@ namespace TaxZone
             
         }
 
-        public static async Task<TaxApiResponse> ProgramarRelatorio(string empresa, TaxContext context)
+        public static async Task<TaxApiResponse> ProgramarRelatorio(TaxContext context, IProgress<Progresso>? progresso = null)
         {
-            context.Empresa = empresa;
             string modulo = "PROCESSOS CUSTOMIZADOS";
 
             try
@@ -471,74 +477,62 @@ namespace TaxZone
                 if (string.IsNullOrEmpty(ConfigManager.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
-                NotificationService.AtualizarStatusTax(
-                                $"Programando relatório para {empresa}",
-                                1);
+                progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 1));
 
                 if (string.IsNullOrEmpty(context.StorageId))
                 {
                     await ObterStorageId(context);
-                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", empresa);
+                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
 
-                    NotificationService.AtualizarStatusTax(
-                            $"Programando relatório para {empresa}",
-                            15);
-
+                    progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 15));
                 }
 
                 if(context.Modulo != modulo)
                 {
                     await SelecionaEmpresaEModulo(context, modulo);
-                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", empresa);
+                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
                 }
 
 
-                NotificationService.AtualizarStatusTax(
-                            $"Programando relatório para {empresa}",
-                            30);
+                progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 30));
 
                 await AbrirTelaProcessosCustomizados(context);
 
 
-                NotificationService.AtualizarStatusTax(
-                           $"Programando relatório para {empresa}",
-                           45);
+                progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 45));
 
                 //ConfigurarParâmetros
 
                 var downloads = new List<Task>();
 
-                await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 3, param_empresa);
-                await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 4, param_estab);
-                await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 5, data_inicio);
-                await ParametrosRelatorio(empresa, context.ControlNumber, context.DataManagerId, context.StorageId, 6, data_fim);
+                //ParametrosRelatorio provavelmente pode ser removido, em testes
+                await ParametrosRelatorio2(context, 3, param_empresa,3);
+                await ParametrosRelatorio2(context, 4, param_estab,4);
+                await ParametrosRelatorio2(context, 5, data_inicio,5);
+                await ParametrosRelatorio2(context, 6, data_fim,6);
 
-                NotificationService.AtualizarStatusTax(
-                           $"Programando relatório para {empresa}",
-                           60);
+                progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 65));
 
                 if (buraco_nota == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 9, buraco_nota, 7);
+                    await ParametrosRelatorio2(context, 9, buraco_nota, 7);
                 if (diferenca_capa_item == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 11, diferenca_capa_item, 9);
+                    await ParametrosRelatorio2(context, 11, diferenca_capa_item, 9);
                 if (icms_resumido == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 14, icms_resumido, 12);
+                    await ParametrosRelatorio2(context,  14, icms_resumido, 12);
                 if (notas_sem_item == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 15, notas_sem_item, 13);
+                    await ParametrosRelatorio2(context, 15, notas_sem_item, 13);
                 if (qtd_itens == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 16, qtd_itens, 14);
+                    await ParametrosRelatorio2(context, 16, qtd_itens, 14);
                 if (qtd_notas == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 18, qtd_notas, 16);
+                    await ParametrosRelatorio2(context, 18, qtd_notas, 16);
                 if (qtd_canceladas == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 19, qtd_canceladas, 17);
+                    await ParametrosRelatorio2(context, 19, qtd_canceladas, 17);
                 if (extracao_canceladas == "S")
-                    await ParametrosRelatorio2(empresa, context.ControlNumber, context.DataManagerId, context.d_lib_proc_processos, context.d_lib_proc_processos, context.d_lib_proc_lista_arquivos, context.StorageId, 21, extracao_canceladas, 19);
+                    await ParametrosRelatorio2(context, 21, extracao_canceladas, 19);
 
                 //await Task.WhenAll(downloads);
 
-                NotificationService.AtualizarStatusTax(
-                           $"Programando relatório para {empresa}",
-                           80);
+                progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 80));
 
                 //Executar
                 //safobfww_lib_proctab_frameworktabpage_parametrosdw_parametros_headerbuttonclicked
@@ -551,27 +545,25 @@ namespace TaxZone
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
-                NotificationService.AtualizarStatusTax(
-                           $"Programando relatório para {empresa}",
-                           95);
+                progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 95));
 
-                var root = await PostAsync(empresa, url, json_content);
+                var root = await PostAsync(context.Empresa, url, json_content);
                 string? retorno = root["VD"]?["Commands"]?[0]?["parameters"]?["text"]?.GetValue<string>();
 
                 if(string.IsNullOrEmpty(retorno))
-                    return new TaxApiResponse(false, "Falha ao programar job", empresa);
+                    return new TaxApiResponse(false, "Falha ao programar job", context.Empresa);
                 else
-                   return new TaxApiResponse(true, $"{retorno}", empresa);
+                   return new TaxApiResponse(true, $"{retorno}", context.Empresa);
             }
             catch (Exception ex)
             {
-                return new TaxApiResponse(false, $"Falha ao executar HTTP POST: {ex.Message}", empresa);
+                progresso?.Report(new Progresso($"Falha {context.Empresa}", 100));
+                return new TaxApiResponse(false, $"Falha ao executar HTTP POST: {ex.Message}", context.Empresa);
+
             }
             finally
             {
-                NotificationService.AtualizarStatusTax(
-                           $"Finalizado",
-                           100);
+                progresso?.Report(new Progresso($"Finalizado {context.Empresa}", 100));
             }
         }
 
@@ -1122,21 +1114,19 @@ namespace TaxZone
         }
 
         //Chama o itemchanged para os parametros Empresa/Estabelecimento/DataInicio/DataFim
-        public static async Task<string> ParametrosRelatorio(string empresa, string controlNumber, string dataManagerId, string storageID, int coluna, string valor)
+        public static async Task ParametrosRelatorio(TaxContext context, int coluna, string valor)
         {
             //safobfwuo_lib_proc_parametrosdw_parametrositemchanged
             string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safobfw/uo_lib_proc_parametros/safobfwuo_lib_proc_parametrosdw_parametrositemchanged";
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            AddHeaders(request, empresa);
 
             string json_content = $$$"""
                                 {
-                   "vm":"{{{controlNumber}}}",
+                   "vm":"{{{context.ControlNumber}}}",
                    "menuPath":"Processos Customizados > Execução dos Processos Customizados",
                    "moduleExe":"safcp",
                    "parameters":{
                       "row":1,
-                      "dwo":"col{{{coluna}}}#{{{dataManagerId}}}",
+                      "dwo":"col{{{coluna}}}#{{{context.DataManagerId}}}",
                       "data":"{{{valor}}}"
                    },
                    "commands":[
@@ -1149,7 +1139,7 @@ namespace TaxZone
                       {
                          "command":"UPDATE_DM_ROW_AND_COL",
                          "data":{
-                            "dataManagerId":"{{{dataManagerId}}}",
+                            "dataManagerId":"{{{context.DataManagerId}}}",
                             "currentRow":0,
                             "currentControlName":"",
                             "displayedRowCount":10,
@@ -1169,7 +1159,7 @@ namespace TaxZone
                       {
                          "command":"UPDATE_BUNDLE_CURRENT_ROW_DELAYED",
                          "data":{
-                            "dataManagerId":"{{{dataManagerId}}}",
+                            "dataManagerId":"{{{context.DataManagerId}}}",
                             "bundle":[
                                {
                                   "0":"char(120)",
@@ -1263,30 +1253,23 @@ namespace TaxZone
                          }
                       }
                    ],
-                "storageID":"{{{storageID}}}"
+                "storageID":"{{{context.StorageId}}}"
                 }
                 """;
 
-            request.Content = new StringContent(json_content, Encoding.UTF8, "application/json");
+            await PostAsync(context.Empresa, url, json_content);
 
-            var response = await _client.SendAsync(request);
-            var a = await response.Content.ReadAsStringAsync();
-            var root = JsonNode.Parse(a)!;
-            return a;
-             
         }
 
         //Chama o parametrosclicked e itemchanged para todos os outros parâmetros
-        public static async Task ParametrosRelatorio2(string empresa, string controlNumber, string dataManagerId, string proc_id_t, string t1_, string pb_abrir, string storageID, int coluna, string valor, int ordem)
+        public static async Task ParametrosRelatorio2(TaxContext context, int coluna, string valor, int ordem)
         {
             //safobfwuo_lib_proc_parametrosdw_parametrositemchanged
             var url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safobfw/uo_lib_proc_parametros/safobfwuo_lib_proc_parametrosdw_parametrosclicked";
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            AddHeaders(request, empresa);
 
             var json_content = $$$"""
                                 {
-                  "vm": "{{{controlNumber}}}",
+                  "vm": "{{{context.ControlNumber}}}",
                   "menuPath": "Processos Customizados > Execução dos Processos Customizados",
                   "moduleExe": "safcp",
                   "parameters": {
@@ -1304,7 +1287,7 @@ namespace TaxZone
                     {
                       "command": "UPDATE_DM_ROW_AND_COL",
                       "data": {
-                        "dataManagerId": "{{{pb_abrir}}}",
+                        "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
                         "currentRow": 0,
                         "currentControlName": "",
                         "displayedRowCount": 10,
@@ -1314,7 +1297,7 @@ namespace TaxZone
                     {
                       "command": "UPDATE_DM_ROW_AND_COL",
                       "data": {
-                        "dataManagerId": "{{{t1_}}}",
+                        "dataManagerId": "{{{context.d_lib_proc_processos}}}",
                         "currentRow": 0,
                         "currentControlName": "",
                         "displayedRowCount": 10,
@@ -1324,7 +1307,7 @@ namespace TaxZone
                     {
                       "command": "UPDATE_BUNDLE_CURRENT_ROW_DELAYED",
                       "data": {
-                        "dataManagerId": "{{{dataManagerId}}}",
+                        "dataManagerId": "{{{context.DataManagerId}}}",
                         "bundle": [
                           {
                             "0": "char(120)",
@@ -1404,28 +1387,24 @@ namespace TaxZone
                       }
                     }
                   ],
-                  "storageID": "{{{storageID}}}"
+                  "storageID": "{{{context.StorageId}}}"
                 }
                 """;
 
-             request.Content = new StringContent(json_content, Encoding.UTF8, "application/json");
+             await PostAsync(context.Empresa, url, json_content);
 
-             var response = await _client.SendAsync(request);
-             var  a = await response.Content.ReadAsStringAsync();
-
+            /*
             //safobfwuo_lib_proc_parametrosdw_parametrositemchanged
              url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safobfw/uo_lib_proc_parametros/safobfwuo_lib_proc_parametrosdw_parametrositemchanged";
-             request = new HttpRequestMessage(HttpMethod.Post, url);
-            AddHeaders(request, empresa);
 
              json_content = $$$"""
                                 {
-                  "vm": "{{{controlNumber}}}",
+                  "vm": "{{{context.ControlNumber}}}",
                   "menuPath": "Processos Customizados > Execução dos Processos Customizados",
                   "moduleExe": "safcp",
                   "parameters": {
                     "row": 1,
-                      "dwo":"col{{{coluna}}}#{{{dataManagerId}}}",
+                      "dwo":"col{{{coluna}}}#{{{context.DataManagerId}}}",
                       "data":"{{{valor}}}"
                   },
                   "commands": [
@@ -1438,7 +1417,7 @@ namespace TaxZone
                     {
                       "command": "UPDATE_DM_ROW_AND_COL",
                       "data": {
-                        "dataManagerId":"{{{pb_abrir}}}",
+                        "dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}",
                         "currentRow": 0,
                         "currentControlName": "",
                         "displayedRowCount": 10,
@@ -1448,7 +1427,7 @@ namespace TaxZone
                     {
                       "command": "UPDATE_DM_ROW_AND_COL",
                       "data": {
-                        "dataManagerId": "{{{t1_}}}",
+                        "dataManagerId": "{{{context.d_lib_proc_processos}}}",
                         "currentRow": 0,
                         "currentControlName": "",
                         "displayedRowCount": 10,
@@ -1456,18 +1435,18 @@ namespace TaxZone
                       }
                     }
                   ],
-                  "storageID": "{{{storageID}}}"
+                  "storageID": "{{{context.StorageId}}}"
                 }
                 """;
 
-            request.Content = new StringContent(json_content, Encoding.UTF8, "application/json");
-
-            response = await _client.SendAsync(request);
-            //a = await response.Content.ReadAsStringAsync();
-
+            await PostAsync(context.Empresa, url, json_content);
+            */
         }
 
-        public static async Task<TaxApiResponse> ObterLogsProcessosCustomizados(TaxContext context, ParametrosRelatorioImportacao parametros, IProgress<Progresso>? progresso = null)
+        #endregion
+
+        #region LOGS PROCESSOS IMPORTACAO
+        public static async Task<TaxApiResponse> ObterLogsProcessosImportacao(TaxContext context, ParametrosRelatorioImportacao parametros, IProgress<Progresso>? progresso = null)
         {
             try
             {
@@ -1538,18 +1517,18 @@ namespace TaxZone
 
                 var downloads = new List<Task>();
 
-                downloads.Add(ParametroRelatorioImportacao(context, "dat_inicio", parametros.DataInicio.ToString("dd-MM-yyyy"), 2, parametros));
-                downloads.Add(ParametroRelatorioImportacao(context, "dat_fim", parametros.DataFim.ToString("dd-MM-yyyy"), 3, parametros));
-                downloads.Add(ParametroRelatorioImportacao(context, "ind_situacao", parametros.Status, 8, parametros));
+                downloads.Add(ParametroLogProcessoImportacao(context, "dat_inicio", parametros.DataInicio.ToString("dd-MM-yyyy"), 2, parametros));
+                downloads.Add(ParametroLogProcessoImportacao(context, "dat_fim", parametros.DataFim.ToString("dd-MM-yyyy"), 3, parametros));
+                downloads.Add(ParametroLogProcessoImportacao(context, "ind_situacao", parametros.Status, 8, parametros));
 
                 if (!string.IsNullOrEmpty(parametros.Usuario))
-                    downloads.Add(ParametroRelatorioImportacao(context, "usuario", parametros.Usuario, 6, parametros));
+                    downloads.Add(ParametroLogProcessoImportacao(context, "usuario", parametros.Usuario, 6, parametros));
                 
                 if (!string.IsNullOrEmpty(parametros.Estabelecimento))
-                    downloads.Add(ParametroRelatorioImportacao(context, "cod_estab", parametros.Estabelecimento, 8, parametros));
+                    downloads.Add(ParametroLogProcessoImportacao(context, "cod_estab", parametros.Estabelecimento, 8, parametros));
 
                 if (!string.IsNullOrEmpty(parametros.Descricao))
-                    downloads.Add(ParametroRelatorioImportacao(context, "descricao", parametros.Descricao, 9, parametros));
+                    downloads.Add(ParametroLogProcessoImportacao(context, "descricao", parametros.Descricao, 9, parametros));
                 await Task.WhenAll(downloads);
 
                 progresso?.Report(new Progresso($"80%", 80));
@@ -1641,7 +1620,7 @@ namespace TaxZone
             }
         }
 
-        public static async Task ParametroRelatorioImportacao(TaxContext context, string dwo, string value, int index, ParametrosRelatorioImportacao parametros)
+        public static async Task ParametroLogProcessoImportacao(TaxContext context, string dwo, string value, int index, ParametrosRelatorioImportacao parametros)
         {
             try
             {
@@ -1793,69 +1772,43 @@ namespace TaxZone
             }
         }
 
-        public static async Task ParametroRelatorioImportacao2(TaxContext context, string dwo, string value)
+        public static async Task<TaxApiResponse> BaixarRelatorioProcessoImportacao(TaxContext context, int row, string path)
         {
-            try
-            {
-                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
+            if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                throw new ArgumentException("Cookie não encontrado!");
 
+            //safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked
+            string url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_consulta_rel_proc_imp/safilcm3w_consulta_rel_proc_impdw_importacaoitemchanged";
 
-                string json_content = $$$"""
-                    {
-                      "menuPath": "Controles > Relatórios > Relatório por Processo > Importação",
-                      "moduleExe": "safil",
-                      "parameters": {
-                        "targetName": "safil",
-                        "args": [
-                          [
-                            "safilcm3/w_consulta_rel_proc_imp/safilcm3w_consulta_rel_proc_impdw_sheetitemchanged",
-                            "{\"vm\":\"{{{context.NewViews}}}\",\"menuPath\":\"Controles > Relatórios > Relatório por Processo > Importação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":1,\"dwo\":\"usuario#3e\",\"data\":\"{{{value}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_consulta_rel_proc_imp_grid}}}\",\"currentRow\":1,\"currentControlName\":\"\",\"displayedRowCount\":23,\"currentPage\":1}}]}",
-                            "{{{context.NewViews}}}",
-                            "safil"
-                          ],
-                          [
-                            "/dataManagerController/forceBundleUpdate",
-                            "{\"menuPath\":\"Controles > Relatórios > Relatório por Processo > Importação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_BUNDLE_CURRENT_ROW\",\"data\":{\"dataManagerId\":\"3e\",\"bundle\":[{\"0\":\"number\",\"1\":\"date\",\"2\":\"date\",\"3\":\"char(1)\",\"4\":\"number\",\"5\":\"char(100)\",\"6\":\"char(3)\",\"7\":\"char(6)\",\"8\":\"char(8)\"},{},[[{\"WM$%S\":2,\"WM$%CS\":\"000000000\",\"computed\":{}},null,\"24072026000000\",\"24072026000000\",null,null,\"TAX-AUTOMATION\",null,null,null]],[\"num_proc\",\"dat_inicio\",\"dat_fim\",\"ind_situacao\",\"num_proc_fim\",\"usuario\",\"cod_empresa\",\"cod_estab\",\"descricao\"]],\"updatedColumns\":[6]}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"3d\",\"currentRow\":1,\"currentControlName\":\"\",\"displayedRowCount\":23,\"currentPage\":1}}]}",
-                            null
-                          ],
-                          [
-                            "safilcm3/w_consulta_rel_proc_imp/safgnfw1w_sheet_dw_simplesdw_sheetitemfocuschanged",
-                            "{\"vm\":\"{{{context.NewViews}}}\",\"menuPath\":\"Controles > Relatórios > Relatório por Processo > Importação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":1,\"dwo\":\"cod_empresa#3e\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"3d\",\"currentRow\":1,\"currentControlName\":\"\",\"displayedRowCount\":23,\"currentPage\":1}}]}",
-                            "{{{context.NewViews}}}",
-                            "safil"
-                          ]
-                        ]
-                      },
-                      "commands": [
-                        {
-                          "command": "UPDATE_CURRENT_KEY",
-                          "data": {
-                            "key": "none"
-                          }
-                        },
-                        {
-                          "command": "UPDATE_DM_ROW_AND_COL",
-                          "data": {
-                            "dataManagerId": "{{{context.d_consulta_rel_proc_imp_grid}}}",
-                            "currentRow": 1,
-                            "currentControlName": "",
-                            "displayedRowCount": 23,
-                            "currentPage": 1
-                          }
-                        }
-                      ],
-                      "storageID": "{{{context.StorageId}}}"
-                    }
-                    """;
+            string json_content = $$$"""
+                {"vm":"{{{context.NewViews}}}","menuPath":"Controles > Relatórios > Relatório por Processo > Importação","moduleExe":"safil",
+                "parameters":{"row":{{{row}}},"dwo":"acao#{{{context.d_consulta_rel_proc_imp_grid}}}","data":"1"},
+                "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_BUNDLE_DELAYED",
+                "data":{"dataManagerId":"{{{context.d_consulta_rel_proc_imp_grid}}}","updatedRows":[1],"bundle":[{"0":"char(1)","1":"decimal(0)","2":"char(3)","3":"char(6)","4":"char(3)","5":"char(22)","6":"datetime","7":"char(100)","8":"char(8)","9":"datetime","10":"datetime","11":"datetime","12":"decimal(0)","13":"decimal(0)","14":"decimal(0)","15":"decimal(0)","16":"decimal(0)"},{},
+                [[{"WM$%S":0,"computed":{}},"1",1272607,"191",null,"IMP","Finalizado com sucesso","28072026090654","Energisa.ips10","IMPX431","28072026090726","01011900000000","28072026000000",67149,66171,0,978,0]],["acao","num_processo","cod_empresa","cod_estab","ind_processo","status","data_ini","cod_usuario","descricao","data_fim","data_ini_movto","data_fim_movto","qtd_lido","qtd_ins","qtd_alt","qtd_ign","qtd_err"]],"dirtyColumns":"@1:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,"}},
+                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_consulta_rel_proc_imp_grid}}}","currentRow":1,"currentControlName":"acao","displayedRowCount":4,"currentPage":1}}],
+                "storageID":"{{{context.StorageId}}}"}
+                """;
 
-                var root = await PostAsync(context.Empresa, url, json_content);
+            var root = await PostAsync(context.Empresa, url, json_content);
 
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Falha ao executar ParametroRelatorioImportacao: {ex.Message}");
-            }
+            string? id = root["MD"]?
+                .AsArray()
+                .FirstOrDefault()?["UniqueID"]?
+                .GetValue<string>()?
+                .Split('#')
+                .Last();
+
+            url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id}&storageID={context.StorageId}";
+
+            
+
+            await BaixarArquivoAsync(context.Empresa, url, path);
+
+            return new TaxApiResponse(true, "Relatório baixado com sucesso", context.Empresa);
+
         }
+        #endregion
 
         public async ValueTask DisposeAsync()
         {

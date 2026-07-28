@@ -200,69 +200,84 @@ namespace TaxZone
 
 
         /*VOU TER QUE CONVERTER TUDO PARA WRITE STRING LIST DO CSV*/
-        public static void ImportarPessoaFisicaJuridica(bool gerarArquivo, bool fracionar = true, bool codFisJurCompleto = false)
+        public static void ImportarPessoaFisicaJuridica(bool gerarArquivo,bool fracionar,bool codFisJurCompleto,string? caminhoPdf = null)
         {
-            using (OpenFileDialog openFileDialog = new()
+            if (string.IsNullOrWhiteSpace(caminhoPdf))
             {
-                Title = "Selecione um arquivo PDF",
-                Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
-            })
-            {
+                using OpenFileDialog openFileDialog = new()
+                {
+                    Title = "Selecione um arquivo PDF",
+                    Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
+                    InitialDirectory = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        "Downloads")
+                };
+
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
                     return;
 
-                using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
+                caminhoPdf = openFileDialog.FileName;
+            }
 
-                string allText = "";
-                for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+            if (!File.Exists(caminhoPdf))
+            {
+                MessageBox.Show("O arquivo informado não foi encontrado.",
+                    "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            using var pdf = new PdfDocument(new PdfReader(caminhoPdf));
+
+            string allText = "";
+            for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+            {
+                allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
+            }
+
+            // Captura valores que aparecem após "Conteúdo do Campo"
+            // Exemplo: F1910005128733
+            var regex = new Regex(@"F\d{13}", RegexOptions.Multiline);
+            var matches = regex.Matches(allText);
+
+            var valores = new List<string>();
+
+            foreach (Match match in matches)
+            {
+                string valor = match.Value;
+
+                if (codFisJurCompleto)
                 {
-                    allText += PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
+                    valores.Add(valor);
                 }
-
-                // Captura valores que aparecem após "Conteúdo do Campo"
-                // Exemplo: F1910005128733
-                var regex = new Regex(@"F\d{13}", RegexOptions.Multiline);
-                var matches = regex.Matches(allText);
-
-                var valores = new List<string>();
-
-
-                foreach (Match match in matches)
+                else if (valor.Length >= 10)
                 {
-                    string valor = match.Value;
-                    if (codFisJurCompleto)
-                        valores.Add(valor);
-                    else if (valor.Length >= 10)
-                        valores.Add(int.Parse(valor.Substring(valor.Length - 10)).ToString()); //o parse é para remover os zeros à esquerda
-
+                    // O Parse remove os zeros à esquerda
+                    valores.Add(int.Parse(valor.Substring(valor.Length - 10)).ToString());
                 }
+            }
 
-                valores = valores.Distinct().ToList();
+            valores = valores.Distinct().ToList();
 
-                if (valores.Count == 0)
-                {
-                    MessageBox.Show("Nenhum valor encontrado no PDF.",
-                        "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
+            if (valores.Count == 0)
+            {
+                MessageBox.Show("Nenhum valor encontrado no PDF.",
+                    "Informação", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
-                if (gerarArquivo)
-                {
-                    CsvClass.WriteListToCsv(valores, fracionar);
-                    MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
-                }
-                else
-                {
-                    if(codFisJurCompleto)
-                        valores = valores.Select(s => $"'{s}'").ToList();
-                    
-                    Util.DividirValoresAreaTransferencia(valores, fracionar); 
-                }
+            if (gerarArquivo)
+            {
+                CsvClass.WriteListToCsv(valores, fracionar);
+                MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
+            }
+            else
+            {
+                if (codFisJurCompleto)
+                    valores = valores.Select(s => $"'{s}'").ToList();
 
+                Util.DividirValoresAreaTransferencia(valores, fracionar);
             }
         }
-
         public static void ImportarProdutos()
         {
             using OpenFileDialog openFileDialog = new()
@@ -612,5 +627,7 @@ namespace TaxZone
             
 
         }
+
+
     }
 }

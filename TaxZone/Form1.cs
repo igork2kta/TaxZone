@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using TaxZone.DTO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TaxZone
 {
@@ -297,9 +298,19 @@ namespace TaxZone
 
             var tasks = empresasSelecionadas.Select(async empresa =>
             {
+
+                var progresso = new Progress<Progresso>(p =>
+                {
+                    lbl_status_tax.Text = p.Mensagem;
+                    progress_bar_tax.Value = p.Valor;
+
+                    lbl_status_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                    progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                });
+
                 TaxContext context = GetContext(empresa);
 
-                TaxApiResponse resposta = await ApiTax.ProgramarRelatorio(empresa, context);
+                TaxApiResponse resposta = await ApiTax.ProgramarRelatorio(context, progresso);
                 int qtd = Interlocked.Increment(ref concluidas);
 
                 if (!resposta.Success)
@@ -357,8 +368,24 @@ namespace TaxZone
 
         }
 
-        private void bt_atualizar_valores_tax_Click(object sender, EventArgs e)
-        => AtualizarValoresTax();
+        private async void bt_atualizar_valores_tax_Click(object sender, EventArgs e)
+        {
+            var progresso = new Progress<Progresso>(p =>
+            {
+                Debug.WriteLine($"Thread UI? {!InvokeRequired}");
+
+                lbl_status_tax.Text = p.Mensagem;
+                progress_bar_tax.Value = p.Valor;
+
+                lbl_status_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
+            });
+
+            
+            await AtualizarValoresTax(progresso);
+            
+
+        } 
 
 
         private void bt_atualizar_comparacao_Click(object sender, EventArgs e)
@@ -667,14 +694,13 @@ namespace TaxZone
             }
         }
 
-        private async Task BuscarRelatoriosAsync(List<string> empresas)
+        private async Task BuscarRelatoriosAsync(List<string> empresas, IProgress<Progresso> progresso)
         {
             int total = empresas.Count;
             int concluidas = 0;
 
-            AtualizarStatusTax(
-                $"Aguardando conclusão dos relatórios. Concluído 0/{total}",
-                0);
+            progresso.Report(new Progresso($"Aguardando conclusão dos relatórios. Concluído 0/{total}",1));
+            
 
             var tasks = empresas.Select(async empresa =>
             {
@@ -721,20 +747,16 @@ namespace TaxZone
                 int qtd = Interlocked.Increment(ref concluidas);
                 int porcentagem = (int)((double)qtd / total * 100);
 
-                AtualizarStatusTax(
-                    $"Aguardando conclusão dos relatórios. {qtd}/{total}",
-                    porcentagem);
+                progresso.Report(new Progresso($"Aguardando conclusão dos relatórios. Concluído {qtd}/{total}", porcentagem));
             });
 
             await Task.WhenAll(tasks);
 
-            AtualizarStatusTax(
-                "Busca concluída",
-                100);
+            progresso.Report(new Progresso($"Busca concluída", 100));
 
         }
 
-        private async Task AtualizarValoresTax()
+        private async Task AtualizarValoresTax(IProgress<Progresso>? progresso)
         {
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
@@ -761,26 +783,17 @@ namespace TaxZone
             int total = empresasSelecionadas.Count;
             int concluidas = 0;
 
-            /*
-            NotificationService.AtualizarStatusTax(
-                $"Programando relatório 0/{total}",
-                0);
-            */
 
             var tasks = empresasSelecionadas.Select(async empresa =>
             {
                 TaxContext context = GetContext(empresa);
 
-                TaxApiResponse response = await ApiTax.ProgramarRelatorio(empresa, context);
+                TaxApiResponse response = await ApiTax.ProgramarRelatorio(context, progresso);
                 int qtd = Interlocked.Increment(ref concluidas);
 
                 if (!response.Success)
                     MessageBox.Show($"Falha ao programar relatório para a empresa {empresa}: {response.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                /*
-                NotificationService.AtualizarStatusTax(
-                    $"Programando relatório {qtd}/{total}",
-                    (int)(qtd * 100.0 / total));
-                */
+
                 return response.Success;
             });
 
@@ -793,82 +806,93 @@ namespace TaxZone
                 return;
             }
 
-            await BuscarRelatoriosAsync(empresasSelecionadas);
-
-            AtualizarStatusTax(
-                $"Atualizando valores",
-                0);
+            await Task.Run(async () =>
+            {
+                await BuscarRelatoriosAsync(empresasSelecionadas, progresso);
+            });
 
             int ano = dtp_inicio_comparativo_notas.Value.Year;
             int mes = dtp_fim_comparativo_notas.Value.Month;
 
-            using var con = Banco.Conexao();
-            con.Open();
-            using var transaction = con.BeginTransaction();
-
-            foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario, "*.pdf"))
+            await Task.Run(() =>
             {
-                string nome = Path.GetFileNameWithoutExtension(arquivo);
+                Debug.WriteLine("Chamando Report");
+                progresso.Report(new Progresso($"Atualizando valores", 1));
 
-                int indice = nome.IndexOf('_');
-                if (indice < 0)
-                    continue;
+                using var con = Banco.Conexao();
+                con.Open();
+                using var transaction = con.BeginTransaction();
 
-                string tipo = nome.Substring(0, indice);
-                string empresa = nome.Substring(indice + 1);
-
-                using PdfReader reader = new PdfReader(arquivo);
-                using PdfDocument pdf = new PdfDocument(reader);
-
-                for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+                int arquivos = Directory.GetFiles(Config.PathArquivoTemporario, "*.pdf").Count();
+                int concluidos = 0;
+                foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario, "*.pdf"))
                 {
-                    string texto = PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
 
-                    foreach (string linha in texto.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                    string nome = Path.GetFileNameWithoutExtension(arquivo);
+
+                    int indice = nome.IndexOf('_');
+                    if (indice < 0)
+                        continue;
+
+                    string tipo = nome.Substring(0, indice);
+                    string empresa = nome.Substring(indice + 1);
+
+                    using PdfReader reader = new PdfReader(arquivo);
+                    using PdfDocument pdf = new PdfDocument(reader);
+
+                    for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
                     {
-                        int estabelecimento = 0;
-                        decimal quantidade = 0;
-                        if (tipo == "ICMS")
+                        string texto = PdfTextExtractor.GetTextFromPage(pdf.GetPage(i));
+
+                        foreach (string linha in texto.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
                         {
-                            Match match = Regex.Match(
-                                linha.Trim(),
-                                @"^\d+\s*\|\s*(\d+)\s*\|.*\|\s*([\d.,]+)$");
+                            int estabelecimento = 0;
+                            decimal quantidade = 0;
+                            if (tipo == "ICMS")
+                            {
+                                Match match = Regex.Match(
+                                    linha.Trim(),
+                                    @"^\d+\s*\|\s*(\d+)\s*\|.*\|\s*([\d.,]+)$");
 
-                            if (!match.Success)
-                                continue;
+                                if (!match.Success)
+                                    continue;
 
-                            estabelecimento = int.Parse(match.Groups[1].Value);
+                                estabelecimento = int.Parse(match.Groups[1].Value);
 
-                            quantidade = decimal.Parse(
-                                match.Groups[2].Value,
-                                CultureInfo.GetCultureInfo("pt-BR"));
+                                quantidade = decimal.Parse(
+                                    match.Groups[2].Value,
+                                    CultureInfo.GetCultureInfo("pt-BR"));
+
+                            }
+                            else
+                            {
+                                Match match = Regex.Match(
+                                    linha.Trim(),
+                                    @"^(\d+)\s*\|\s*(\d+)$");
+
+                                if (!match.Success)
+                                    continue;
+
+                                estabelecimento = int.Parse(match.Groups[1].Value);
+                                quantidade = int.Parse(match.Groups[2].Value);
+
+                            }
+                            Thread.Sleep(1000);
+                            Banco.AtualizarQtdTax(ano, mes, empresa, tipo, estabelecimento, quantidade, con, transaction);
 
                         }
-                        else
-                        {
-                            Match match = Regex.Match(
-                                linha.Trim(),
-                                @"^(\d+)\s*\|\s*(\d+)$");
-
-                            if (!match.Success)
-                                continue;
-
-                            estabelecimento = int.Parse(match.Groups[1].Value);
-                            quantidade = int.Parse(match.Groups[2].Value);
-
-                        }
-                        Thread.Sleep(1000);
-                        Banco.AtualizarQtdTax(ano, mes, empresa, tipo, estabelecimento, quantidade, con, transaction);
 
                     }
+                    concluidos++;
+                    progresso.Report(new Progresso($"Atualizando valores {concluidos}/{total}", (int)(concluidos / arquivos * 100)));
                 }
-            }
 
-            AtualizarStatusTax(
-                $"Concluido",
-                100);
+                progresso.Report(new Progresso($"Concluido", 100));
 
-            transaction.Commit();
+                transaction.Commit();
+
+            });
+
             AtualizarComparativoNotas();
 
             MessageBox.Show(
@@ -878,7 +902,7 @@ namespace TaxZone
                 MessageBoxIcon.Information);
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void bt_logs_processos_importacao_Click(object sender, EventArgs e)
         {
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
             if (lbox_empresas.SelectedItems.Count == 0)

@@ -87,7 +87,7 @@
             label2 = new Label();
             bt_produtos_taxas = new Button();
             groupBox3 = new GroupBox();
-            button2 = new Button();
+            bt_logs_processos_importacao = new Button();
             lbox_empresas = new ListBox();
             lbl_status_tax = new Label();
             ckb_renew_task = new CheckBox();
@@ -690,7 +690,7 @@
             // 
             // groupBox3
             // 
-            groupBox3.Controls.Add(button2);
+            groupBox3.Controls.Add(bt_logs_processos_importacao);
             groupBox3.Controls.Add(lbox_empresas);
             groupBox3.Controls.Add(lbl_status_tax);
             groupBox3.Controls.Add(ckb_renew_task);
@@ -728,15 +728,15 @@
             groupBox3.TabStop = false;
             groupBox3.Text = "Tax API";
             // 
-            // button2
+            // bt_logs_processos_importacao
             // 
-            button2.Location = new Point(294, 357);
-            button2.Name = "button2";
-            button2.Size = new Size(75, 23);
-            button2.TabIndex = 60;
-            button2.Text = "button2";
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click;
+            bt_logs_processos_importacao.Location = new Point(294, 357);
+            bt_logs_processos_importacao.Name = "bt_logs_processos_importacao";
+            bt_logs_processos_importacao.Size = new Size(105, 23);
+            bt_logs_processos_importacao.TabIndex = 60;
+            bt_logs_processos_importacao.Text = "Log Importações";
+            bt_logs_processos_importacao.UseVisualStyleBackColor = true;
+            bt_logs_processos_importacao.Click += bt_logs_processos_importacao_Click;
             // 
             // lbox_empresas
             // 
@@ -1340,6 +1340,6 @@
         private Button bt_atualizar_valores_tax;
         private ListBox lbox_empresas;
         private Label label24;
-        private Button button2;
+        private Button bt_logs_processos_importacao;
     }
 }
