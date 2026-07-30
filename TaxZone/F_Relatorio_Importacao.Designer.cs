@@ -57,7 +57,7 @@
             // label29
             // 
             label29.AutoSize = true;
-            label29.Location = new Point(171, 21);
+            label29.Location = new Point(170, 17);
             label29.Name = "label29";
             label29.Size = new Size(13, 15);
             label29.TabIndex = 54;
@@ -66,7 +66,7 @@
             // dtp_fim
             // 
             dtp_fim.Format = DateTimePickerFormat.Short;
-            dtp_fim.Location = new Point(190, 17);
+            dtp_fim.Location = new Point(189, 13);
             dtp_fim.Name = "dtp_fim";
             dtp_fim.Size = new Size(84, 23);
             dtp_fim.TabIndex = 53;
@@ -74,7 +74,7 @@
             // label30
             // 
             label30.AutoSize = true;
-            label30.Location = new Point(23, 21);
+            label30.Location = new Point(22, 17);
             label30.Name = "label30";
             label30.Size = new Size(51, 15);
             label30.TabIndex = 52;
@@ -83,7 +83,7 @@
             // dtp_inicio
             // 
             dtp_inicio.Format = DateTimePickerFormat.Short;
-            dtp_inicio.Location = new Point(80, 17);
+            dtp_inicio.Location = new Point(79, 13);
             dtp_inicio.Name = "dtp_inicio";
             dtp_inicio.Size = new Size(85, 23);
             dtp_inicio.TabIndex = 51;
@@ -92,7 +92,7 @@
             // 
             cb_status.FormattingEnabled = true;
             cb_status.Items.AddRange(new object[] { " ", "Finalizado com sucesso", "Finalizado com erros" });
-            cb_status.Location = new Point(823, 49);
+            cb_status.Location = new Point(822, 45);
             cb_status.Name = "cb_status";
             cb_status.Size = new Size(194, 23);
             cb_status.TabIndex = 55;
@@ -101,7 +101,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(775, 53);
+            label1.Location = new Point(774, 49);
             label1.Name = "label1";
             label1.Size = new Size(42, 15);
             label1.TabIndex = 56;
@@ -111,7 +111,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(420, 21);
+            label2.Location = new Point(419, 17);
             label2.Name = "label2";
             label2.Size = new Size(50, 15);
             label2.TabIndex = 57;
@@ -120,7 +120,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(291, 21);
+            label3.Location = new Point(290, 17);
             label3.Name = "label3";
             label3.Size = new Size(38, 15);
             label3.TabIndex = 58;
@@ -129,7 +129,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(608, 21);
+            label4.Location = new Point(607, 17);
             label4.Name = "label4";
             label4.Size = new Size(61, 15);
             label4.TabIndex = 59;
@@ -137,7 +137,7 @@
             // 
             // tb_usuario
             // 
-            tb_usuario.Location = new Point(476, 17);
+            tb_usuario.Location = new Point(475, 13);
             tb_usuario.Name = "tb_usuario";
             tb_usuario.Size = new Size(126, 23);
             tb_usuario.TabIndex = 60;
@@ -146,21 +146,21 @@
             // 
             cb_estabelecimento.FormattingEnabled = true;
             cb_estabelecimento.Items.AddRange(new object[] { "Finalizado com sucesso", "Finalizado com erros" });
-            cb_estabelecimento.Location = new Point(335, 17);
+            cb_estabelecimento.Location = new Point(334, 13);
             cb_estabelecimento.Name = "cb_estabelecimento";
             cb_estabelecimento.Size = new Size(67, 23);
             cb_estabelecimento.TabIndex = 61;
             // 
             // tb_descricao
             // 
-            tb_descricao.Location = new Point(672, 17);
+            tb_descricao.Location = new Point(671, 13);
             tb_descricao.Name = "tb_descricao";
             tb_descricao.Size = new Size(100, 23);
             tb_descricao.TabIndex = 62;
             // 
             // bt_pesquisar
             // 
-            bt_pesquisar.Location = new Point(791, 17);
+            bt_pesquisar.Location = new Point(790, 13);
             bt_pesquisar.Name = "bt_pesquisar";
             bt_pesquisar.Size = new Size(75, 23);
             bt_pesquisar.TabIndex = 63;
@@ -188,7 +188,7 @@
             dgv_relatorio_importacao.Name = "dgv_relatorio_importacao";
             dgv_relatorio_importacao.ReadOnly = true;
             dgv_relatorio_importacao.RowHeadersVisible = false;
-            dgv_relatorio_importacao.Size = new Size(1034, 347);
+            dgv_relatorio_importacao.Size = new Size(1034, 319);
             dgv_relatorio_importacao.TabIndex = 64;
             dgv_relatorio_importacao.CellContentClick += dgv_relatorio_importacao_CellContentClick;
             dgv_relatorio_importacao.CellFormatting += dgv_relatorio_importacao_CellFormatting;
@@ -196,7 +196,7 @@
             // lbl_loading_percentage
             // 
             lbl_loading_percentage.AutoSize = true;
-            lbl_loading_percentage.Location = new Point(511, 285);
+            lbl_loading_percentage.Location = new Point(490, 290);
             lbl_loading_percentage.Name = "lbl_loading_percentage";
             lbl_loading_percentage.Size = new Size(69, 15);
             lbl_loading_percentage.TabIndex = 66;
@@ -209,7 +209,7 @@
             pb_loading.ErrorImage = null;
             pb_loading.Image = (Image)resources.GetObject("pb_loading.Image");
             pb_loading.InitialImage = null;
-            pb_loading.Location = new Point(487, 220);
+            pb_loading.Location = new Point(466, 225);
             pb_loading.Name = "pb_loading";
             pb_loading.Size = new Size(69, 62);
             pb_loading.SizeMode = PictureBoxSizeMode.Zoom;
@@ -221,7 +221,7 @@
             // 
             cb_acao_botao_relatorio.FormattingEnabled = true;
             cb_acao_botao_relatorio.Items.AddRange(new object[] { "Visualisar Arquivo", "Baixar Arquivo", "Processar (SAFX42 apenas)" });
-            cb_acao_botao_relatorio.Location = new Point(147, 54);
+            cb_acao_botao_relatorio.Location = new Point(146, 50);
             cb_acao_botao_relatorio.Name = "cb_acao_botao_relatorio";
             cb_acao_botao_relatorio.Size = new Size(168, 23);
             cb_acao_botao_relatorio.TabIndex = 67;
@@ -230,7 +230,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(23, 58);
+            label5.Location = new Point(22, 54);
             label5.Name = "label5";
             label5.Size = new Size(118, 15);
             label5.TabIndex = 68;
@@ -239,7 +239,7 @@
             // ckb_gerar_arquivo
             // 
             ckb_gerar_arquivo.AutoSize = true;
-            ckb_gerar_arquivo.Location = new Point(326, 56);
+            ckb_gerar_arquivo.Location = new Point(325, 52);
             ckb_gerar_arquivo.Name = "ckb_gerar_arquivo";
             ckb_gerar_arquivo.Size = new Size(99, 19);
             ckb_gerar_arquivo.TabIndex = 69;
@@ -250,7 +250,7 @@
             // ckb_fracionar
             // 
             ckb_fracionar.AutoSize = true;
-            ckb_fracionar.Location = new Point(431, 56);
+            ckb_fracionar.Location = new Point(430, 52);
             ckb_fracionar.Name = "ckb_fracionar";
             ckb_fracionar.Size = new Size(75, 19);
             ckb_fracionar.TabIndex = 70;
@@ -262,7 +262,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1057, 450);
+            ClientSize = new Size(1057, 422);
             Controls.Add(ckb_fracionar);
             Controls.Add(ckb_gerar_arquivo);
             Controls.Add(label5);

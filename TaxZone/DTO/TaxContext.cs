@@ -37,5 +37,19 @@ namespace TaxZone.DTO
         public string UniqueIdListaArquivos { get; set; }
 
         public string d_consulta_rel_proc_imp_grid { get; set; }
+
+
+        public string d_prog_job_imp_uf_tab_taxone { get; set; }
+        public string d_lis_arquivos_imp { get; set; }
+        public string d_dddw_empresa_usuario { get; set; }
+        public string omssafil_safilcm2_m_man_job_imp_safil { get; set; }
+        public string uo_parametros { get; set; }
+        public string d_prog_job_imp_frmwk { get; set; } 
+        public string dd_lib_proc_numeric { get; set; } 
+        public string d_lib_proc_par_header { get; set; } 
+
+
+
+
     }
 }

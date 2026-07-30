@@ -87,6 +87,7 @@
             label2 = new Label();
             bt_produtos_taxas = new Button();
             groupBox3 = new GroupBox();
+            bt_executar_job = new Button();
             bt_logs_processos_importacao = new Button();
             lbox_empresas = new ListBox();
             lbl_status_tax = new Label();
@@ -690,6 +691,7 @@
             // 
             // groupBox3
             // 
+            groupBox3.Controls.Add(bt_executar_job);
             groupBox3.Controls.Add(bt_logs_processos_importacao);
             groupBox3.Controls.Add(lbox_empresas);
             groupBox3.Controls.Add(lbl_status_tax);
@@ -728,9 +730,19 @@
             groupBox3.TabStop = false;
             groupBox3.Text = "Tax API";
             // 
+            // bt_executar_job
+            // 
+            bt_executar_job.Location = new Point(261, 357);
+            bt_executar_job.Name = "bt_executar_job";
+            bt_executar_job.Size = new Size(87, 23);
+            bt_executar_job.TabIndex = 61;
+            bt_executar_job.Text = "Executar JOB";
+            bt_executar_job.UseVisualStyleBackColor = true;
+            bt_executar_job.Click += bt_executar_job_Click;
+            // 
             // bt_logs_processos_importacao
             // 
-            bt_logs_processos_importacao.Location = new Point(294, 357);
+            bt_logs_processos_importacao.Location = new Point(354, 357);
             bt_logs_processos_importacao.Name = "bt_logs_processos_importacao";
             bt_logs_processos_importacao.Size = new Size(105, 23);
             bt_logs_processos_importacao.TabIndex = 60;
@@ -830,7 +842,7 @@
             // 
             // bt_relatorios
             // 
-            bt_relatorios.Location = new Point(213, 357);
+            bt_relatorios.Location = new Point(138, 357);
             bt_relatorios.Name = "bt_relatorios";
             bt_relatorios.Size = new Size(75, 23);
             bt_relatorios.TabIndex = 53;
@@ -968,11 +980,11 @@
             // 
             // bt_executar_relatorio
             // 
-            bt_executar_relatorio.Location = new Point(132, 357);
+            bt_executar_relatorio.Location = new Point(21, 357);
             bt_executar_relatorio.Name = "bt_executar_relatorio";
-            bt_executar_relatorio.Size = new Size(75, 23);
+            bt_executar_relatorio.Size = new Size(111, 23);
             bt_executar_relatorio.TabIndex = 52;
-            bt_executar_relatorio.Text = "Executar";
+            bt_executar_relatorio.Text = "Executar Relatorio";
             bt_executar_relatorio.UseVisualStyleBackColor = true;
             bt_executar_relatorio.Click += bt_executar_relatorio_Click;
             // 
@@ -1341,5 +1353,6 @@
         private ListBox lbox_empresas;
         private Label label24;
         private Button bt_logs_processos_importacao;
+        private Button bt_executar_job;
     }
 }

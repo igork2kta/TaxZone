@@ -381,11 +381,11 @@ namespace TaxZone
                 progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
             });
 
-            
-            await AtualizarValoresTax(progresso);
-            
 
-        } 
+            await AtualizarValoresTax(progresso);
+
+
+        }
 
 
         private void bt_atualizar_comparacao_Click(object sender, EventArgs e)
@@ -699,8 +699,8 @@ namespace TaxZone
             int total = empresas.Count;
             int concluidas = 0;
 
-            progresso.Report(new Progresso($"Aguardando conclusão dos relatórios. Concluído 0/{total}",1));
-            
+            progresso.Report(new Progresso($"Aguardando conclusão dos relatórios. Concluído 0/{total}", 1));
+
 
             var tasks = empresas.Select(async empresa =>
             {
@@ -712,8 +712,7 @@ namespace TaxZone
 
                     var response = await ApiTax.VerificaUltimoRelatorioConcluido(
                         empresa,
-                        context,
-                        string.IsNullOrEmpty(context.StorageId));
+                        context);
 
                     finalizado = response.Completed;
 
@@ -920,6 +919,40 @@ namespace TaxZone
 
             F_Relatorio_Importacao form = new(GetContext(empresa));
             form.Show();
+        }
+
+        private async void bt_executar_job_Click(object sender, EventArgs e)
+        {
+
+            List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
+
+            TaxContext context;
+            int total = empresasSelecionadas.Count;
+            int concluidas = 0;
+
+            var tasks = empresasSelecionadas.Select(async empresa =>
+            {
+
+                var progresso = new Progress<Progresso>(p =>
+                {
+                    lbl_status_tax.Text = p.Mensagem;
+                    progress_bar_tax.Value = p.Valor;
+
+                    lbl_status_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                    progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                });
+
+                TaxContext context = GetContext(empresa);
+
+                TaxApiResponse resposta = await ApiTax.ProgramarJob(context, null, progresso);
+                int qtd = Interlocked.Increment(ref concluidas);
+
+                if (!resposta.Success)
+                    MessageBox.Show($"Falha ao programar relatório para a empresa {empresa}: {resposta.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            });
+
+            await Task.WhenAll(tasks);
         }
     }
 }

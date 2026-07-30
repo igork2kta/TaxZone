@@ -360,6 +360,7 @@ namespace TaxZone
                 var root = await PostAsync(context.Empresa, url, json_content);
                 //root = await PostAsync(context.Empresa, url, json_content);
 
+                
                 context.NewViews = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
 
                 if (string.IsNullOrEmpty(context.NewViews))
@@ -479,16 +480,13 @@ namespace TaxZone
 
                 progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 1));
 
-                if (string.IsNullOrEmpty(context.StorageId))
+                if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
                 {
                     await ObterStorageId(context);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
 
                     progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 15));
-                }
-
-                if(context.Modulo != modulo)
-                {
+               
                     await SelecionaEmpresaEModulo(context, modulo);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
                 }
@@ -579,17 +577,13 @@ namespace TaxZone
                 if (string.IsNullOrEmpty(ConfigManager.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
-                if (string.IsNullOrEmpty(context.StorageId))
+                if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
                 {
                     await ObterStorageId(context);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
 
                     progresso?.Report(new Progresso($"15%", 15));
 
-                }
-
-                if (context.Modulo != modulo)
-                {
                     await SelecionaEmpresaEModulo(context, modulo);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
                 }
@@ -666,7 +660,7 @@ namespace TaxZone
             }
         }
 
-        public static async Task<TaxApiResponse> VerificaUltimoRelatorioConcluido(string empresa, TaxContext context, bool novo_contexto)
+        public static async Task<TaxApiResponse> VerificaUltimoRelatorioConcluido(string empresa, TaxContext context)
         {
 
             string url, json_content;
@@ -679,15 +673,11 @@ namespace TaxZone
                 if (string.IsNullOrEmpty(ConfigManager.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
-                if (novo_contexto)
+                if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
                 {
                     await ObterStorageId(context);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
 
-                }
-
-                if (context.Modulo != modulo)
-                {
                     await SelecionaEmpresaEModulo(context, modulo);
                     if (string.IsNullOrEmpty(context.StorageId)) 
                         return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
@@ -1445,6 +1435,32 @@ namespace TaxZone
 
         #endregion
 
+
+        public static async Task PrepararAmbienteJobImportacao(TaxContext context)
+        {
+            try
+            {
+
+                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/prepareStartupApp";
+
+                string json_content = $$$"""
+                        {"storageID": "{{{context.StorageId}}}"}
+                    """;
+                //Não tem retorno
+                await PostAsync(context.Empresa, url, json_content);
+
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm1/safil/safilcm1safilopen";
+
+                //Reaproveita o json anterior
+                var root = await PostAsync(context.Empresa, url, json_content);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Falha ao executar HTTP POST: {ex.Message}");
+            }
+        }
+
         #region LOGS PROCESSOS IMPORTACAO
         public static async Task<TaxApiResponse> ObterLogsProcessosImportacao(TaxContext context, ParametrosRelatorioImportacao parametros, IProgress<Progresso>? progresso = null)
         {
@@ -1455,52 +1471,34 @@ namespace TaxZone
                 if (string.IsNullOrEmpty(ConfigManager.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
-                if (string.IsNullOrEmpty(context.StorageId))
+                if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
                 {
                     await ObterStorageId(context);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
-
+                
                     progresso?.Report(new Progresso($"15%", 15));
-                    
-                }
 
-                if (context.Modulo != modulo)
-                {
                     await SelecionaEmpresaEModulo(context, modulo);
+
                     if (string.IsNullOrEmpty(context.StorageId))
-                        return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
+                        throw new Exception("Falha ao selecionar empresa e módulo");
                 }
 
                 progresso?.Report(new Progresso($"30%", 30));
 
-                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/prepareStartupApp";
-
-                string json_content = $$$"""
-                        {
-                      "storageID": "{{{context.StorageId}}}"
-                    }
-                    """;
-                //Não tem retorno
-                await PostAsync(context.Empresa, url, json_content);
-
-                progresso?.Report(new Progresso($"40%", 40));
-
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm1/safil/safilcm1safilopen";
-
-                //Reaproveita o json anterior
-                var root = await PostAsync(context.Empresa, url, json_content);
+                await PrepararAmbienteJobImportacao(context);
 
                 progresso?.Report(new Progresso($"50%", 50));
 
                 //Abrir tela Controles>Relatórios>Importação
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm2/m_mdi_safil/m_importacaonovaclicked";
+                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm2/m_mdi_safil/m_importacaonovaclicked";
 
-                json_content = $$$"""
+                string json_content = $$$"""
                         {"vm": "a","menuPath": "Controles > Relatórios > Relatório por Processo > Importação","moduleExe": "safil","commands": [{"command": "UPDATE_CURRENT_KEY","data": {"key": "none"}}],
                         "storageID": "{{{context.StorageId}}}"}
                     """;
 
-                root = await PostAsync(context.Empresa, url, json_content);
+                var root = await PostAsync(context.Empresa, url, json_content);
 
                 progresso?.Report(new Progresso($"60%", 60));
 
@@ -1515,21 +1513,24 @@ namespace TaxZone
 
                 context.d_consulta_rel_proc_imp_grid = obj?["UniqueID"]?.GetValue<string>();
 
-                var downloads = new List<Task>();
+               // var downloads = new List<Task>();
 
-                downloads.Add(ParametroLogProcessoImportacao(context, "dat_inicio", parametros.DataInicio.ToString("dd-MM-yyyy"), 2, parametros));
-                downloads.Add(ParametroLogProcessoImportacao(context, "dat_fim", parametros.DataFim.ToString("dd-MM-yyyy"), 3, parametros));
-                downloads.Add(ParametroLogProcessoImportacao(context, "ind_situacao", parametros.Status, 8, parametros));
+                await ParametroLogProcessoImportacao(context, "dat_inicio", parametros.DataInicio.ToString("dd-MM-yyyy"), 2, parametros);
+                await ParametroLogProcessoImportacao(context, "dat_fim", parametros.DataFim.ToString("dd-MM-yyyy"), 3, parametros);
+                await ParametroLogProcessoImportacao(context, "ind_situacao", parametros.Status, 8, parametros);
+
+                progresso?.Report(new Progresso($"70%", 70));
 
                 if (!string.IsNullOrEmpty(parametros.Usuario))
-                    downloads.Add(ParametroLogProcessoImportacao(context, "usuario", parametros.Usuario, 6, parametros));
+                    await ParametroLogProcessoImportacao(context, "usuario", parametros.Usuario, 6, parametros);
                 
                 if (!string.IsNullOrEmpty(parametros.Estabelecimento))
-                    downloads.Add(ParametroLogProcessoImportacao(context, "cod_estab", parametros.Estabelecimento, 8, parametros));
+                    await ParametroLogProcessoImportacao(context, "cod_estab", parametros.Estabelecimento, 8, parametros);
 
                 if (!string.IsNullOrEmpty(parametros.Descricao))
-                    downloads.Add(ParametroLogProcessoImportacao(context, "descricao", parametros.Descricao, 9, parametros));
-                await Task.WhenAll(downloads);
+                    await ParametroLogProcessoImportacao(context, "descricao", parametros.Descricao, 9, parametros);
+                
+                //await Task.WhenAll(downloads);
 
                 progresso?.Report(new Progresso($"80%", 80));
 
@@ -1808,6 +1809,597 @@ namespace TaxZone
             return new TaxApiResponse(true, "Relatório baixado com sucesso", context.Empresa);
 
         }
+        #endregion
+
+        #region PROGRAMAR JOB IMPORTACAO
+
+        public static async Task<TaxApiResponse> ProgramarJob(TaxContext context, ParametrosJobImportacao parametros, IProgress<Progresso>? progresso = null)
+        {
+            try
+            {
+                string modulo = "JOB SERVIDOR";
+
+                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                    throw new ArgumentException("Cookie não encontrado!");
+
+                if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
+                {
+                    await ObterStorageId(context);
+                    if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
+
+                    progresso?.Report(new Progresso($"15%", 15));
+
+                
+                    await SelecionaEmpresaEModulo(context, modulo);
+                    if (string.IsNullOrEmpty(context.StorageId))
+                        return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
+                }
+
+                progresso?.Report(new Progresso($"30%", 30));
+
+                await PrepararAmbienteJobImportacao(context);
+
+                progresso?.Report(new Progresso($"40%", 40));
+
+
+                //ABRIR TELA JOB
+                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm2/m_man_job_imp_safil/m_programa%C3%A7%C3%A3o0clicked";
+
+                string json_content = $$$"""
+                      {"vm":"a","menuPath":"Importação > Importação > Programação","moduleExe":"safil","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}}],
+                      "storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                var root = await PostAsync(context.Empresa, url, json_content);
+
+                context.NewViews2 = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
+                context.DataManagerId = root["VD"]?["Commands"]?[0]?["parameters"]?["dataManagerId"]?.GetValue<string>();
+
+                JsonObject obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "safil/safilcm3/d_prog_job_imp_uf_tab_taxone/d_prog_job_imp_uf_tab_taxone");
+    
+                context.d_prog_job_imp_uf_tab_taxone = obj?["UniqueID"]?.GetValue<string>();
+
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "safil/safilcm3/d_lis_arquivos_imp/d_lis_arquivos_imp");
+                context.d_lis_arquivos_imp = obj?["UniqueID"]?.GetValue<string>();
+
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "safil/safilcm3/d_dddw_empresa_usuario/d_dddw_empresa_usuario") ;
+
+                context.d_dddw_empresa_usuario = obj?["UniqueID"]?.GetValue<string>();
+
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "omssafil_safilcm2_m_man_job_imp_safil") ;
+
+                context.omssafil_safilcm2_m_man_job_imp_safil = obj?["UniqueID"]?.GetValue<string>();
+
+
+                //CRIAR NUMERO JOB
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecb_novoclicked";
+
+                json_content = $$$"""
+                      {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                      {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                      {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":1,"currentControlName":"","displayedRowCount":450,"currentPage":1}}],
+                      "storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["UniqueID"]?.ToString() == $"st_new_job#{context.NewViews2}")
+    ;
+
+                string numJob = obj?["text"]?.GetValue<string>();
+
+                //Clica no checkbox apenas tabelas carregadas
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecbx_restringeclicked";
+
+                json_content = $$$"""
+                    {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil","dirty":{"cbx_restringe#{{{context.NewViews2}}}":{"checked":true}},
+                    "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":1,"currentControlName":"","displayedRowCount":450,"currentPage":1}}],
+                    "storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                await PostAsync(context.Empresa, url, json_content);
+
+
+                //Buscar tabelas disponíveis
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=44&dataManagerId={context.d_lis_arquivos_imp}&start=1";
+
+                json_content = $$$"""
+                    {"storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                
+                List<ArquivoImportacao> arquivos = new();
+
+                int row = 0;
+                int selected_rows = 0;
+                foreach (JsonArray linha in root[3]!.AsArray())
+                {
+                    row++;
+
+                    string nomeTabela = linha[4]!.GetValue<string>();
+
+                    if (nomeTabela == "SAFX04"   || nomeTabela == "SAFX42" || nomeTabela == "SAFX43" ||
+                       nomeTabela == "SAFX2013" )//|| nomeTabela == "SAFX431")
+                    {
+
+                        arquivos.Add(new ArquivoImportacao
+                        {
+                            GrupoArquivo = linha[1]!.GetValue<int>(),
+                            NumeroArquivo = linha[2]!.GetValue<int>(),
+                            // DescricaoArquivo = linha[3]!.GetValue<string>(),
+                            NomeTabelaWork = linha[4]!.GetValue<string>(),
+                            // QtdRegistros = linha[5]!.GetValue<int>(),
+                            // IndAtoCotepe = linha[6]!.GetValue<string>(),
+                            // IndEstabGrp = linha[7]!.GetValue<string>(),
+                            // IndMultiLoad = linha[8]!.GetValue<string>()
+                        });
+
+
+                        //SELECIONAR CADA TABELA
+                        url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_arquivosclicked";
+
+                        /*
+                        json_content = $$$"""
+                            {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                            "parameters":{"xpos":0,"ypos":0,"row":{{{row}}},"dwo":"descricao_arquivo#{{{context.d_lis_arquivos_imp}}}"},
+                            "commands":[
+                                {"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                                {"command":"UPDATE_CLICKED_DM_ROW","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","row":{{{row}}}}}],
+                            "storageID":"{{{context.StorageId}}}"}
+                            """;
+                        */
+                        json_content = $$$"""
+                            {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                            "parameters":{"xpos":0,"ypos":0,"row":{{{row}}},"dwo":"descricao_arquivo#{{{context.d_lis_arquivos_imp}}}"},
+                            "storageID":"{{{context.StorageId}}}"}
+                            """;
+
+                        root = await PostAsync(context.Empresa, url, json_content);
+
+                        selected_rows++;
+                    }
+                }
+
+                //Botão adicionar arquivos
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecb_adicionaclicked";
+
+                /*
+                json_content = $$$"""
+                    {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                    "commands":[
+                        {"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":4,"currentControlName":"","displayedRowCount":4,"currentPage":1}}],
+                    "storageID":"{{{context.StorageId}}}"}
+                    """;
+                */
+                json_content = $$$"""
+                    {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                     "storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                DateTime dataIni = new DateTime(1900, 01, 01);
+                DateTime dataFim = DateTime.Today;
+                string limpaTabela = "S";
+
+                int codEmpresa = Empresa.GetCodEmpresa(context.Empresa);
+
+                //Percorre todas as linhas setando os parametros
+                for(int i = 1; i <= selected_rows; i++)
+                {
+                    string indLimitaPeriodo = "S";
+
+                    if (arquivos[i - 1].NomeTabelaWork == "SAFX04" || arquivos[i - 1].NomeTabelaWork == "SAFX2013")
+                        indLimitaPeriodo = "N";
+
+
+                    url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
+
+                    json_content = $$$"""
+                        {
+                        "menuPath": "Importação > Importação > Programação",
+                        "moduleExe": "safil",
+                        "parameters": {
+                        "targetName": "safil",
+                        "args": [
+                            [
+                            "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemfocuschanged",
+                            "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":{{{i}}},\"dwo\":\"data_fim#{{{context.d_prog_job_imp_uf_tab_taxone}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"data_fim\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE_DELAYED\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i - 1].GrupoArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},\"{{{codEmpresa}}}\",null,\"{{{dataIni.ToString("ddMMyyyy")}}}000000\",null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:6,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                            "{{{context.NewViews2}}}",
+                            "safil"
+                            ]
+                        ]
+                        },
+                        "commands": [
+                        {
+                            "command": "UPDATE_CURRENT_KEY",
+                            "data": {
+                            "key": "none"
+                            }
+                        },
+                        {
+                            "command": "UPDATE_DM_ROW_AND_COL",
+                            "data": {
+                            "dataManagerId": "{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                            "currentRow": {{{i}}},
+                            "currentControlName": "data_fim",
+                            "displayedRowCount": 10,
+                            "currentPage": 1
+                            }
+                        },
+                        {
+                            "command": "UPDATE_DM_ROW_AND_COL",
+                            "data": {
+                            "dataManagerId": "{{{context.d_lis_arquivos_imp}}}",
+                            "currentRow": 0,
+                            "currentControlName": "",
+                            "displayedRowCount": 0,
+                            "currentPage": 1
+                            }
+                        }
+                        ],
+                        "storageID": "{{{context.StorageId}}}"
+                    }
+                    """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+                    
+
+                    url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemchanged";
+
+                    //dataini
+                    /*
+                    json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                        "parameters":{"row":{{{i}}},"dwo":"data_ini#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                        "data":"{{{dataIni.ToString("yyyy-MM-dd 00:00:00:000000")}}}"},
+                        "commands":[
+                            {"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                            {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":{{{i}}},"currentControlName":"perc_erro","displayedRowCount":10,"currentPage":1}},
+                            {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":{{{i-1}}},"currentControlName":"","displayedRowCount":0,"currentPage":1}}],
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+                    */
+                    json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                        "parameters":{"row":{{{i}}},"dwo":"data_ini#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                        "data":"{{{dataIni.ToString("yyyy-MM-dd 00:00:00:000000")}}}"},
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+                    //datafim
+                    json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                        "parameters":{"row":{{{i}}},"dwo":"data_fim#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                        "data":"{{{dataFim.ToString("yyyy-MM-dd 00:00:00:000000")}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":{{{i}}},"currentControlName":"data_fim","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_BUNDLE_DELAYED","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","updatedRows":[{{{i}}}],"bundle":[{"0":"decimal(0)","1":"decimal(0)","2":"decimal(0)","3":"char(3)","4":"char(6)","5":"datetime","6":"datetime","7":"decimal(0)","8":"char(1)","9":"datetime","10":"datetime","11":"char(1)","12":"char(1)","13":"char(1)","14":"char(1)","15":"char(1)","16":"char(1)","17":"char(1)","18":"char(1)","19":"char(1)","20":"char(1)","21":"char(1)","22":"char(1)","23":"char(9)","24":"char(9)","25":"char(3)","26":"char(1)","27":"number"},{"0":"compute_1","1":"teste_empresa"},[[{"WM$%S":2,"WM$%CS":"0000000000000000000000000000",
+                        "computed":{"compute_1":"00{{{arquivos[i-1].GrupoArquivo}}}0{{{arquivos[i-1].NumeroArquivo}}}","teste_empresa":0}},{{{numJob}}},{{{arquivos[i-1].GrupoArquivo}}},{{{arquivos[i-1].NumeroArquivo}}},"{{{codEmpresa}}}",null,"{{{dataIni.ToString("ddMMyyyy")}}}000000","{{{dataFim.ToString("ddMMyyyy")}}}000000",100,"N",null,null,"P","N","N","S","{{{indLimitaPeriodo}}}",null,"N","N","N","N","N","S",null,null,"{{{codEmpresa}}}","{{{arquivos[i - 1].IndEstabGrp}}}",0]],["num_job","grupo_arquivo","numero_arquivo","cod_empresa","cod_estab","data_ini","data_fim","perc_erro","ind_aborta_job","dat_ini_exec","dat_fim_exec","import_status","ind_drop_tab","ind_periodo","ind_sobrepor_reg","ind_lim_periodo","ind_ato_cotepe","det_job_import_ind_log_x2013","ind_valid_x2013","ind_data_averb_x48","ind_gera_x530","ind_gera_x751","ind_valid_cep_x04","grupo_x188","grupo_x189","estabelecimento_cod_empresa","ind_estab_grp","protect"]],"dirtyColumns":"@{{{i}}}:7,"}},{"command":"UPDATE_DM_ROW_AND_COL",
+                        "data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":{{{i-1}}},"currentControlName":"","displayedRowCount":0,"currentPage":1}}],
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+                    
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+                    //limpa tabela
+                    json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                        "parameters":{"row":{{{i}}},"dwo":"ind_drop_tab#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                        "data":"{{{limpaTabela}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":{{{i}}},"currentControlName":"ind_drop_tab","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_BUNDLE_DELAYED","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","updatedRows":[{{{i}}}],"bundle":[{"0":"decimal(0)","1":"decimal(0)","2":"decimal(0)","3":"char(3)","4":"char(6)","5":"datetime","6":"datetime","7":"decimal(0)","8":"char(1)","9":"datetime","10":"datetime","11":"char(1)","12":"char(1)","13":"char(1)","14":"char(1)","15":"char(1)","16":"char(1)","17":"char(1)","18":"char(1)","19":"char(1)","20":"char(1)","21":"char(1)","22":"char(1)","23":"char(9)","24":"char(9)","25":"char(3)","26":"char(1)","27":"number"},{"0":"compute_1","1":"teste_empresa"},[[{"WM$%S":0,
+                        "computed":{"compute_1":"00{{{arquivos[i-1].GrupoArquivo}}}0{{{arquivos[i-1].NumeroArquivo}}}","teste_empresa":0}},{{{numJob}}},{{{arquivos[i-1].GrupoArquivo}}},{{{arquivos[i-1].NumeroArquivo}}},"{{{codEmpresa}}}",null,"{{{dataIni.ToString("ddMMyyyy")}}}000000","{{{dataFim.ToString("ddMMyyyy")}}}000000",100,"N",null,null,"P","{{{limpaTabela}}}","N","S","{{{indLimitaPeriodo}}}",null,"N","N","N","N","N","S",null,null,"{{{codEmpresa}}}","{{{arquivos[i - 1].IndEstabGrp}}}",0]],["num_job","grupo_arquivo","numero_arquivo","cod_empresa","cod_estab","data_ini","data_fim","perc_erro","ind_aborta_job","dat_ini_exec","dat_fim_exec","import_status","ind_drop_tab","ind_periodo","ind_sobrepor_reg","ind_lim_periodo","ind_ato_cotepe","det_job_import_ind_log_x2013","ind_valid_x2013","ind_data_averb_x48","ind_gera_x530","ind_gera_x751","ind_valid_cep_x04","grupo_x188","grupo_x189","estabelecimento_cod_empresa","ind_estab_grp","protect"]],"dirtyColumns":"@{{{i}}}:13,"}},{"command":"UPDATE_DM_ROW_AND_COL",
+                        "data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":{{{i-1}}},"currentControlName":"","displayedRowCount":0,"currentPage":1}}],
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+                    //limita periodo
+
+                    json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                        "parameters":{"row":{{{i}}},"dwo":"ind_periodo#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                        "data":"{{{limpaTabela}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":{{{i}}},"currentControlName":"ind_drop_tab","displayedRowCount":10,"currentPage":1}},
+                        {"command":"UPDATE_BUNDLE_DELAYED","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","updatedRows":[{{{i}}}],"bundle":[{"0":"decimal(0)","1":"decimal(0)","2":"decimal(0)","3":"char(3)","4":"char(6)","5":"datetime","6":"datetime","7":"decimal(0)","8":"char(1)","9":"datetime","10":"datetime","11":"char(1)","12":"char(1)","13":"char(1)","14":"char(1)","15":"char(1)","16":"char(1)","17":"char(1)","18":"char(1)","19":"char(1)","20":"char(1)","21":"char(1)","22":"char(1)","23":"char(9)","24":"char(9)","25":"char(3)","26":"char(1)","27":"number"},{"0":"compute_1","1":"teste_empresa"},[[{"WM$%S":0,
+                        "computed":{"compute_1":"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}","teste_empresa":0}},{{{numJob}}},{{{arquivos[i - 1].GrupoArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},"{{{codEmpresa}}}",null,"{{{dataIni.ToString("ddMMyyyy")}}}000000","{{{dataFim.ToString("ddMMyyyy")}}}000000",100,"N",null,null,"P","{{{limpaTabela}}}","N","S","{{{indLimitaPeriodo}}}",null,"N","N","N","N","N","S",null,null,"{{{codEmpresa}}}","{{{arquivos[i - 1].IndEstabGrp}}}",0]],["num_job","grupo_arquivo","numero_arquivo","cod_empresa","cod_estab","data_ini","data_fim","perc_erro","ind_aborta_job","dat_ini_exec","dat_fim_exec","import_status","ind_drop_tab","ind_periodo","ind_sobrepor_reg","ind_lim_periodo","ind_ato_cotepe","det_job_import_ind_log_x2013","ind_valid_x2013","ind_data_averb_x48","ind_gera_x530","ind_gera_x751","ind_valid_cep_x04","grupo_x188","grupo_x189","estabelecimento_cod_empresa","ind_estab_grp","protect"]],"dirtyColumns":"@{{{i}}}:13,"}},{"command":"UPDATE_DM_ROW_AND_COL",
+                        "data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":{{{i-1}}},"currentControlName":"","displayedRowCount":0,"currentPage":1}}],
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+
+                    json_content = $$$"""
+                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
+                        "parameters":{"row":{{{i}}},"dwo":"ind_periodo#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
+                        "data":"{{{limpaTabela}}}"},
+                        "storageID":"{{{context.StorageId}}}"}
+                        """;
+
+                    root = await PostAsync(context.Empresa, url, json_content);
+
+                    if (arquivos[i - 1].NomeTabelaWork == "SAFX04" || arquivos[i - 1].NomeTabelaWork == "SAFX2013")
+                    {
+  
+                        url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
+
+                        //codestab
+                        json_content = $$$"""
+                            {
+                              "menuPath": "Importação > Importação > Programação",
+                              "moduleExe": "safil",
+                              "parameters": {
+                                "targetName": "safil",
+                                "args": [
+                                  [
+                                    "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemchanged",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":{{{i}}},\"dwo\":\"cod_estab#{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{{{context.NewViews2}}}",
+                                    "safil"
+                                  ],
+                                  [
+                                    "/dataManagerController/forceBundleUpdate",
+                                    "{\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i-1].GrupoArquivo}}}0{{{arquivos[i-1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i-1].NumeroArquivo}}},{{{arquivos[i-1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",null,null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:5,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    null
+                                  ],
+                                  [
+                                    "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemfocuschanged",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":1,\"dwo\":\"data_fim#{{{context.d_prog_job_imp_uf_tab_taxone}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"data_fim\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{{{context.NewViews2}}}",
+                                    "safil"
+                                  ]
+                                ]
+                              },
+                              "commands": [
+                                {"command": "UPDATE_CURRENT_KEY","data": {"key": "none"}},
+                                {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow": {{{i}}},
+                                    "currentControlName": "data_fim","displayedRowCount": 10,"currentPage": 1}},
+                                {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lis_arquivos_imp}}}","currentRow": 0,
+                                    "currentControlName": "","displayedRowCount": 0,"currentPage": 1}}
+                              ],
+                              "storageID": "{{{context.StorageId}}}"
+                            }
+                            """;
+
+                        //codestab
+                        json_content = $$$"""
+                            {
+                              "menuPath": "Importação > Importação > Programação",
+                              "moduleExe": "safil",
+                              "parameters": {
+                                "targetName": "safil",
+                                "args": [
+                                  [
+                                    "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemchanged",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":{{{i}}},\"dwo\":\"cod_estab#{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{{{context.NewViews2}}}",
+                                    "safil"
+                                  ],
+                                  [
+                                    "/dataManagerController/forceBundleUpdate",
+                                    "{\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i - 1].NumeroArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",null,null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:5,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    null
+                                  ],
+                                  [
+                                    "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemfocuschanged",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":1,\"dwo\":\"data_fim#{{{context.d_prog_job_imp_uf_tab_taxone}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"data_fim\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{{{context.NewViews2}}}",
+                                    "safil"
+                                  ]
+                                ]
+                              },
+                              "storageID": "{{{context.StorageId}}}"
+                            }
+                            """;
+
+                        root = await PostAsync(context.Empresa, url, json_content);
+                    }
+
+                    if (arquivos[i-1].NomeTabelaWork == "SAFX04")
+                    {
+
+                        url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
+                        
+                        //valida cep
+                        json_content = $$$"""
+                              {
+                              "menuPath": "Importação > Importação > Programação",
+                              "moduleExe": "safil",
+                              "parameters": {
+                                "targetName": "safil",
+                                "args": [
+                                  [
+                                    "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetclicked",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"ypos\":0,\"row\":1,\"dwo\":\"ind_valid_cep_x04#{{{context.d_prog_job_imp_uf_tab_taxone}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":1,\"currentControlName\":\"\",\"displayedRowCount\":446,\"currentPage\":1}}]}",
+                                    "{{{context.NewViews2}}}",
+                                    "safil"
+                                  ],
+                                  [
+                                    "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemchanged",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":1,\"dwo\":\"ind_valid_cep_x04#{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"data\":\"N\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":1,\"currentControlName\":\"ind_valid_cep_x04\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE_DELAYED\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":0,\"computed\":{\"compute_1\":\"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i - 1].GrupoArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",\"{{{dataIni.ToString("ddMMyyyy")}}}000000\",\"{{{dataFim.ToString("ddMMyyyy")}}}000000\",100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"N\",\"S\",\"N\",\"N\",\"N\",\"N\",\"N\",\"{{{indLimitaPeriodo}}}\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@1:23,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":1,\"currentControlName\":\"\",\"displayedRowCount\":446,\"currentPage\":1}}]}",
+                                    "{{{context.NewViews2}}}",
+                                    "safil"
+                                  ]
+                                ]
+                              },
+                              "commands": [
+                                {
+                                  "command": "UPDATE_CURRENT_KEY",
+                                  "data": {
+                                    "key": "none"
+                                  }
+                                },
+                                {
+                                  "command": "UPDATE_DM_ROW_AND_COL",
+                                  "data": {
+                                    "dataManagerId": "{{{context.d_lis_arquivos_imp}}}",
+                                    "currentRow": {{{i}}},
+                                    "currentControlName": "",
+                                    "displayedRowCount": 446,
+                                    "currentPage": 1
+                                  }
+                                }
+                              ],
+                              "storageID": "{{{context.StorageId}}}"
+                            }
+                            """;
+
+                        root = await PostAsync(context.Empresa, url, json_content);
+                    }
+
+                }
+
+                //salvar
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm2/m_man_job_imp_safil/m_graclicked";
+
+                json_content = $$$"""
+                    {"vm":"{{{context.omssafil_safilcm2_m_man_job_imp_safil}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":1,"currentControlName":"ind_drop_tab","displayedRowCount":10,"currentPage":1}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":0,"currentControlName":"","displayedRowCount":0,"currentPage":1}}],
+                    "storageID":"{{{context.StorageId}}}"}
+
+                    """;
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                string mensagem = root["VD"]?[0]?[0]?[0]?[0]?.GetValue<string>();
+
+                if (mensagem != "Dados atualizados com sucesso.")
+                    return new TaxApiResponse(false, $"Falha ao programar JOB: {mensagem}", context.Empresa);
+
+                //Tela de execução
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm2/m_mdi_safil/m_execu%C3%A7%C3%A3oclicked";
+
+                json_content = $$$"""
+                    {"vm":"a","menuPath":"Importação > Importação > Execução","moduleExe":"safil","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}}],
+                    "storageID":"{{{context.StorageId}}}"}
+                    """;
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                context.NewViews2 = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "uo_parametros");
+
+                context.uo_parametros = obj?["UniqueID"]?.GetValue<string>();
+
+                context.DataManagerId = root["VD"]?["Commands"]?[0]?["parameters"]?["dataManagerId"]?.GetValue<string>();
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "genericas/safobfw/d_lib_proc_processos/d_lib_proc_processos");
+
+                context.d_lib_proc_processos = obj?["UniqueID"]?.GetValue<string>();
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "genericas/safobfw/d_lib_proc_lista_arquivos/d_lib_proc_lista_arquivos");
+
+
+                context.d_lib_proc_lista_arquivos = obj?["UniqueID"]?.GetValue<string>();
+                    
+                 obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["name"]?.ToString() == "safil/safilcm2/d_prog_job_imp_frmwk/d_prog_job_imp_frmwk");
+
+                context.d_prog_job_imp_frmwk = obj?["UniqueID"]?.GetValue<string>();
+                                    
+                    
+                obj = root["MD"]!.AsArray()
+                        .OfType<JsonObject>()
+                        .FirstOrDefault(o =>
+                            o["name"]?.ToString() == "genericas/safobfw/dd_lib_proc_numeric/dd_lib_proc_numeric");
+
+                context.dd_lib_proc_numeric = obj?["UniqueID"]?.GetValue<string>();
+
+                obj = root["MD"]!.AsArray()
+                        .OfType<JsonObject>()
+                        .FirstOrDefault(o =>
+                            o["name"]?.ToString() == "genericas/safobfw/d_lib_proc_par_header/d_lib_proc_par_header");
+
+                context.d_lib_proc_par_header = obj?["UniqueID"]?.GetValue<string>();
+
+                //Selecionar job
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safobfw/uo_lib_proc_parametros/safobfwuo_lib_proc_parametrosdw_parametrositemchanged";
+
+                /*
+                json_content = $$$"""
+                    {"vm":"{{{context.uo_parametros}}}","menuPath":"Importação > Importação > Execução","moduleExe":"safil",
+                    "parameters":{"row":1,"dwo":"col1#{{{context.DataManagerId}}}","data":{{{numJob}}}},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_processos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                    {"command":"UPDATE_BUNDLE_CURRENT_ROW_DELAYED","data":{"dataManagerId":"{{{context.DataManagerId}}}","bundle":[{"0":"number"},{},[[{"WM$%S":3,"WM$%CS":"1","computed":{}},{{{numJob}}}]],["col1"]],
+                    "updatedColumns":[1]}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_frmwk}}}","currentRow":0,"currentControlName":"","displayedRowCount":0,"currentPage":1}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.dd_lib_proc_numeric}}}","currentRow":1,"currentControlName":"descricao","displayedRowCount":124,"currentPage":1}}],
+                    "storageID":"{{{context.StorageId}}}"}
+                    """;
+                */
+                json_content = $$$"""
+                    {"vm":"{{{context.uo_parametros}}}","menuPath":"Importação > Importação > Execução","moduleExe":"safil",
+                    "parameters":{"row":1,"dwo":"col1#{{{context.DataManagerId}}}","data":{{{numJob}}}},"
+                    commands":[
+                        {"command":"UPDATE_BUNDLE_CURRENT_ROW_DELAYED","data":{"dataManagerId":"{{{context.DataManagerId}}}","bundle":[{"0":"number"},{},[[{"WM$%S":3,"WM$%CS":"1","computed":{}},{{{numJob}}}]],["col1"]],
+                        "updatedColumns":[1]}},{"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_frmwk}}}","currentRow":0,"currentControlName":"","displayedRowCount":0,"currentPage":1}},
+                    {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.dd_lib_proc_numeric}}}","currentRow":1,"currentControlName":"descricao","displayedRowCount":124,"currentPage":1}}],
+                    "storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                //botao executa
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm2/w_lib_proc_safil_imp_online/safilcm2w_lib_proc_safil_imp_onlinetab_frameworktabpage_parametrosdw_parametros_headerbuttonclicked";
+
+                json_content = $$$"""
+                    {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Execução","moduleExe":"safil",
+                    "parameters":{"row":1,"dwo":"pb_executar#{{{context.d_lib_proc_par_header}}}"},
+                    "storageID":"{{{context.StorageId}}}"}
+                    """;
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                mensagem = root[2]?[0]?[0]?[0]?[0].GetValue<string>();
+
+
+                return new TaxApiResponse(true, mensagem, context.Empresa);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Falha ao executar ParametroRelatorioImportacao: {ex.Message}");
+            }
+        }
+
+
         #endregion
 
         public async ValueTask DisposeAsync()

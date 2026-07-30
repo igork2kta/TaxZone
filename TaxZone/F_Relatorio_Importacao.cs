@@ -59,7 +59,13 @@ namespace TaxZone
             var retorno = await ApiTax.ObterLogsProcessosImportacao(taxContext, parametros, progresso);
 
             if (!retorno.Success)
+            {
                 MessageBox.Show(retorno.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                pb_loading.Visible = false;
+                lbl_loading_percentage.Visible = false;
+                return;
+            }
+
             dgv_relatorio_importacao.DataSource = retorno.ProcessosImportacao;
 
             dgv_relatorio_importacao.Columns["CodEmpresa"].Visible = false;
@@ -152,6 +158,7 @@ namespace TaxZone
 
                     response = await ApiTax.BaixarRelatorioProcessoImportacao(taxContext, e.RowIndex + 1, saveDialog.FileName);
 
+
                 }
                 else if (opcao == 2)
                 {
@@ -166,14 +173,16 @@ namespace TaxZone
                     }
                 }
 
-                MessageBox.Show(response?.Message, "Atenção");
+                if(!response.Success || opcao == 1) //Mostrar mensagem so em caso de erro ou de arquivo baixado
+                    MessageBox.Show(response?.Message, "Atenção");
+
             }
 
         }
 
         private void cb_acao_botao_relatorio_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if(cb_acao_botao_relatorio.SelectedIndex == 2)
+            if (cb_acao_botao_relatorio.SelectedIndex == 2)
             {
                 ckb_fracionar.Visible = true;
                 ckb_gerar_arquivo.Visible = true;
@@ -183,6 +192,12 @@ namespace TaxZone
                 ckb_fracionar.Visible = false;
                 ckb_gerar_arquivo.Visible = false;
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+            ApiTax.ProgramarJob(taxContext, null, null);
         }
     }
 }
