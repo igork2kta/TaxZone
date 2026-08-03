@@ -156,6 +156,8 @@ namespace TaxZone
                 catch (Exception ex)
                 {
                     GravaLog.Gravar($"Base: {serviceName}. \n {ex.Message}");
+                    if (ex.InnerException != null)
+                        GravaLog.Gravar(ex.InnerException.ToString());
                     MessageBox.Show($"{ex.Message}\nBanco: {serviceName}\nSession: {session}\nUsuario: {user}\nSenha: {password} ", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return null;
                 }

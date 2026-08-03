@@ -30,7 +30,6 @@ namespace TaxZone
         public static string UsuarioTax { get; set; }
         public static string SenhaTax { get; set; }
         public static string Versao { get; set; }
-
         public static string Cookie { get; set; }
 
         private static string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), GetAppName(), "config.json");

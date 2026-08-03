@@ -3,6 +3,7 @@ using iText.Kernel.Pdf.Canvas.Parser;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using TaxZone.DTO;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -20,6 +21,15 @@ namespace TaxZone
         {
             InitializeComponent();
             ConfigManager.Load();
+
+            ToolTip toolTip = new ToolTip();
+
+            // Obter a data de criação do arquivo do assembly
+            DateTime creationDate = File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location);
+
+            string helpText = $"Data de compilação: {creationDate}\nVersão {ConfigManager.Versao}";
+
+            toolTip.SetToolTip(lbl_help, helpText);
 
             NotificationService.QtdNotasProgressChanged += AtualizarStatusQtdNotas;
             NotificationService.StatusTaxChanged += AtualizarStatusTax;
@@ -948,11 +958,16 @@ namespace TaxZone
                 int qtd = Interlocked.Increment(ref concluidas);
 
                 if (!resposta.Success)
+                {
                     MessageBox.Show($"Falha ao programar relatório para a empresa {empresa}: {resposta.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
             });
 
             await Task.WhenAll(tasks);
+
+            MessageBox.Show($"Job(s) programado(s).", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
