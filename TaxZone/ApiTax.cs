@@ -1,34 +1,15 @@
 ﻿using Microsoft.Playwright;
-using System.Configuration;
-using System.Diagnostics;
 using System.Globalization;
-using System.Net.Http.Json;
-using System.Reflection;
-using System.Security.Policy;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using TaxZone.DTO;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace TaxZone
 {
-    public class ApiTax : IAsyncDisposable
+    public class ApiTax
     {
         private static readonly HttpClient _client = new HttpClient();
-
-        public static string param_empresa;
-        public static string param_estab;
-        public static string data_inicio;
-        public static string data_fim;
-        public static string buraco_nota;
-        public static string diferenca_capa_item;
-        public static string icms_resumido;
-        public static string notas_sem_item;
-        public static string qtd_itens;
-        public static string qtd_notas;
-        public static string qtd_canceladas;
-        public static string extracao_canceladas;
 
         public ApiTax()
         {
@@ -50,48 +31,23 @@ namespace TaxZone
                 });
 
             var context = await browser.NewContextAsync();
+
             var page = await context.NewPageAsync();
-
             await page.GotoAsync(url);
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).ClickAsync();
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).FillAsync(usuario);
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).ClickAsync();
+            await page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).FillAsync(senha);
+            await page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
+            await page.GetByRole(AriaRole.Listitem, new() { Name = "TAX ONE" }).ClickAsync();
+            await page.GetByRole(AriaRole.Gridcell, new() { Name = "-EMR" }).ClickAsync();
+            await page.GotoAsync("https://www.onesourcetax.com/platform/apps/oms-11/home");
 
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Username" })
-                .FillAsync(usuario);
-
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Password" })
-                .FillAsync(senha);
-
-            await page.GetByRole(AriaRole.Button, new() { Name = "Sign In" })
-                .ClickAsync();
-
-            // Aguarda navegação após login
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            // Caso apareça o card TAX ONE depois do login
-            try
-            {
-                await page.GetByRole(AriaRole.Listitem, new() { Name = "TAX ONE" })
-                    .ClickAsync(new() { Timeout = 5000 });
-
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-                await page.GetByRole(AriaRole.Listitem, new() { Name = "001 - EMR" })
-                    .ClickAsync(new() { Timeout = 5000 });
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-            }
-            catch
-            {
-                // Ignora caso não apareça
-            }
-
-            Thread.Sleep(3000);
+            await Task.Delay(3000);
 
             var cookies = await context.CookiesAsync();
-
-            foreach (var cookie in cookies)
-            {
-                Console.WriteLine($"{cookie.Name}={cookie.Value}");
-            }
 
             var cookieHeader = string.Join(
                 "; ",
@@ -128,7 +84,7 @@ namespace TaxZone
         }
         public static void AddHeaders(HttpRequestMessage request, string empresa)
         {
-            request.Headers.Add("Cookie", ConfigManager.Cookie);
+            request.Headers.Add("Cookie", Config.Cookie);
             request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             request.Headers.Add("Accept", "application/json, text/plain, */*");
             request.Headers.Add("x-taxautomation-tenant", Empresa.GetUsuarioTaxAutomation(empresa));
@@ -176,17 +132,40 @@ namespace TaxZone
 
         public static async Task BaixarArquivoAsync(string empresa, string url, string caminhoArquivo)
         {
-            using HttpClient client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, url);
 
             AddHeaders(request, empresa);
 
-            using HttpResponseMessage response = await client.SendAsync(request);
+            using HttpResponseMessage response = await _client.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
             byte[] bytes = await response.Content.ReadAsByteArrayAsync();
 
             await System.IO.File.WriteAllBytesAsync(caminhoArquivo, bytes);
+        }
+
+        private static string? LocalizarDataManagerId(JsonArray metadata, string titulo)
+        {
+            int indice = metadata
+                .Select((item, index) => new { Item = item, Index = index })
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.Item?["text"]?.GetValue<string>(),
+                        titulo,
+                        StringComparison.OrdinalIgnoreCase))
+                ?.Index ?? -1;
+
+            if (indice < 0)
+                return null;
+
+            return metadata
+                .Skip(indice + 1)
+                .Select(x => x?["UniqueID"]?.GetValue<string>())
+                .FirstOrDefault(x => x?.StartsWith(
+                    "group1#",
+                    StringComparison.Ordinal) == true)
+                ?.Split('#')
+                .LastOrDefault();
         }
 
         #region TAX AUTOMATION
@@ -200,7 +179,7 @@ namespace TaxZone
 
             try
             {
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 AddHeaders(request, empresa);
@@ -234,7 +213,7 @@ namespace TaxZone
 
             try
             {
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 AddHeaders(request, empresa);
@@ -322,7 +301,7 @@ namespace TaxZone
                         "storageID":"{{context.StorageId}}"}
                     """;
 
-                var root = await PostAsync(context.Empresa, url, json_content);
+                await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                 //Abrir módulo
                 //safcp/safcpsafcpopen
@@ -332,7 +311,7 @@ namespace TaxZone
                     { "storageID":"{{context.StorageId}}"}
                     """;
 
-                root = await PostAsync(context.Empresa, url, json_content);
+                var root = await PostAsync(context.Empresa, url, json_content);
 
                 context.StorageId = root["storageID"].ToString();
                 string? mensagemErro = root["Commands"]?
@@ -370,11 +349,8 @@ namespace TaxZone
                         "storageID":"{{{context.StorageId}}}"}
                     """;
 
-                //Precisa chamar duas vezes para funcionar? 
                 var root = await PostAsync(context.Empresa, url, json_content);
-                //root = await PostAsync(context.Empresa, url, json_content);
 
-                
                 context.NewViews = root["VD"]?["NewViews"]?[0]?.GetValue<string>();
 
                 if (string.IsNullOrEmpty(context.NewViews))
@@ -406,7 +382,7 @@ namespace TaxZone
                     "storageID":"{{{context.StorageId}}}"}
                     """;
 
-                root = await PostAsync(context.Empresa, url, json_content);
+                await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                 //w_processos_customizadoscb_executarclicked
                 url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_processos_customizados/safcp2w_processos_customizadoscb_executarclicked";
@@ -478,18 +454,18 @@ namespace TaxZone
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw;
             }
             
         }
 
-        public static async Task<TaxApiResponse> ProgramarRelatorio(TaxContext context, IProgress<Progresso>? progresso = null)
+        public static async Task<TaxApiResponse> ProgramarRelatorio(TaxContext context, ParametrosProcessosCustomizados parametros, IProgress<Progresso>? progresso = null)
         {
             string modulo = "PROCESSOS CUSTOMIZADOS";
 
             try
             {
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 1));
@@ -514,35 +490,29 @@ namespace TaxZone
                 progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 45));
 
                 //ConfigurarParâmetros
-
-                var downloads = new List<Task>();
-
-                //ParametrosRelatorio provavelmente pode ser removido, em testes
-                await ParametrosRelatorio2(context, 3, param_empresa,3);
-                await ParametrosRelatorio2(context, 4, param_estab,4);
-                await ParametrosRelatorio2(context, 5, data_inicio,5);
-                await ParametrosRelatorio2(context, 6, data_fim,6);
+                await ParametrosRelatorio(context, 3, parametros.Empresa,3, parametros);
+                await ParametrosRelatorio(context, 4, parametros.Estabelecimento,4, parametros);
+                await ParametrosRelatorio(context, 5, parametros.DataInicio,5, parametros);
+                await ParametrosRelatorio(context, 6, parametros.DataFim,6, parametros);
 
                 progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 65));
 
-                if (buraco_nota == "S")
-                    await ParametrosRelatorio2(context, 9, buraco_nota, 7);
-                if (diferenca_capa_item == "S")
-                    await ParametrosRelatorio2(context, 11, diferenca_capa_item, 9);
-                if (icms_resumido == "S")
-                    await ParametrosRelatorio2(context,  14, icms_resumido, 12);
-                if (notas_sem_item == "S")
-                    await ParametrosRelatorio2(context, 15, notas_sem_item, 13);
-                if (qtd_itens == "S")
-                    await ParametrosRelatorio2(context, 16, qtd_itens, 14);
-                if (qtd_notas == "S")
-                    await ParametrosRelatorio2(context, 18, qtd_notas, 16);
-                if (qtd_canceladas == "S")
-                    await ParametrosRelatorio2(context, 19, qtd_canceladas, 17);
-                if (extracao_canceladas == "S")
-                    await ParametrosRelatorio2(context, 21, extracao_canceladas, 19);
-
-                //await Task.WhenAll(downloads);
+                if (parametros.BuracoNota == "S")
+                    await ParametrosRelatorio(context, 9, parametros.BuracoNota, 7, parametros);
+                if (parametros.DiferencaCapaItem == "S")
+                    await ParametrosRelatorio(context, 11, parametros.DiferencaCapaItem, 9, parametros);
+                if (parametros.IcmsResumido == "S")
+                    await ParametrosRelatorio(context,  14, parametros.IcmsResumido, 12, parametros);
+                if (parametros.NotasSemItem == "S")
+                    await ParametrosRelatorio(context, 15, parametros.NotasSemItem, 13, parametros);
+                if (parametros.QuantidadeItens == "S")
+                    await ParametrosRelatorio(context, 16, parametros.QuantidadeItens, 14, parametros);
+                if (parametros.QuantidadeNotas == "S")
+                    await ParametrosRelatorio(context, 18, parametros.QuantidadeNotas, 16, parametros);
+                if (parametros.QuantidadeCanceladas == "S")
+                    await ParametrosRelatorio(context, 19, parametros.QuantidadeCanceladas, 17, parametros);
+                if (parametros.ExtracaoCanceladas == "S")
+                    await ParametrosRelatorio(context, 21, parametros.ExtracaoCanceladas, 19, parametros);
 
                 progresso?.Report(new Progresso($"Programando relatório para {context.Empresa}", 80));
 
@@ -588,7 +558,7 @@ namespace TaxZone
 
             try
             {
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
@@ -683,7 +653,7 @@ namespace TaxZone
 
             try
             {
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
@@ -729,11 +699,9 @@ namespace TaxZone
 
                 root = await PostAsync(empresa, url, json_content);
 
-                List<ProcessoRelatorio> processos = new();
-
                 JsonArray registros = root[3]!.AsArray();
 
-                if (registros[1]![9]!.GetValue<string>().ToUpper() == "ENCERRADO")
+                if (registros[1]![9]!.GetValue<string>().Equals("ENCERRADO",StringComparison.OrdinalIgnoreCase))
                     return new TaxApiResponse(true, $"Sucesso", context.Empresa) { Completed = true };
                 else
                     return new TaxApiResponse(true, $"Sucesso", context.Empresa) { Completed = false};
@@ -747,526 +715,300 @@ namespace TaxZone
 
         public static async Task<bool> BaixarRelatorio(TaxContext context, int row, int procId, string path = null)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
-                    throw new ArgumentException("Cookie não encontrado!");
+            
+            if (string.IsNullOrEmpty(Config.Cookie))
+                throw new ArgumentException("Cookie não encontrado!");
 
-                //safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked
-                string url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked";
+            //safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked
+            string url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked";
 
-                string json_content = $$$"""
-                {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp",
-                "parameters":{"row":{{{row}}},"dwo":"pb_abrir#{{{context.d_lib_proc_processos}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
-                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_processos}}}","currentRow":1,"currentControlName":"pb_abrir","displayedRowCount":10,"currentPage":1}},
-                {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
-                "storageID":"{{{context.StorageId}}}"}
-                """;
+            string json_content = $$$"""
+            {"vm":"{{{context.NewViews2}}}","menuPath":"Processos Customizados > Execução dos Processos Customizados","moduleExe":"safcp",
+            "parameters":{"row":{{{row}}},"dwo":"pb_abrir#{{{context.d_lib_proc_processos}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+            {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_processos}}}","currentRow":1,"currentControlName":"pb_abrir","displayedRowCount":10,"currentPage":1}},
+            {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lib_proc_lista_arquivos}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}}],
+            "storageID":"{{{context.StorageId}}}"}
+            """;
                 
 
-                var root = await PostAsync(context.Empresa, url, json_content);
+            var root = await PostAsync(context.Empresa, url, json_content);
 
-                var md = root["MD"]!.AsArray();
-
-
-                if (string.IsNullOrEmpty(path))
-                {
-                    using FolderBrowserDialog dialog = new FolderBrowserDialog();
-
-                    dialog.Description = "Selecione a pasta para salvar os PDFs";
-
-                    if (dialog.ShowDialog() != DialogResult.OK)
-                        return false;
-
-                    path = dialog.SelectedPath;
-                }
+            var md = root["MD"]!.AsArray();
 
 
-                var downloads = new List<Task>();
+            if (string.IsNullOrEmpty(path))
+            {
+                using FolderBrowserDialog dialog = new FolderBrowserDialog();
 
-                try
-                {
-                    // Índice do objeto que contém o texto
-                    int indice_buraco = md
-                        .Select((item, index) => new { Item = item, Index = index })
-                        .First(x => x.Item?["text"]?.GetValue<string>() == "Buraco Nota")
-                        .Index;
+                dialog.Description = "Selecione a pasta para salvar os PDFs";
 
-                    // Primeiro group1# após esse objeto
-                    string? id_buraco = md
-                        .Skip(indice_buraco + 1)
-                        .Select(x => x?["UniqueID"]?.GetValue<string>())
-                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                        .Split('#')
-                        .LastOrDefault();
+                if (dialog.ShowDialog() != DialogResult.OK)
+                    return false;
 
-                    string urlBuraco = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_buraco}&storageID={context.StorageId}";
-                    string arquivoBuraco = Path.Combine(path, $"BURACO_{context.Empresa}.pdf");
-                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlBuraco, arquivoBuraco));
+                path = dialog.SelectedPath;
+            }
 
-                }
-                catch (Exception ex) { }
 
-                try
-                {
-                    // Índice do objeto que contém o texto
-                    int indice_itens = md
-                        .Select((item, index) => new { Item = item, Index = index })
-                        .First(x => x.Item?["text"]?.GetValue<string>() == "Itens por Estabelecimento")
-                        .Index;
+            var downloads = new List<Task>();
 
-                    // Primeiro group1# após esse objeto
-                    string? id_itens = md
-                        .Skip(indice_itens + 1)
-                        .Select(x => x?["UniqueID"]?.GetValue<string>())
-                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                        .Split('#')
-                        .LastOrDefault();
+            string? idBuraco = LocalizarDataManagerId(md, "Buraco Nota");
 
-                    string urlItens = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_itens}&storageID={context.StorageId}";
-                    string arquivoItens = Path.Combine(path, $"ITENS_{context.Empresa}.pdf");
-                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlItens, arquivoItens));
+            if (idBuraco is not null)
+            {
+                string urlBuraco = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={idBuraco}&storageID={context.StorageId}";
+                string arquivoBuraco = Path.Combine(path, $"BURACO_{context.Empresa}.pdf");
+                downloads.Add(BaixarArquivoAsync(context.Empresa, urlBuraco, arquivoBuraco));
 
-                }
+            }
 
-                catch (Exception ex) { }
+            string? idItens = LocalizarDataManagerId(md, "Itens por Estabelecimento");
 
-                try
-                {
-                    int indice_notas = md
-                    .Select((item, index) => new { Item = item, Index = index })
-                    .First(x => x.Item?["text"]?.GetValue<string>() == "Notas Estabelecimento")
-                    .Index;
+            if (idItens is not null)
+            {
+                string urlItens = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={idItens}&storageID={context.StorageId}";
+                string arquivoItens = Path.Combine(path, $"ITENS_{context.Empresa}.pdf");
+                downloads.Add(BaixarArquivoAsync(context.Empresa, urlItens, arquivoItens));
+            }
 
-                    string? id_notas = md
-                        .Skip(indice_notas + 1)
-                        .Select(x => x?["UniqueID"]?.GetValue<string>())
-                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                        .Split('#')
-                        .LastOrDefault();
+            string? idNotas = LocalizarDataManagerId(md, "Notas Estabelecimento");
 
-                    string urlNotas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_notas}&storageID={context.StorageId}";
-                    string arquivoNotas = Path.Combine(path, $"NOTAS_{context.Empresa}.pdf");
+            if (idNotas is not null)
+            {
+                string urlNotas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={idNotas}&storageID={context.StorageId}";
+                string arquivoNotas = Path.Combine(path, $"NOTAS_{context.Empresa}.pdf");
+                downloads.Add(BaixarArquivoAsync(context.Empresa, urlNotas, arquivoNotas));
+            }
 
-                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlNotas, arquivoNotas));
+            string? idCanceladas = LocalizarDataManagerId(md, "Notas Canceladas");
 
-                }
-                catch (Exception ex) { }
+            if (idCanceladas is not null)
+            {
+                string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={idCanceladas}&storageID={context.StorageId}";
+                string arquivoCanceladas = Path.Combine(path, $"CANC_{context.Empresa}.pdf");
+                downloads.Add(BaixarArquivoAsync(context.Empresa, urlCanceladas, arquivoCanceladas));
+            }
 
-                try
-                {
-                    int indice_canceladas = md
-                    .Select((item, index) => new { Item = item, Index = index })
-                    .First(x => x.Item?["text"]?.GetValue<string>() == "Notas Canceladas")
-                    .Index;
+            string? idIcms = LocalizarDataManagerId(md, "Mont. ICMS Res. Estab.");
 
-                    string? id_canceladas = md
-                        .Skip(indice_canceladas + 1)
-                        .Select(x => x?["UniqueID"]?.GetValue<string>())
-                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                        .Split('#')
-                        .LastOrDefault();
+            if (idIcms is not null)
+            {
+                string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={idIcms}&storageID={context.StorageId}";
+                string arquivoCanceladas = Path.Combine(path, $"ICMS_{context.Empresa}.pdf");
+                downloads.Add(BaixarArquivoAsync(context.Empresa, urlCanceladas, arquivoCanceladas));
+            }
 
-                    string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_canceladas}&storageID={context.StorageId}";
-                    string arquivoCanceladas = Path.Combine(path, $"CANC_{context.Empresa}.pdf");
+              
+            await Task.WhenAll(downloads);
 
-                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlCanceladas, arquivoCanceladas));
-                }
-                catch (Exception ex) { }
+            //Se o procid for informado, baixa os arquivos zip da área de transferencia do tax
+            if(procId > 0)
+            {
 
-                try
-                {
-                    int indice_icms = md
-                    .Select((item, index) => new { Item = item, Index = index })
-                    .First(x => x.Item?["text"]?.GetValue<string>() == "Mont. ICMS Res. Estab.")
-                    .Index;
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=10&dataManagerId={context.d_lib_proc_lista_arquivos}&start=1";
 
-                    string? id_icms = md
-                        .Skip(indice_icms + 1)
-                        .Select(x => x?["UniqueID"]?.GetValue<string>())
-                        .FirstOrDefault(x => x?.StartsWith("group1#") == true)?
-                        .Split('#')
-                        .LastOrDefault();
+                json_content = $$$"""
+                        {
+                        "storageID": "{{{context.StorageId}}}"
+                    }
+                    """;
 
-                    string urlCanceladas = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/printDataManager?dataManagerId={id_icms}&storageID={context.StorageId}";
-                    string arquivoCanceladas = Path.Combine(path, $"ICMS_{context.Empresa}.pdf");
+                root = await PostAsync(context.Empresa, url, json_content);
+                int total_itens = root[0]?[0]?.GetValue<int>() ?? 0;
 
-                    downloads.Add(BaixarArquivoAsync(context.Empresa, urlCanceladas, arquivoCanceladas))    ;
-                }
-                catch (Exception ex) { }
+                if (total_itens == 0) return true;
 
-                await Task.WhenAll(downloads);
+                bool jaExisteAreaTransferencia = await BaixarAreaTransferenciaPorProcId(context, procId, path);
 
-                //Se o procid for informado, baixa os arquivos zip da área de transferencia do tax
-                if(procId > 0)
-                {
+                if (jaExisteAreaTransferencia) return true;
 
-                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=10&dataManagerId={context.d_lib_proc_lista_arquivos}&start=1";
-
-                    json_content = $$$"""
-                         {
-                          "storageID": "{{{context.StorageId}}}"
-                        }
-                        """;
-
-                    root = await PostAsync(context.Empresa, url, json_content);
-                    int total_itens = root[0]?[0]?.GetValue<int>() ?? 0;
-
-                    if (total_itens == 0) return true;
-
-                    bool jaExisteAreaTransferencia = await BaixarAreaTransferenciaPorProcId(context, procId, path);
-
-                    if (jaExisteAreaTransferencia) return true;
-
-                    //trocar para aba ARQUIVOS
-                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
+                //trocar para aba ARQUIVOS
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworkselectionchanged";
 
                     
-                    json_content = $$$"""
-                    { "vm": "{{{context.NewViews2}}}",
-                      "menuPath": "Processos Customizados > Execução dos Processos Customizados","moduleExe": "safcp",
-                      "parameters": {"oldindex": 2,"newindex": 4},"dirty": {"tab_framework#{{{context.NewViews2}}}": {"selectedTabIndex": 4}},"commands": [{"command": "UPDATE_CURRENT_KEY","data": {"key": "none"} },
-                      {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lib_proc_processos}}}","currentRow": 1,"currentControlName": "pb_abrir","displayedRowCount": 10,"currentPage": 1}},
-                      {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}","currentRow": 1,"currentControlName": "","displayedRowCount": 10,"currentPage": 1}}],
-                      "storageID": "{{{context.StorageId}}}"}
-                    """;
+                json_content = $$$"""
+                { "vm": "{{{context.NewViews2}}}",
+                    "menuPath": "Processos Customizados > Execução dos Processos Customizados","moduleExe": "safcp",
+                    "parameters": {"oldindex": 2,"newindex": 4},"dirty": {"tab_framework#{{{context.NewViews2}}}": {"selectedTabIndex": 4}},"commands": [{"command": "UPDATE_CURRENT_KEY","data": {"key": "none"} },
+                    {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lib_proc_processos}}}","currentRow": 1,"currentControlName": "pb_abrir","displayedRowCount": 10,"currentPage": 1}},
+                    {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}","currentRow": 1,"currentControlName": "","displayedRowCount": 10,"currentPage": 1}}],
+                    "storageID": "{{{context.StorageId}}}"}
+                """;
 
-                    root = await PostAsync(context.Empresa, url, json_content);
+                await PostAsyncNoResponse(context.Empresa, url, json_content);
+                                
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
 
-            
-                
-                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/PerformMultiOperation";
-
-                    json_content = $$$"""
-                    {
-                      "menuPath": "Processos Customizados > Execução dos Processos Customizados",
-                      "moduleExe": "safcp",
-                      "parameters": {
-                        "targetName": "safcp",
-                        "args": [
-                          [
-                            "safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headerclicked",
-                            "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"parameters\":{\"ypos\":0,\"row\":1,\"dwo\":\"todos#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_processos}}}\",\"currentRow\":1,\"currentControlName\":\"pb_abrir\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_lista_arquivos}}}\",\"currentRow\":1,\"currentControlName\":\"c_selecionar\",\"displayedRowCount\":10,\"currentPage\":1}}]}",
-                            "{{{context.NewViews2}}}",
-                            "safcp"
-                          ],
-                          [
-                            "safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headeritemchanged",
-                            "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"parameters\":{\"row\":1,\"dwo\":\"todos#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_BUNDLE_CURRENT_ROW_DELAYED\",\"data\":{\"dataManagerId\":\"4e\",\"bundle\":[{\"0\":\"char(500)\",\"1\":\"char(1)\",\"2\":\"number\",\"3\":\"char(1)\",\"4\":\"char(1)\"},{},[[{\"WM$%S\":3,\"WM$%CS\":\"11011\",\"computed\":{}},\"TAXONEDIR_ENERGISA\",\"S\",0,\"N\",\"1\"]],[\"diretorio\",\"localizacao\",\"max_size\",\"gera_sem_num_processo\",\"todos\"]],\"updatedColumns\":[5]}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_processos}}}\",\"currentRow\":1,\"currentControlName\":\"pb_abrir\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_lista_arquivos}}}\",\"currentRow\":1,\"currentControlName\":\"c_selecionar\",\"displayedRowCount\":10,\"currentPage\":1}}]}",
-                            "{{{context.NewViews2}}}",
-                            "safcp"
-                          ]
+                json_content = $$$"""
+                {
+                    "menuPath": "Processos Customizados > Execução dos Processos Customizados",
+                    "moduleExe": "safcp",
+                    "parameters": {
+                    "targetName": "safcp",
+                    "args": [
+                        [
+                        "safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headerclicked",
+                        "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"parameters\":{\"ypos\":0,\"row\":1,\"dwo\":\"todos#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_processos}}}\",\"currentRow\":1,\"currentControlName\":\"pb_abrir\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_lista_arquivos}}}\",\"currentRow\":1,\"currentControlName\":\"c_selecionar\",\"displayedRowCount\":10,\"currentPage\":1}}]}",
+                        "{{{context.NewViews2}}}",
+                        "safcp"
+                        ],
+                        [
+                        "safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headeritemchanged",
+                        "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Processos Customizados > Execução dos Processos Customizados\",\"moduleExe\":\"safcp\",\"parameters\":{\"row\":1,\"dwo\":\"todos#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_BUNDLE_CURRENT_ROW_DELAYED\",\"data\":{\"dataManagerId\":\"4e\",\"bundle\":[{\"0\":\"char(500)\",\"1\":\"char(1)\",\"2\":\"number\",\"3\":\"char(1)\",\"4\":\"char(1)\"},{},[[{\"WM$%S\":3,\"WM$%CS\":\"11011\",\"computed\":{}},\"TAXONEDIR_ENERGISA\",\"S\",0,\"N\",\"1\"]],[\"diretorio\",\"localizacao\",\"max_size\",\"gera_sem_num_processo\",\"todos\"]],\"updatedColumns\":[5]}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_processos}}}\",\"currentRow\":1,\"currentControlName\":\"pb_abrir\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lib_proc_lista_arquivos}}}\",\"currentRow\":1,\"currentControlName\":\"c_selecionar\",\"displayedRowCount\":10,\"currentPage\":1}}]}",
+                        "{{{context.NewViews2}}}",
+                        "safcp"
                         ]
-                      },
-                      "commands": [
-                        {
-                          "command": "UPDATE_CURRENT_KEY",
-                          "data": {
-                            "key": "none"
-                          }
-                        },
-                        {
-                          "command": "UPDATE_DM_ROW_AND_COL",
-                          "data": {
-                            "dataManagerId": "{{{context.d_lib_proc_processos}}}",
-                            "currentRow": 1,
-                            "currentControlName": "pb_abrir",
-                            "displayedRowCount": 10,
-                            "currentPage": 1
-                          }
-                        },
-                        {
-                          "command": "UPDATE_DM_ROW_AND_COL",
-                          "data": {
-                            "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
-                            "currentRow": 1,
-                            "currentControlName": "c_selecionar",
-                            "displayedRowCount": 10,
-                            "currentPage": 1
-                          }
-                        }
-                      ],
-                      "storageID": "{{{context.StorageId}}}"
-                    }
-                    """;
-
-                    root = await PostAsync(context.Empresa, url, json_content);
-
-                    //SALVAR ARQUIVOS SELECIONADOS
-                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headerbuttonclicked";
-
-                    json_content = $$$"""
+                    ]
+                    },
+                    "commands": [
                     {
-                      "vm": "{{{context.NewViews2}}}",
-                      "menuPath": "Processos Customizados > Execução dos Processos Customizados",
-                      "moduleExe": "safcp",
-                      "parameters": {
-                        "row": 1,
-                        "dwo": "pb_salvar#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}"
-                      },
-                      "commands": [
-                        {
-                          "command": "UPDATE_CURRENT_KEY",
-                          "data": {
-                            "key": "none"
-                          }
-                        },
-                        {
-                          "command": "UPDATE_DM_ROW_AND_COL",
-                          "data": {
-                            "dataManagerId": "{{{context.d_lib_proc_processos}}}",
-                            "currentRow": 1,
-                            "currentControlName": "pb_abrir",
-                            "displayedRowCount": 10,
-                            "currentPage": 1
-                          }
-                        },
-                        {
-                          "command": "UPDATE_DM_ROW_AND_COL",
-                          "data": {
-                            "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
-                            "currentRow": 1,
-                            "currentControlName": "c_selecionar",
-                            "displayedRowCount": 10,
-                            "currentPage": 1
-                          }
+                        "command": "UPDATE_CURRENT_KEY",
+                        "data": {
+                        "key": "none"
                         }
-                      ],
-                     "storageID": "{{{context.StorageId}}}"
+                    },
+                    {
+                        "command": "UPDATE_DM_ROW_AND_COL",
+                        "data": {
+                        "dataManagerId": "{{{context.d_lib_proc_processos}}}",
+                        "currentRow": 1,
+                        "currentControlName": "pb_abrir",
+                        "displayedRowCount": 10,
+                        "currentPage": 1
+                        }
+                    },
+                    {
+                        "command": "UPDATE_DM_ROW_AND_COL",
+                        "data": {
+                        "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
+                        "currentRow": 1,
+                        "currentControlName": "c_selecionar",
+                        "displayedRowCount": 10,
+                        "currentPage": 1
+                        }
                     }
-                    """;
-
-                    root = await PostAsync(context.Empresa, url, json_content);
-
-                    if (root[2]?[0]?[0]?[0]?["text"].GetValue<string>() != "Operação realizada com sucesso.")
-                        return false;
-
-                    await BaixarAreaTransferenciaPorProcId(context, procId, path); jaExisteAreaTransferencia = await BaixarAreaTransferenciaPorProcId(context, procId, path);
+                    ],
+                    "storageID": "{{{context.StorageId}}}"
                 }
+                """;
 
-                return true;
+                await PostAsyncNoResponse(context.Empresa, url, json_content);
+
+                //SALVAR ARQUIVOS SELECIONADOS
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safcp2/w_lib_proc_customizado_taxbr/safobfww_lib_proctab_frameworktabpage_arqdw_arquivos_headerbuttonclicked";
+
+                json_content = $$$"""
+                {
+                    "vm": "{{{context.NewViews2}}}",
+                    "menuPath": "Processos Customizados > Execução dos Processos Customizados",
+                    "moduleExe": "safcp",
+                    "parameters": {
+                    "row": 1,
+                    "dwo": "pb_salvar#{{{context.d_lib_proc_lista_arquivos_header_taxbr}}}"
+                    },
+                    "commands": [
+                    {
+                        "command": "UPDATE_CURRENT_KEY",
+                        "data": {
+                        "key": "none"
+                        }
+                    },
+                    {
+                        "command": "UPDATE_DM_ROW_AND_COL",
+                        "data": {
+                        "dataManagerId": "{{{context.d_lib_proc_processos}}}",
+                        "currentRow": 1,
+                        "currentControlName": "pb_abrir",
+                        "displayedRowCount": 10,
+                        "currentPage": 1
+                        }
+                    },
+                    {
+                        "command": "UPDATE_DM_ROW_AND_COL",
+                        "data": {
+                        "dataManagerId": "{{{context.d_lib_proc_lista_arquivos}}}",
+                        "currentRow": 1,
+                        "currentControlName": "c_selecionar",
+                        "displayedRowCount": 10,
+                        "currentPage": 1
+                        }
+                    }
+                    ],
+                    "storageID": "{{{context.StorageId}}}"
+                }
+                """;
+
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                if (root[2]?[0]?[0]?[0]?["text"].GetValue<string>() != "Operação realizada com sucesso.")
+                    return false;
+
+                Thread.Sleep(3000);
+
+                await BaixarAreaTransferenciaPorProcId(context, procId, path);
             }
-            catch(Exception ex)
-            {
-                throw ex;
-            }
+
+            return true;
+            
 
         }
 
         public static async Task<bool> BaixarAreaTransferenciaPorProcId(TaxContext context, int procId, string path)
         {
-            try
-            {
-                //ACESSAR ÁREA DE TRANSFERENCIA DE ARQUIVOS
-                using HttpClient client = new HttpClient();
-                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/NAS/fileTransfer/files?isZipFileOnly=true";
+            //ACESSAR ÁREA DE TRANSFERENCIA DE ARQUIVOS
+            string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/NAS/fileTransfer/files?isZipFileOnly=true";
 
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
-                AddHeaders(request, context.Empresa);
-                using HttpResponseMessage response = await client.SendAsync(request);
-                response.EnsureSuccessStatusCode();
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            AddHeaders(request, context.Empresa);
+            using HttpResponseMessage response = await _client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync();
 
-                var jsonArray = JsonNode.Parse(content)?.AsArray();
+            var jsonArray = JsonNode.Parse(content)?.AsArray();
 
-                var resultado = jsonArray?
-                    .Where(node => node["name"]?.ToString().Contains(procId.ToString()) == true)
-                    .GroupBy(node =>
-                    {
-                        var nome = node["name"]?.ToString() ?? "";
-
-                        // Remove a extensão
-                        nome = Path.GetFileNameWithoutExtension(nome);
-
-                        // Remove tudo após o último "_"
-                        int ultimoUnderscore = nome.LastIndexOf('_');
-                        return ultimoUnderscore > 0
-                            ? nome.Substring(0, ultimoUnderscore)
-                            : nome;
-                    })
-                    .Select(group => group
-                        .OrderByDescending(n => n["fileDate"]?.GetValue<long>() ?? 0)
-                        .First())
-                    .Select(node => new
-                    {
-                        Name = node["name"]?.ToString(),
-                        HashPath = node["hashPath"]?.GetValue<long>()
-                    })
-                    .ToList();
-
-                var downloads = new List<Task>();
-
-                if (resultado.Count == 0) return false;
-
-                foreach (var item in resultado)
+            var resultado = jsonArray?
+                .Where(node => node["name"]?.ToString().Contains(procId.ToString()) == true)
+                .GroupBy(node =>
                 {
-                    string path_ = Path.Combine(path, item.Name);
-                    url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/NAS/fileTransfer/files/download?hash={item.HashPath}&path=Download%5C{item.Name}";
-                    downloads.Add(BaixarArquivoAsync(context.Empresa, url, path_));
-                    //Console.WriteLine($"Nome: {item.Name} | HashPath: {item.HashPath}");
-                }
-                await Task.WhenAll(downloads);
+                    var nome = node["name"]?.ToString() ?? "";
 
-                return true;
-            }
-            catch (Exception ex)
+                    // Remove a extensão
+                    nome = Path.GetFileNameWithoutExtension(nome);
+
+                    // Remove tudo após o último "_"
+                    int ultimoUnderscore = nome.LastIndexOf('_');
+                    return ultimoUnderscore > 0
+                        ? nome.Substring(0, ultimoUnderscore)
+                        : nome;
+                })
+                .Select(group => group
+                    .OrderByDescending(n => n["fileDate"]?.GetValue<long>() ?? 0)
+                    .First())
+                .Select(node => new
+                {
+                    Name = node["name"]?.ToString(),
+                    HashPath = node["hashPath"]?.GetValue<long>()
+                })
+                .ToList();
+
+            var downloads = new List<Task>();
+
+            if (resultado.Count == 0) return false;
+
+            foreach (var item in resultado)
             {
-                throw ex;
+                string path_ = Path.Combine(path, item.Name);
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/NAS/fileTransfer/files/download?hash={item.HashPath}&path=Download%5C{item.Name}";
+                downloads.Add(BaixarArquivoAsync(context.Empresa, url, path_));
+                //Console.WriteLine($"Nome: {item.Name} | HashPath: {item.HashPath}");
             }
+            await Task.WhenAll(downloads);
 
-        }
-
-        //Chama o itemchanged para os parametros Empresa/Estabelecimento/DataInicio/DataFim
-        public static async Task ParametrosRelatorio(TaxContext context, int coluna, string valor)
-        {
-            //safobfwuo_lib_proc_parametrosdw_parametrositemchanged
-            string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safobfw/uo_lib_proc_parametros/safobfwuo_lib_proc_parametrosdw_parametrositemchanged";
-
-            string json_content = $$$"""
-                                {
-                   "vm":"{{{context.ControlNumber}}}",
-                   "menuPath":"Processos Customizados > Execução dos Processos Customizados",
-                   "moduleExe":"safcp",
-                   "parameters":{
-                      "row":1,
-                      "dwo":"col{{{coluna}}}#{{{context.DataManagerId}}}",
-                      "data":"{{{valor}}}"
-                   },
-                   "commands":[
-                      {
-                         "command":"UPDATE_CURRENT_KEY",
-                         "data":{
-                            "key":"none"
-                         }
-                      },
-                      {
-                         "command":"UPDATE_DM_ROW_AND_COL",
-                         "data":{
-                            "dataManagerId":"{{{context.DataManagerId}}}",
-                            "currentRow":0,
-                            "currentControlName":"",
-                            "displayedRowCount":10,
-                            "currentPage":1
-                         }
-                      },
-                      {
-                         "command":"UPDATE_DM_ROW_AND_COL",
-                         "data":{
-                            "dataManagerId":"47",
-                            "currentRow":0,
-                            "currentControlName":"",
-                            "displayedRowCount":10,
-                            "currentPage":1
-                         }
-                      },
-                      {
-                         "command":"UPDATE_BUNDLE_CURRENT_ROW_DELAYED",
-                         "data":{
-                            "dataManagerId":"{{{context.DataManagerId}}}",
-                            "bundle":[
-                               {
-                                  "0":"char(120)",
-                                  "1":"char(120)",
-                                  "2":"char(120)",
-                                  "3":"char(120)",
-                                  "4":"date",
-                                  "5":"date",
-                                  "6":"char(120)",
-                                  "7":"char(120)",
-                                  "8":"char(120)",
-                                  "9":"char(120)",
-                                  "10":"char(120)",
-                                  "11":"char(120)",
-                                  "12":"char(120)",
-                                  "13":"char(120)",
-                                  "14":"char(120)",
-                                  "15":"char(120)",
-                                  "16":"char(120)",
-                                  "17":"char(120)",
-                                  "18":"char(120)"
-                               },
-                               {
-
-                               },
-                               [
-                                  [
-                                     {
-                                        "WM$%S":3,
-                                        "WM$%CS":"1111111111111111111",
-                                        "computed":{
-
-                                        }
-                                     },
-                                     "S",
-                                     "S",
-                                     "{{{param_empresa}}}",
-                                     "{{{param_estab}}}",
-                                     "{{{data_inicio}}}",
-                                     "{{{data_fim}}}",
-                                     "{{{buraco_nota}}}",
-                                     "N",
-                                     "{{{diferenca_capa_item}}}",
-                                     "N",
-                                     "N",
-                                     "{{{icms_resumido}}}",
-                                     "{{{notas_sem_item}}}",
-                                     "{{{qtd_itens}}}",
-                                     "N",
-                                     "{{{qtd_notas}}}",
-                                     "{{{qtd_canceladas}}}",
-                                     "N",
-                                     "{{{extracao_canceladas}}}"
-                                  ]
-                               ],
-                               [
-                                  "col1",
-                                  "col2",
-                                  "col3",
-                                  "col4",
-                                  "col5",
-                                  "col6",
-                                  "col9",
-                                  "col10",
-                                  "col11",
-                                  "col12",
-                                  "col13",
-                                  "col14",
-                                  "col15",
-                                  "col16",
-                                  "col17",
-                                  "col18",
-                                  "col19",
-                                  "col20",
-                                  "col21"
-                               ]
-                            ],
-                            "updatedColumns":[
-                               {{{coluna}}}
-                            ]
-                         }
-                      },
-                      {
-                         "command":"UPDATE_DM_ROW_AND_COL",
-                         "data":{
-                            "dataManagerId":"d4",
-                            "currentRow":1,
-                            "currentControlName":"descricao",
-                            "displayedRowCount":2,
-                            "currentPage":1
-                         }
-                      }
-                   ],
-                "storageID":"{{{context.StorageId}}}"
-                }
-                """;
-
-            await PostAsync(context.Empresa, url, json_content);
-
+            return true;
         }
 
         //Chama o parametrosclicked e itemchanged para todos os outros parâmetros
-        public static async Task ParametrosRelatorio2(TaxContext context, int coluna, string valor, int ordem)
+        public static async Task ParametrosRelatorio(TaxContext context, int coluna, string valor, int ordem, ParametrosProcessosCustomizados parametros)
         {
             //safobfwuo_lib_proc_parametrosdw_parametrositemchanged
             var url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safobfw/uo_lib_proc_parametros/safobfwuo_lib_proc_parametrosdw_parametrosclicked";
@@ -1344,23 +1086,23 @@ namespace TaxZone
                               },
                               "S",
                               "S",
-                                "{{{param_empresa}}}",
-                                "{{{param_estab}}}",
-                                "{{{data_inicio}}}",
-                                "{{{data_fim}}}",
-                                "{{{buraco_nota}}}",
+                                "{{{parametros.Empresa}}}",
+                                "{{{parametros.Estabelecimento}}}",
+                                "{{{parametros.DataInicio}}}",
+                                "{{{parametros.DataFim}}}",
+                                "{{{parametros.BuracoNota}}}",
                                 "N",
-                                "{{{diferenca_capa_item}}}",
+                                "{{{parametros.DiferencaCapaItem}}}",
                                 "N",
                                 "N",
-                                "{{{icms_resumido}}}",
-                                "{{{notas_sem_item}}}",
-                                "{{{qtd_itens}}}",
+                                "{{{parametros.IcmsResumido}}}",
+                                "{{{parametros.NotasSemItem}}}",
+                                "{{{parametros.QuantidadeItens}}}",
                                 "N",
-                                "{{{qtd_notas}}}",
-                                "{{{qtd_canceladas}}}",
+                                "{{{parametros.QuantidadeNotas}}}",
+                                "{{{parametros.QuantidadeCanceladas}}}",
                                 "N",
-                                "{{{extracao_canceladas}}}"
+                                "{{{parametros.ExtracaoCanceladas}}}"
                             ]
                           ],
                           [
@@ -1452,27 +1194,18 @@ namespace TaxZone
 
         public static async Task PrepararAmbienteJobImportacao(TaxContext context)
         {
-            try
-            {
+            string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/prepareStartupApp";
 
-                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/ResumeOperation/prepareStartupApp";
+            string json_content = $$$"""
+                    {"storageID": "{{{context.StorageId}}}"}
+                """;
+            //Não tem retorno
+            await PostAsyncNoResponse(context.Empresa, url, json_content);
 
-                string json_content = $$$"""
-                        {"storageID": "{{{context.StorageId}}}"}
-                    """;
-                //Não tem retorno
-                await PostAsync(context.Empresa, url, json_content);
+            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm1/safil/safilcm1safilopen";
 
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm1/safil/safilcm1safilopen";
-
-                //Reaproveita o json anterior
-                var root = await PostAsync(context.Empresa, url, json_content);
-
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Falha ao executar HTTP POST: {ex.Message}");
-            }
+            //Reaproveita o json anterior
+            await PostAsyncNoResponse(context.Empresa, url, json_content);
         }
 
         #region LOGS PROCESSOS IMPORTACAO
@@ -1482,14 +1215,14 @@ namespace TaxZone
             {
                 string modulo = "JOB SERVIDOR";
 
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
                 {
                     await ObterStorageId(context);
                     if (string.IsNullOrEmpty(context.StorageId)) return new TaxApiResponse(false, "Falha ao obter StorageId", context.Empresa);
-                
+                    
                     progresso?.Report(new Progresso($"15%", 15));
 
                     await SelecionaEmpresaEModulo(context, modulo);
@@ -1528,7 +1261,7 @@ namespace TaxZone
                 context.d_consulta_rel_proc_imp_grid = obj?["UniqueID"]?.GetValue<string>();
 
                 
-
+                
                 if (!string.IsNullOrEmpty(parametros.Usuario))
                     parametros.Usuario = $"\"{parametros.Usuario}\"";
                 else 
@@ -1544,10 +1277,12 @@ namespace TaxZone
                     parametros.Descricao = $"\"{parametros.Descricao}\"";
                 else
                     parametros.Descricao = "null";
+                
+                
 
                 await ParametroLogProcessoImportacao(context, "dat_inicio", parametros.DataInicio.ToString("dd-MM-yyyy"), 2, parametros);
                 await ParametroLogProcessoImportacao(context, "dat_fim", parametros.DataFim.ToString("dd-MM-yyyy"), 3, parametros);
-                await ParametroLogProcessoImportacao(context, "ind_situacao", parametros.Status, 8, parametros);
+                //await ParametroLogProcessoImportacao(context, "ind_situacao", parametros.Status, 4, parametros);
 
                 progresso?.Report(new Progresso($"70%", 70));
 
@@ -1592,7 +1327,7 @@ namespace TaxZone
                     }
                     """;
 
-                root = await PostAsync(context.Empresa, url, json_content);
+                await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                 progresso?.Report(new Progresso($"90%", 90));
 
@@ -1627,10 +1362,15 @@ namespace TaxZone
                         QtdAlt = linha[15]!.GetValue<int>(),
                         QtdIgn = linha[16]!.GetValue<int>(),
                         QtdErr = linha[17]!.GetValue<int>(),
-                        DataIni = DateOnly.ParseExact(linha[7]!.GetValue<string>(),"ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
-                        DataFim = DateOnly.ParseExact(linha[10]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
-                        DataIniMovto = linha[11] is null ? DateOnly.MaxValue : DateOnly.ParseExact(linha[11]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
-                        DataFimMovto = linha[12] is null ? DateOnly.MaxValue: DateOnly.ParseExact(linha[12]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
+                        DataIni = DateTime.ParseExact(linha[7]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
+                        DataFim = DateTime.ParseExact(linha[10]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
+                        DataIniMovto = linha[11] is null ? DateTime.MinValue : DateTime.ParseExact(linha[10]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
+                        DataFimMovto = linha[12] is null ? DateTime.MinValue : DateTime.ParseExact(linha[10]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
+
+                        //DataIni = DateOnly.ParseExact(linha[7]!.GetValue<string>(),"ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
+                        //DataFim = DateOnly.ParseExact(linha[10]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
+                        //DataIniMovto = linha[11] is null ? DateOnly.MaxValue : DateOnly.ParseExact(linha[11]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
+                        //DataFimMovto = linha[12] is null ? DateOnly.MaxValue: DateOnly.ParseExact(linha[12]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
 
                     });
                 }
@@ -1650,73 +1390,68 @@ namespace TaxZone
 
         public static async Task ParametroLogProcessoImportacao(TaxContext context, string dwo, string value, int index, ParametrosRelatorioImportacao parametros)
         {
-            try
-            {
-                string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_consulta_rel_proc_imp/safgnfw1w_sheet_dw_simplesdw_sheetclicked";
+            
+            string url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_consulta_rel_proc_imp/safgnfw1w_sheet_dw_simplesdw_sheetclicked";
 
-                string json_content = $$$"""
+            string json_content = $$$"""
+                {
+                "vm": "{{{context.NewViews}}}",
+                "menuPath": "Controles > Relatórios > Relatório por Processo > Importação",
+                "moduleExe": "safil","parameters": {"xpos": 0,"ypos": 0,"row": 1,"dwo": "{{{dwo}}}#{{{context.DataManagerId}}}"},
+                "commands": [{"command": "UPDATE_BUNDLE_CURRENT_ROW_DELAYED","data": {"dataManagerId": "{{{context.DataManagerId}}}","bundle": [{"0": "number","1": "date","2": "date","3": "char(1)","4": "number","5": "char(100)","6": "char(3)","7": "char(6)","8": "char(8)"},{},[[{"WM$%S": 2,"WM$%CS": "000000000","computed": {}},
+                        null,
+                        "{{{parametros.DataInicio.ToString("ddMMyyyy000000")}}}",
+                        "{{{parametros.DataFim.ToString("ddMMyyyy000000")}}}",
+                        " ",
+                        null,
+                        {{{parametros.Usuario}}},
+                        null,
+                        {{{parametros.Estabelecimento}}},
+                        {{{parametros.Descricao}}}]],
+                        [
+                        "num_proc",
+                        "dat_inicio",
+                        "dat_fim",
+                        "ind_situacao",
+                        "num_proc_fim",
+                        "usuario",
+                        "cod_empresa",
+                        "cod_estab",
+                        "descricao"
+                        ]
+                    ],
+                    "updatedColumns": [
+                        {{{index}}}
+                    ]
+                    }
+                },
+                {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_consulta_rel_proc_imp_grid}}}","currentRow": 0,"currentControlName": "","displayedRowCount": 0,"currentPage": 1}}],
+                "storageID": "{{{context.StorageId}}}"}
+            """;
+                
+            await PostAsyncNoResponse(context.Empresa, url, json_content);
+                
+            /*
+            url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_consulta_rel_proc_imp/safilcm3w_consulta_rel_proc_impdw_sheetitemchanged";
+
+            json_content = $$$"""
                     {
                     "vm": "{{{context.NewViews}}}",
                     "menuPath": "Controles > Relatórios > Relatório por Processo > Importação",
-                    "moduleExe": "safil","parameters": {"xpos": 0,"ypos": 0,"row": 1,"dwo": "{{{dwo}}}#{{{context.DataManagerId}}}"},
-                    "commands": [{"command": "UPDATE_BUNDLE_CURRENT_ROW_DELAYED","data": {"dataManagerId": "{{{context.DataManagerId}}}","bundle": [{"0": "number","1": "date","2": "date","3": "char(1)","4": "number","5": "char(100)","6": "char(3)","7": "char(6)","8": "char(8)"},{},[[{"WM$%S": 2,"WM$%CS": "000000000","computed": {}},
-                            null,
-                            "{{{parametros.DataInicio.ToString("ddMMyyyy000000")}}}",
-                            "{{{parametros.DataFim.ToString("ddMMyyyy000000")}}}",
-                            "{{{parametros.Status}}}",
-                            null,
-                            {{{parametros.Usuario}}},
-                            null,
-                            {{{parametros.Estabelecimento}}},
-                            {{{parametros.Descricao}}}]],
-                            [
-                            "num_proc",
-                            "dat_inicio",
-                            "dat_fim",
-                            "ind_situacao",
-                            "num_proc_fim",
-                            "usuario",
-                            "cod_empresa",
-                            "cod_estab",
-                            "descricao"
-                            ]
-                        ],
-                        "updatedColumns": [
-                            {{{index}}}
-                        ]
-                        }
-                    },
-                    {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_consulta_rel_proc_imp_grid}}}","currentRow": 0,"currentControlName": "","displayedRowCount": 0,"currentPage": 1}}],
-                    "storageID": "{{{context.StorageId}}}"}
+                    "moduleExe": "safil","parameters": {"row": 1,"dwo": "{{{dwo}}}#{{{context.DataManagerId}}}","data": "{{{value}}}"},"commands": [                        
+                    {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_consulta_rel_proc_imp_grid}}}","currentRow": 0,"currentControlName": "","displayedRowCount": 0,"currentPage": 1}}                      ],
+                    "storageID": "{{{context.StorageId}}}"
+                }
                 """;
-                
-                await PostAsyncNoResponse(context.Empresa, url, json_content);
-                
-                /*
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_consulta_rel_proc_imp/safilcm3w_consulta_rel_proc_impdw_sheetitemchanged";
 
-                json_content = $$$"""
-                       {
-                      "vm": "{{{context.NewViews}}}",
-                      "menuPath": "Controles > Relatórios > Relatório por Processo > Importação",
-                      "moduleExe": "safil","parameters": {"row": 1,"dwo": "{{{dwo}}}#{{{context.DataManagerId}}}","data": "{{{value}}}"},"commands": [                        
-                        {"command": "UPDATE_DM_ROW_AND_COL","data": {"dataManagerId": "{{{context.d_consulta_rel_proc_imp_grid}}}","currentRow": 0,"currentControlName": "","displayedRowCount": 0,"currentPage": 1}}                      ],
-                      "storageID": "{{{context.StorageId}}}"
-                    }
-                    """;
-
-                await PostAsyncNoResponse(context.Empresa, url, json_content);
-                */
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Falha ao executar ParametroRelatorioImportacao: {ex.Message}");
-            }
+            await PostAsyncNoResponse(context.Empresa, url, json_content);
+            */
+            
         }
 
         public static async Task<TaxApiResponse> BaixarRelatorioProcessoImportacao(TaxContext context, int row, string path)
         {
-            if (string.IsNullOrEmpty(ConfigManager.Cookie))
+            if (string.IsNullOrEmpty(Config.Cookie))
                 throw new ArgumentException("Cookie não encontrado!");
 
             //safobfww_lib_proctab_frameworktabpage_processosdw_processosbuttonclicked
@@ -1727,7 +1462,7 @@ namespace TaxZone
                 "parameters":{"row":{{{row}}},"dwo":"acao#{{{context.d_consulta_rel_proc_imp_grid}}}","data":"1"},
                 "commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},{"command":"UPDATE_BUNDLE_DELAYED",
                 "data":{"dataManagerId":"{{{context.d_consulta_rel_proc_imp_grid}}}","updatedRows":[1],"bundle":[{"0":"char(1)","1":"decimal(0)","2":"char(3)","3":"char(6)","4":"char(3)","5":"char(22)","6":"datetime","7":"char(100)","8":"char(8)","9":"datetime","10":"datetime","11":"datetime","12":"decimal(0)","13":"decimal(0)","14":"decimal(0)","15":"decimal(0)","16":"decimal(0)"},{},
-                [[{"WM$%S":0,"computed":{}},"1",1272607,"191",null,"IMP","Finalizado com sucesso","28072026090654","Energisa.ips10","IMPX431","28072026090726","01011900000000","28072026000000",67149,66171,0,978,0]],["acao","num_processo","cod_empresa","cod_estab","ind_processo","status","data_ini","cod_usuario","descricao","data_fim","data_ini_movto","data_fim_movto","qtd_lido","qtd_ins","qtd_alt","qtd_ign","qtd_err"]],"dirtyColumns":"@1:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,"}},
+                [[{"WM$%S":0,"computed":{}},"1",1272607,"191",null,"IMP","Finalizado com sucesso","28072026090654","Energisa.ips10","IMPX431","28072026090726","01011900000000","28072026000000",67149,66171,0,978,0]],["acao","num_processo","cod_empresa","cod_estab","ind_processo","status","data_ini","cod_usuario","descricao","parametros.DataFim","data_ini_movto","parametros.DataFim_movto","qtd_lido","qtd_ins","qtd_alt","qtd_ign","qtd_err"]],"dirtyColumns":"@1:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,"}},
                 {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_consulta_rel_proc_imp_grid}}}","currentRow":1,"currentControlName":"acao","displayedRowCount":4,"currentPage":1}}],
                 "storageID":"{{{context.StorageId}}}"}
                 """;
@@ -1760,7 +1495,7 @@ namespace TaxZone
             {
                 string modulo = "JOB SERVIDOR";
 
-                if (string.IsNullOrEmpty(ConfigManager.Cookie))
+                if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
 
                 if (string.IsNullOrEmpty(context.StorageId) || context.Modulo != modulo)
@@ -1829,27 +1564,7 @@ namespace TaxZone
 
                 progresso?.Report(new Progresso($"Programando job {context.Empresa}", 20));
 
-                //CRIAR NUMERO JOB
-                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecb_novoclicked";
-
-                json_content = $$$"""
-                      {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
-                      {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
-                      {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":1,"currentControlName":"","displayedRowCount":450,"currentPage":1}}],
-                      "storageID":"{{{context.StorageId}}}"}
-                    """;
-
-                root = await PostAsync(context.Empresa, url, json_content);
-
-                progresso?.Report(new Progresso($"Programando job {context.Empresa}", 25));
-
-                obj = root["MD"]!.AsArray()
-                            .OfType<JsonObject>()
-                            .FirstOrDefault(o =>
-                                o["UniqueID"]?.ToString() == $"st_new_job#{context.NewViews2}")
-    ;
-
-                string numJob = obj?["text"]?.GetValue<string>();
+                
 
                 //Clica no checkbox apenas tabelas carregadas
                 url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecbx_restringeclicked";
@@ -1897,12 +1612,11 @@ namespace TaxZone
                             NumeroArquivo = linha[2]!.GetValue<int>(),
                             // DescricaoArquivo = linha[3]!.GetValue<string>(),
                             NomeTabelaWork = linha[4]!.GetValue<string>(),
-                            // QtdRegistros = linha[5]!.GetValue<int>(),
+                             QtdRegistros = linha[5]!.GetValue<int>(),
                             // IndAtoCotepe = linha[6]!.GetValue<string>(),
                             // IndEstabGrp = linha[7]!.GetValue<string>(),
                             // IndMultiLoad = linha[8]!.GetValue<string>()
                         });
-
 
                         //SELECIONAR CADA TABELA
                         url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_arquivosclicked";
@@ -1929,6 +1643,30 @@ namespace TaxZone
                         selected_rows++;
                     }
                 }
+
+
+                //CRIAR NUMERO JOB
+                url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecb_novoclicked";
+
+                json_content = $$$"""
+                      {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil","commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
+                      {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":0,"currentControlName":"","displayedRowCount":10,"currentPage":1}},
+                      {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":1,"currentControlName":"","displayedRowCount":450,"currentPage":1}}],
+                      "storageID":"{{{context.StorageId}}}"}
+                    """;
+
+                root = await PostAsync(context.Empresa, url, json_content);
+
+                progresso?.Report(new Progresso($"Programando job {context.Empresa}", 25));
+
+                obj = root["MD"]!.AsArray()
+                            .OfType<JsonObject>()
+                            .FirstOrDefault(o =>
+                                o["UniqueID"]?.ToString() == $"st_new_job#{context.NewViews2}")
+    ;
+
+                string numJob = obj?["text"]?.GetValue<string>();
+
 
                 //Botão adicionar arquivos
                 url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonecb_adicionaclicked";
@@ -2017,7 +1755,7 @@ namespace TaxZone
                     }
                     """;
 
-                    root = await PostAsync(context.Empresa, url, json_content);
+                     await PostAsyncNoResponse(context.Empresa, url, json_content);
                     
 
                     url = "https://www.onesourcetax.com/amer1/oms-taxone-11/ws/safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemchanged";
@@ -2042,7 +1780,7 @@ namespace TaxZone
                         "storageID":"{{{context.StorageId}}}"}
                         """;
 
-                    root = await PostAsync(context.Empresa, url, json_content);
+                    await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                     //datafim
                     json_content = $$$"""
@@ -2056,7 +1794,7 @@ namespace TaxZone
                         "storageID":"{{{context.StorageId}}}"}
                         """;
                     
-                    root = await PostAsync(context.Empresa, url, json_content);
+                    await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                     //limpa tabela
                     json_content = $$$"""
@@ -2071,21 +1809,9 @@ namespace TaxZone
                         """;
 
 
-                    root = await PostAsync(context.Empresa, url, json_content);
+                    await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                     //limita periodo
-
-                    json_content = $$$"""
-                        {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
-                        "parameters":{"row":{{{i}}},"dwo":"ind_periodo#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
-                        "data":"{{{limpaTabela}}}"},"commands":[{"command":"UPDATE_CURRENT_KEY","data":{"key":"none"}},
-                        {"command":"UPDATE_DM_ROW_AND_COL","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","currentRow":{{{i}}},"currentControlName":"ind_drop_tab","displayedRowCount":10,"currentPage":1}},
-                        {"command":"UPDATE_BUNDLE_DELAYED","data":{"dataManagerId":"{{{context.d_prog_job_imp_uf_tab_taxone}}}","updatedRows":[{{{i}}}],"bundle":[{"0":"decimal(0)","1":"decimal(0)","2":"decimal(0)","3":"char(3)","4":"char(6)","5":"datetime","6":"datetime","7":"decimal(0)","8":"char(1)","9":"datetime","10":"datetime","11":"char(1)","12":"char(1)","13":"char(1)","14":"char(1)","15":"char(1)","16":"char(1)","17":"char(1)","18":"char(1)","19":"char(1)","20":"char(1)","21":"char(1)","22":"char(1)","23":"char(9)","24":"char(9)","25":"char(3)","26":"char(1)","27":"number"},{"0":"compute_1","1":"teste_empresa"},[[{"WM$%S":0,
-                        "computed":{"compute_1":"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}","teste_empresa":0}},{{{numJob}}},{{{arquivos[i - 1].GrupoArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},"{{{codEmpresa}}}",null,"{{{dataIni.ToString("ddMMyyyy")}}}000000","{{{dataFim.ToString("ddMMyyyy")}}}000000",100,"N",null,null,"P","{{{limpaTabela}}}","N","S","{{{indLimitaPeriodo}}}",null,"N","N","N","N","N","S",null,null,"{{{codEmpresa}}}","{{{arquivos[i - 1].IndEstabGrp}}}",0]],["num_job","grupo_arquivo","numero_arquivo","cod_empresa","cod_estab","data_ini","data_fim","perc_erro","ind_aborta_job","dat_ini_exec","dat_fim_exec","import_status","ind_drop_tab","ind_periodo","ind_sobrepor_reg","ind_lim_periodo","ind_ato_cotepe","det_job_import_ind_log_x2013","ind_valid_x2013","ind_data_averb_x48","ind_gera_x530","ind_gera_x751","ind_valid_cep_x04","grupo_x188","grupo_x189","estabelecimento_cod_empresa","ind_estab_grp","protect"]],"dirtyColumns":"@{{{i}}}:13,"}},{"command":"UPDATE_DM_ROW_AND_COL",
-                        "data":{"dataManagerId":"{{{context.d_lis_arquivos_imp}}}","currentRow":{{{i-1}}},"currentControlName":"","displayedRowCount":0,"currentPage":1}}],
-                        "storageID":"{{{context.StorageId}}}"}
-                        """;
-
                     json_content = $$$"""
                         {"vm":"{{{context.NewViews2}}}","menuPath":"Importação > Importação > Programação","moduleExe":"safil",
                         "parameters":{"row":{{{i}}},"dwo":"ind_periodo#{{{context.d_prog_job_imp_uf_tab_taxone}}}",
@@ -2093,7 +1819,7 @@ namespace TaxZone
                         "storageID":"{{{context.StorageId}}}"}
                         """;
 
-                    root = await PostAsync(context.Empresa, url, json_content);
+                    await PostAsyncNoResponse(context.Empresa, url, json_content);
 
                     if (arquivos[i - 1].NomeTabelaWork == "SAFX04" || arquivos[i - 1].NomeTabelaWork == "SAFX2013")
                     {
@@ -2116,7 +1842,7 @@ namespace TaxZone
                                   ],
                                   [
                                     "/dataManagerController/forceBundleUpdate",
-                                    "{\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i-1].GrupoArquivo}}}0{{{arquivos[i-1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i-1].NumeroArquivo}}},{{{arquivos[i-1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",null,null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:5,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i-1].GrupoArquivo}}}0{{{arquivos[i-1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i-1].GrupoArquivo}}},{{{arquivos[i-1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",null,null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:5,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
                                     null
                                   ],
                                   [
@@ -2148,18 +1874,18 @@ namespace TaxZone
                                 "args": [
                                   [
                                     "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemchanged",
-                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":{{{i}}},\"dwo\":\"cod_estab#{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":{{{i}}},\"dwo\":\"cod_estab#{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"data\":\"1\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
                                     "{{{context.NewViews2}}}",
                                     "safil"
                                   ],
                                   [
                                     "/dataManagerController/forceBundleUpdate",
-                                    "{\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i - 1].NumeroArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",null,null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:5,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"cod_estab\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_BUNDLE\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"updatedRows\":[{{{i}}}],\"bundle\":[{\"0\":\"decimal(0)\",\"1\":\"decimal(0)\",\"2\":\"decimal(0)\",\"3\":\"char(3)\",\"4\":\"char(6)\",\"5\":\"datetime\",\"6\":\"datetime\",\"7\":\"decimal(0)\",\"8\":\"char(1)\",\"9\":\"datetime\",\"10\":\"datetime\",\"11\":\"char(1)\",\"12\":\"char(1)\",\"13\":\"char(1)\",\"14\":\"char(1)\",\"15\":\"char(1)\",\"16\":\"char(1)\",\"17\":\"char(1)\",\"18\":\"char(1)\",\"19\":\"char(1)\",\"20\":\"char(1)\",\"21\":\"char(1)\",\"22\":\"char(1)\",\"23\":\"char(9)\",\"24\":\"char(9)\",\"25\":\"char(3)\",\"26\":\"char(1)\",\"27\":\"number\"},{\"0\":\"compute_1\",\"1\":\"teste_empresa\"},[[{\"WM$%S\":2,\"WM$%CS\":\"0000000000000000000000000000\",\"computed\":{\"compute_1\":\"00{{{arquivos[i - 1].GrupoArquivo}}}0{{{arquivos[i - 1].NumeroArquivo}}}\",\"teste_empresa\":0}},{{{numJob}}},{{{arquivos[i - 1].GrupoArquivo}}},{{{arquivos[i - 1].NumeroArquivo}}},\"{{{codEmpresa}}}\",\"1\",null,null,100,\"N\",null,null,\"P\",\"N\",\"N\",\"S\",\"{{{indLimitaPeriodo}}}\",null,\"N\",\"N\",\"N\",\"N\",\"N\",\"S\",null,null,\"{{{codEmpresa}}}\",\"{{{arquivos[i - 1].IndEstabGrp}}}\",0]],[\"num_job\",\"grupo_arquivo\",\"numero_arquivo\",\"cod_empresa\",\"cod_estab\",\"data_ini\",\"data_fim\",\"perc_erro\",\"ind_aborta_job\",\"dat_ini_exec\",\"dat_fim_exec\",\"import_status\",\"ind_drop_tab\",\"ind_periodo\",\"ind_sobrepor_reg\",\"ind_lim_periodo\",\"ind_ato_cotepe\",\"det_job_import_ind_log_x2013\",\"ind_valid_x2013\",\"ind_data_averb_x48\",\"ind_gera_x530\",\"ind_gera_x751\",\"ind_valid_cep_x04\",\"grupo_x188\",\"grupo_x189\",\"estabelecimento_cod_empresa\",\"ind_estab_grp\",\"protect\"]],\"dirtyColumns\":\"@{{{i}}}:5,\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
                                     null
                                   ],
                                   [
                                     "safilcm3/w_prog_job_imp_taxone/safilcm3w_prog_job_imp_taxonedw_sheetitemfocuschanged",
-                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":1,\"dwo\":\"data_fim#{{{context.d_prog_job_imp_uf_tab_taxone}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"data_fim\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
+                                    "{\"vm\":\"{{{context.NewViews2}}}\",\"menuPath\":\"Importação > Importação > Programação\",\"moduleExe\":\"safil\",\"parameters\":{\"row\":{{{i}}},\"dwo\":\"data_fim#{{{context.d_prog_job_imp_uf_tab_taxone}}}\"},\"commands\":[{\"command\":\"UPDATE_CURRENT_KEY\",\"data\":{\"key\":\"none\"}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_prog_job_imp_uf_tab_taxone}}}\",\"currentRow\":{{{i}}},\"currentControlName\":\"data_fim\",\"displayedRowCount\":10,\"currentPage\":1}},{\"command\":\"UPDATE_DM_ROW_AND_COL\",\"data\":{\"dataManagerId\":\"{{{context.d_lis_arquivos_imp}}}\",\"currentRow\":0,\"currentControlName\":\"\",\"displayedRowCount\":0,\"currentPage\":1}}]}",
                                     "{{{context.NewViews2}}}",
                                     "safil"
                                   ]
@@ -2169,7 +1895,7 @@ namespace TaxZone
                             }
                             """;
 
-                        root = await PostAsync(context.Empresa, url, json_content);
+                        await PostAsyncNoResponse(context.Empresa, url, json_content);
                     }
 
                     if (arquivos[i-1].NomeTabelaWork == "SAFX04")
@@ -2221,7 +1947,7 @@ namespace TaxZone
                             }
                             """;
 
-                        root = await PostAsync(context.Empresa, url, json_content);
+                        await PostAsyncNoResponse(context.Empresa, url, json_content);
                     }
 
                 }
@@ -2361,12 +2087,6 @@ namespace TaxZone
 
 
         #endregion
-
-        public async ValueTask DisposeAsync()
-        {
-            //if (_browser != null) await _browser.CloseAsync();
-           // _playwright?.Dispose();
-        }
 
     }
 }

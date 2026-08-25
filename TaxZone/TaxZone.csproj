@@ -6,12 +6,15 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <ApplicationIcon>icon_v2.ico</ApplicationIcon>
     <AssemblyVersion>2.0.0</AssemblyVersion>
+    <Company>Sustentation Subsystems</Company>
+    <Description>Aplicação auxiliar para tratamento de dados entre Energisa e Tax One. Permite executar JOBs, relatórios e disponibiliza ferramentas para tratamento e comparação de dados.</Description>
+    <PackageIcon></PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="icon.ico" />
+    <Content Include="icon_v2.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +30,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +42,21 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.svg">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="icone.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

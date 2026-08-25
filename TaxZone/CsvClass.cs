@@ -2,6 +2,7 @@
 using System.IO.Compression;
 using System.Text;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace TaxZone
 {
@@ -18,7 +19,7 @@ namespace TaxZone
                 {
                     Title = "Selecione um arquivo CSV ou ZIP",
                     Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*",
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+                    InitialDirectory = Config.DiretorioPadraoEntrada
                 };
 
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
@@ -261,6 +262,7 @@ namespace TaxZone
                 salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
                 salvarDialog.DefaultExt = "csv";
                 salvarDialog.AddExtension = true;
+                salvarDialog.InitialDirectory = Config.DiretorioPadraoSaida;
 
                 if (salvarDialog.ShowDialog() != DialogResult.OK) return;
 
@@ -307,6 +309,7 @@ namespace TaxZone
                 salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
                 salvarDialog.DefaultExt = "csv";
                 salvarDialog.AddExtension = true;
+                salvarDialog.InitialDirectory = Config.DiretorioPadraoSaida;
 
                 if (salvarDialog.ShowDialog() != DialogResult.OK) return;
 

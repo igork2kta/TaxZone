@@ -126,7 +126,6 @@ namespace TaxZone
             form.Show();
         }
 
-        
         public static string DividirValoresIn(string valores, string coluna, bool aspas)
         {
             string[] split = valores.Split(",");
@@ -156,6 +155,27 @@ namespace TaxZone
             }
             
             return string.Join("", split);
+        }
+
+        public static string SelecionarPasta()
+        {
+            // Garante suporte ao visual moderno do Windows
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Selecione a pasta desejada";
+                dialog.UseDescriptionForTitle = true;
+                dialog.ShowNewFolderButton = true;
+
+
+                DialogResult result = dialog.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                {
+                    return dialog.SelectedPath;
+                }
+            }
+
+            return null; // Usuário cancelou a seleção
         }
 
     }

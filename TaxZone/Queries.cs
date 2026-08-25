@@ -79,14 +79,14 @@
                                             order by 4, 2 desc";
 
 
-        public const string qtdNotasFarMesFechado = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
+        public const string qtdNotasFarMesFechado = @"select '{2}' EMPRESA, 'NOTAS' TIPO, count(1) TOTAL, codfil COD_ESTAB
                                             from CAPA_NF_SPED_{0}_{1} a
                                             where CODMDE_DOC = 66 
                                             group by codfil
 
                                             union all
 
-                                            select '{2}' EMPRESA, 'ITENS', count(1) TOTAL, a.codfil
+                                            select '{2}' EMPRESA, 'ITENS' TIPO, count(1) TOTAL, a.codfil COD_ESTAB
                                             from CAPA_NF_SPED_{0}_{1} a,
                                                  ITEM_NF_SPED_{0}_{1} b
                                             where   a.CODEMP = b.CODEMP
@@ -101,21 +101,21 @@
 
                                             union all
 
-                                            select '{2}' EMPRESA, 'CANC',count(1) TOTAL, codfil
+                                            select '{2}' EMPRESA, 'CANC' TIPO,count(1) TOTAL, codfil COD_ESTAB
                                             from CAPA_NF_SPED_{0}_{1} a
                                             where DATCAN is not null AND CODMDE_DOC = 66
                                             group by codfil
 
                                             order by 4, 2 desc";
 
-        public const string qtdNotasFarMesAberto = @"select '{2}' EMPRESA, 'NOTAS', count(1) TOTAL, codfil
+        public const string qtdNotasFarMesAberto = @"select '{2}' EMPRESA, 'NOTAS' TIPO, count(1) TOTAL, codfil COD_ESTAB
                                             from CAPA_NF_SPED a
                                             where CODMDE_DOC = 66 and TRUNC(DATEMI) BETWEEN '{0}' AND '{1}'
                                             group by codfil
 
                                             union all
 
-                                            select '{2}' EMPRESA, 'ITENS', count(1) TOTAL, a.codfil
+                                            select '{2}' EMPRESA, 'ITENS' TIPO, count(1) TOTAL, a.codfil COD_ESTAB
                                             from CAPA_NF_SPED a,
                                                  ITEM_NF_SPED b
                                             where   a.CODEMP = b.CODEMP
@@ -132,7 +132,7 @@
 
                                             union all
 
-                                            select '{2}' EMPRESA, 'CANC',count(1) TOTAL, codfil
+                                            select '{2}' EMPRESA, 'CANC' TIPO,count(1) TOTAL, codfil COD_ESTAB
                                             from CAPA_NF_SPED a
                                             where DATCAN is not null AND CODMDE_DOC = 66 and TRUNC(DATEMI) BETWEEN '{0}' AND '{1}'
                                             group by codfil
@@ -149,6 +149,25 @@
                                         ) ICMS
                                 FROM CAPA_NF_SPED_{0}_{1} A,
                                      ITEM_NF_SPED_{0}_{1} B
+                                WHERE A.CODEMP = B.CODEMP
+                                  AND A.CODFIL = B.CODFIL
+                                  AND A.DATEMI = B.DATEMI
+                                  AND A.IDTPSS = B.IDTPSS
+                                  AND A.CODDTN = B.CODDTN
+                                  AND A.NUMDOC_FSC = B.NUMDOC_FSC
+                                  AND A.NUMSER = B.NUMSER
+                                  AND A.CODMDE_DOC = '66'
+                                GROUP BY A.CODFIL";
+
+        public const string queryIcmsSifarMesAberto = @"SELECT  A.CODFIL, SUM(
+                                            CASE 
+                                                WHEN DATCAN IS NULL 
+                                                THEN DECODE(INDADC_DCT, 'A', B.VLRICMS, B.VLRICMS * (-1)) 
+                                                ELSE 0 
+                                            END
+                                        ) ICMS
+                                FROM CAPA_NF_SPED A,
+                                     ITEM_NF_SPED B
                                 WHERE A.CODEMP = B.CODEMP
                                   AND A.CODFIL = B.CODFIL
                                   AND A.DATEMI = B.DATEMI

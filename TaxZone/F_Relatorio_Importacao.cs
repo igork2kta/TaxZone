@@ -17,7 +17,7 @@ namespace TaxZone
             List<string> estabelecimentos = ["TODOS"];
             estabelecimentos.AddRange(Empresa.GetEstabelecimentos(taxContext.Empresa).Select(a => a.ToString()));
             cb_estabelecimento.DataSource = estabelecimentos;
-            tb_usuario.Text = ConfigManager.UsuarioTax;
+            tb_usuario.Text = Config.UsuarioTax;
 
             cb_acao_botao_relatorio.SelectedIndex = 0;
         }
@@ -30,18 +30,11 @@ namespace TaxZone
 
             string status = " ";
             string estabelecimento = string.Empty;
-
-            /*
-            if (cb_status.SelectedIndex == 0 || cb_status.SelectedIndex == -1) status = " ";
-            else if (cb_status.SelectedIndex == 1) status = "O";
-            else if (cb_status.SelectedIndex == 2) status = "E";
-            */
             if (cb_estabelecimento.SelectedIndex != 0) estabelecimento = cb_estabelecimento.Text;
 
             ParametrosRelatorioImportacao parametros = new(
                     dtp_inicio.Value,
                     dtp_fim.Value,
-                    status,
                     tb_usuario.Text,
                     estabelecimento,
                     tb_descricao.Text);
@@ -101,7 +94,7 @@ namespace TaxZone
 
             if (coluna == "QtdErr")
             {
-                if (Convert.ToInt16(e.Value) > 0)
+                if (Convert.ToInt32(e.Value) > 0)
                 {
                     e.CellStyle.BackColor = Color.Salmon;
                     e.CellStyle.Font = new Font(dgv_relatorio_importacao.Font, FontStyle.Bold);

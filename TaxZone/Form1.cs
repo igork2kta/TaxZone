@@ -20,26 +20,25 @@ namespace TaxZone
         public Form1()
         {
             InitializeComponent();
-            ConfigManager.Load();
 
             ToolTip toolTip = new ToolTip();
 
             // Obter a data de criação do arquivo do assembly
             DateTime creationDate = File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location);
 
-            string helpText = $"Data de compilação: {creationDate}\nVersão {ConfigManager.Versao}";
+            string helpText = $"Data de compilação: {creationDate}\nVersão {Config.Versao}";
 
             toolTip.SetToolTip(lbl_help, helpText);
 
             NotificationService.QtdNotasProgressChanged += AtualizarStatusQtdNotas;
             NotificationService.StatusTaxChanged += AtualizarStatusTax;
 
-            tb_usuario_banco_far.Text = ConfigManager.DatabaseUserFar;
-            tb_senha_banco_far.Text = ConfigManager.DatabasePasswordFar;
-            tb_usuario_banco_msa.Text = ConfigManager.DatabaseUserMsa;
-            tb_senha_banco_msa.Text = ConfigManager.DatabasePasswordMsa;
-            tb_usuario_tax.Text = ConfigManager.UsuarioTax;
-            tb_senha_tax.Text = ConfigManager.SenhaTax;
+            tb_usuario_banco_far.Text = Config.DatabaseUserFar;
+            tb_senha_banco_far.Text = Config.DatabasePasswordFar;
+            tb_usuario_banco_msa.Text = Config.DatabaseUserMsa;
+            tb_senha_banco_msa.Text = Config.DatabasePasswordMsa;
+            tb_usuario_tax.Text = Config.UsuarioTax;
+            tb_senha_tax.Text = Config.SenhaTax;
 
             //Data source dos combobox
             cb_banco.DataSource = Empresa.ListaEmpresas;
@@ -146,7 +145,7 @@ namespace TaxZone
             string ano = tb_ano.Text;
 
             string query = string.Format(
-                                Queries.queryIcmsSifar,
+                                ckb_mes_aberto.Checked ? Queries.queryIcmsSifarMesAberto : Queries.queryIcmsSifar,
                                 mes,
                                 ano
                             );
@@ -286,19 +285,21 @@ namespace TaxZone
 
         private async void bt_executar_relatorio_Click(object sender, EventArgs e)
         {
-            ApiTax.param_empresa = "*";
-            ApiTax.param_estab = "*";
-            ApiTax.data_inicio = dtp_tax_data_inicio.Value.ToString("ddMMyyyy000000");
-            ApiTax.data_fim = dtp_tax_data_fim.Value.ToString("ddMMyyyy000000");
-            ApiTax.buraco_nota = ckb_buraco_notas.Checked ? "S" : "N";
-            ApiTax.diferenca_capa_item = ckb_diferenca_capa_item.Checked ? "S" : "N";
-            ApiTax.icms_resumido = ckb_icms_resumido.Checked ? "S" : "N";
-            ApiTax.notas_sem_item = ckb_notas_sem_item.Checked ? "S" : "N";
-            ApiTax.qtd_itens = ckb_qtd_itens.Checked ? "S" : "N";
-            ApiTax.qtd_notas = ckb_qtd_notas.Checked ? "S" : "N";
-            ApiTax.qtd_canceladas = ckb_qtd_canceladas.Checked ? "S" : "N";
-            ApiTax.extracao_canceladas = ckb_extracao_canceladas.Checked ? "S" : "N";
 
+            var parametros = new ParametrosProcessosCustomizados(
+                "*",
+                "*",
+                dtp_tax_data_inicio.Value,
+                dtp_tax_data_fim.Value,
+                ckb_buraco_notas.Checked,
+                ckb_diferenca_capa_item.Checked,
+                ckb_icms_resumido.Checked,
+                ckb_notas_sem_item.Checked,
+                ckb_qtd_itens.Checked,
+                ckb_qtd_notas.Checked,
+                ckb_qtd_canceladas.Checked,
+                ckb_extracao_canceladas.Checked
+                );
 
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
@@ -320,7 +321,7 @@ namespace TaxZone
 
                 TaxContext context = GetContext(empresa);
 
-                TaxApiResponse resposta = await ApiTax.ProgramarRelatorio(context, progresso);
+                TaxApiResponse resposta = await ApiTax.ProgramarRelatorio(context, parametros, progresso);
                 int qtd = Interlocked.Increment(ref concluidas);
 
                 if (!resposta.Success)
@@ -408,26 +409,37 @@ namespace TaxZone
 
         private void tb_usuario_banco_TextChanged(object sender, EventArgs e)
         {
-            ConfigManager.DatabaseUserFar = tb_usuario_banco_far.Text;
-            ConfigManager.Save();
+            Config.DatabaseUserFar = tb_usuario_banco_far.Text;
+            Config.Save();
         }
 
         private void tb_senha_banco_TextChanged(object sender, EventArgs e)
         {
-            ConfigManager.DatabasePasswordFar = tb_senha_banco_far.Text;
-            ConfigManager.Save();
+            Config.DatabasePasswordFar = tb_senha_banco_far.Text;
+            Config.Save();
         }
 
         private void tb_usuario_banco_msa_TextChanged(object sender, EventArgs e)
         {
-            ConfigManager.DatabaseUserMsa = tb_usuario_banco_msa.Text;
-            ConfigManager.Save();
+            Config.DatabaseUserMsa = tb_usuario_banco_msa.Text;
+            Config.Save();
         }
 
         private void tb_senha_banco_msa_TextChanged(object sender, EventArgs e)
         {
-            ConfigManager.DatabasePasswordMsa = tb_senha_banco_msa.Text;
-            ConfigManager.Save();
+            Config.DatabasePasswordMsa = tb_senha_banco_msa.Text;
+            Config.Save();
+        }
+        private void tb_usuario_tax_TextChanged(object sender, EventArgs e)
+        {
+            Config.UsuarioTax = tb_usuario_tax.Text;
+            Config.Save();
+        }
+
+        private void tb_senha_tax_TextChanged(object sender, EventArgs e)
+        {
+            Config.SenhaTax = tb_senha_tax.Text;
+            Config.Save();
         }
 
         private void ckb_buraco_notas_hardcore_CheckedChanged(object sender, EventArgs e)
@@ -488,23 +500,13 @@ namespace TaxZone
 
         private void tb_cookie_TextChanged(object sender, EventArgs e)
         {
-            ConfigManager.Cookie = tb_cookie.Text;
+            Config.Cookie = tb_cookie.Text;
             //Renova os contextos para a nova sessão
             contextos = new();
         }
 
 
-        private void tb_usuario_tax_TextChanged(object sender, EventArgs e)
-        {
-            ConfigManager.UsuarioTax = tb_usuario_tax.Text;
-            ConfigManager.Save();
-        }
 
-        private void tb_senha_tax_TextChanged(object sender, EventArgs e)
-        {
-            ConfigManager.SenhaTax = tb_senha_tax.Text;
-            ConfigManager.Save();
-        }
 
         private void cb_local_qtd_notas_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -771,23 +773,20 @@ namespace TaxZone
 
             TaxContext context;
 
-            ApiTax.param_empresa = "*";
-            ApiTax.param_estab = "*";
-            ApiTax.data_inicio = dtp_inicio_comparativo_notas.Value.ToString("ddMMyyyy000000");
-            ApiTax.data_fim = dtp_fim_comparativo_notas.Value.ToString("ddMMyyyy000000");
-            ApiTax.buraco_nota = "N";
-            ApiTax.diferenca_capa_item = "N";
-            //Não busca icms em mÊs aberto porque ainda não tem no sifar
-            if (dtp_inicio_comparativo_notas.Value.Month != DateTime.Now.Month && dtp_inicio_comparativo_notas.Value.Year != DateTime.Now.Year)
-                ApiTax.icms_resumido = "S";
-            else
-                ApiTax.icms_resumido = "N";
-            ApiTax.notas_sem_item = "N";
-            ApiTax.qtd_itens = "S";
-            ApiTax.qtd_notas = "S";
-            ApiTax.qtd_canceladas = "S";
-            ApiTax.extracao_canceladas = "N";
-
+            var parametros = new ParametrosProcessosCustomizados(
+                "*",
+                "*",
+                dtp_tax_data_inicio.Value,
+                dtp_tax_data_fim.Value,
+                false,
+                false,
+                false,
+                false,
+                true,
+                true,
+                true,
+                false
+                );
 
             int total = empresasSelecionadas.Count;
             int concluidas = 0;
@@ -797,7 +796,7 @@ namespace TaxZone
             {
                 TaxContext context = GetContext(empresa);
 
-                TaxApiResponse response = await ApiTax.ProgramarRelatorio(context, progresso);
+                TaxApiResponse response = await ApiTax.ProgramarRelatorio(context, parametros, progresso);
                 int qtd = Interlocked.Increment(ref concluidas);
 
                 if (!response.Success)
@@ -933,41 +932,63 @@ namespace TaxZone
 
         private async void bt_executar_job_Click(object sender, EventArgs e)
         {
-
-            List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
-
-            TaxContext context;
-            int total = empresasSelecionadas.Count;
-            int concluidas = 0;
-
-            var tasks = empresasSelecionadas.Select(async empresa =>
+            try
             {
+                List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
-                var progresso = new Progress<Progresso>(p =>
+                TaxContext context;
+                int total = empresasSelecionadas.Count;
+                int concluidas = 0;
+
+                var tasks = empresasSelecionadas.Select(async empresa =>
                 {
-                    lbl_status_tax.Text = p.Mensagem;
-                    progress_bar_tax.Value = p.Valor;
 
-                    lbl_status_tax.Visible = p.Valor > 0 && p.Valor < 100;
-                    progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                    var progresso = new Progress<Progresso>(p =>
+                    {
+                        lbl_status_tax.Text = p.Mensagem;
+                        progress_bar_tax.Value = p.Valor;
+
+                        lbl_status_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                        progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
+                    });
+
+                    TaxContext context = GetContext(empresa);
+
+                    TaxApiResponse resposta = await ApiTax.ProgramarJob(context, null, progresso);
+                    int qtd = Interlocked.Increment(ref concluidas);
+
+                    if (!resposta.Success)
+                        MessageBox.Show($"Falha ao programar relatório para a empresa {empresa}: {resposta.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    return resposta;
+
                 });
 
-                TaxContext context = GetContext(empresa);
+                TaxApiResponse[] resultados = await Task.WhenAll(tasks);
 
-                TaxApiResponse resposta = await ApiTax.ProgramarJob(context, null, progresso);
-                int qtd = Interlocked.Increment(ref concluidas);
-
-                if (!resposta.Success)
+                string empresasSucesso = "";
+                string empresasComFalha = "";
+                foreach (var resultado in resultados)
                 {
-                    MessageBox.Show($"Falha ao programar relatório para a empresa {empresa}: {resposta.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
+                    if (resultado.Success)
+                        empresasSucesso += resultado.Empresa + "/";
+                    else
+                        empresasComFalha += resultado.Empresa + "/";
                 }
 
-            });
+                MessageBox.Show($"Sucesso: {empresasSucesso}\nErro: {empresasComFalha}", "Programação JOB", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao executar JOB: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-            await Task.WhenAll(tasks);
 
-            MessageBox.Show($"Job(s) programado(s).", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void bt_interface_nova_Click(object sender, EventArgs e)
+        {
+           
         }
     }
 }

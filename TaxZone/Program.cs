@@ -22,18 +22,19 @@ namespace TaxZone
             Banco.CriarBanco();
 
             //Limpar pasta de arquivos temporários
-            if (Directory.Exists(Config.PathArquivoTemporario))
-            {
-                foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
-                {
-                    File.Delete(arquivo);
-                }
-            }
+            // Garantir que a pasta de arquivos temporários exista
+            Directory.CreateDirectory(Config.PathArquivoTemporario);
+            foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
+                File.Delete(arquivo);
+                
+            
+
+            Config.Load();
 
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Application.Run(new F_Main_V2());
         }
     }
 }

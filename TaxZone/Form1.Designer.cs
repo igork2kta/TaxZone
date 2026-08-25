@@ -1081,7 +1081,7 @@
             groupBox4.Controls.Add(dgv_comparativo_notas);
             groupBox4.Location = new Point(1089, 8);
             groupBox4.Name = "groupBox4";
-            groupBox4.Size = new Size(588, 524);
+            groupBox4.Size = new Size(588, 536);
             groupBox4.TabIndex = 46;
             groupBox4.TabStop = false;
             groupBox4.Text = "Comparação Quantidades";
@@ -1178,7 +1178,7 @@
             dgv_comparativo_notas.Location = new Point(6, 59);
             dgv_comparativo_notas.Name = "dgv_comparativo_notas";
             dgv_comparativo_notas.RowHeadersVisible = false;
-            dgv_comparativo_notas.Size = new Size(576, 456);
+            dgv_comparativo_notas.Size = new Size(576, 468);
             dgv_comparativo_notas.TabIndex = 46;
             dgv_comparativo_notas.CellEndEdit += dgv_comparativo_notas_CellEndEdit;
             dgv_comparativo_notas.CellFormatting += dgv_comparativo_notas_CellFormatting;
@@ -1186,7 +1186,7 @@
             // ckb_always_on_top
             // 
             ckb_always_on_top.AutoSize = true;
-            ckb_always_on_top.Location = new Point(17, 524);
+            ckb_always_on_top.Location = new Point(12, 526);
             ckb_always_on_top.Name = "ckb_always_on_top";
             ckb_always_on_top.Size = new Size(101, 19);
             ckb_always_on_top.TabIndex = 47;
@@ -1199,7 +1199,7 @@
             lbl_help.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             lbl_help.Font = new Font("Segoe UI", 10F);
             lbl_help.Image = (Image)resources.GetObject("lbl_help.Image");
-            lbl_help.Location = new Point(580, 514);
+            lbl_help.Location = new Point(580, 526);
             lbl_help.Name = "lbl_help";
             lbl_help.Size = new Size(20, 18);
             lbl_help.TabIndex = 48;
@@ -1208,7 +1208,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1689, 546);
+            ClientSize = new Size(1689, 558);
             Controls.Add(lbl_help);
             Controls.Add(ckb_always_on_top);
             Controls.Add(groupBox4);
@@ -1367,5 +1367,6 @@
         private Button bt_logs_processos_importacao;
         private Button bt_executar_job;
         private Label lbl_help;
+        private Button bt_interface_nova;
     }
 }

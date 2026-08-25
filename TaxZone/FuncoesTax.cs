@@ -4,6 +4,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using TaxZone.DTO;
 
 namespace TaxZone
 {
@@ -19,8 +20,8 @@ namespace TaxZone
                 dialog.Title = "Selecione os arquivos";
                 dialog.Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*";
                 dialog.Multiselect = true;
+                dialog.InitialDirectory = Config.DiretorioPadraoEntrada;
 
-              
                 if (dialog.ShowDialog() != DialogResult.OK)
                     return;
 
@@ -29,13 +30,11 @@ namespace TaxZone
                     string nome = Path.GetFileNameWithoutExtension(arquivo).ToUpper();
 
                     if (nome.Contains("DIFERENCA_CAPA_ITEM"))
-                    {
                         diferencaCapaItem = CsvClass.CopiarNotas(1, arquivo);
-                    }
+                    
                     else if (nome.Contains("NOTAS_SEM_ITEM"))
-                    {
                         notasSemItem = CsvClass.CopiarNotas(2, arquivo);
-                    }
+                    
                 }
             }
 
@@ -73,7 +72,7 @@ namespace TaxZone
             {
                 Title = "Selecione um arquivo PDF",
                 Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+                InitialDirectory = Config.DiretorioPadraoEntrada
             };
 
             if (openFileDialog.ShowDialog() != DialogResult.OK)
@@ -193,7 +192,7 @@ namespace TaxZone
                 return;
             }
 
-            DataTable pendentes = DataAccess.ExecuteQuery(ConfigManager.DatabaseUserMsa, ConfigManager.DatabasePasswordMsa, banco.database, banco.owner, query);
+            DataTable pendentes = DataAccess.ExecuteQuery(Config.DatabaseUserMsa, Config.DatabasePasswordMsa, banco.database, banco.owner, query);
 
             MessageBox.Show($"{pendentes.Rows.Count} notas pendentes!", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -208,9 +207,7 @@ namespace TaxZone
                 {
                     Title = "Selecione um arquivo PDF",
                     Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
-                    InitialDirectory = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                        "Downloads")
+                    InitialDirectory = Config.DiretorioPadraoEntrada
                 };
 
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
@@ -284,7 +281,7 @@ namespace TaxZone
             {
                 Title = "Selecione um arquivo PDF",
                 Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads"
+                InitialDirectory = Config.DiretorioPadraoEntrada
             };
             if (openFileDialog.ShowDialog() != DialogResult.OK)
                 return;
@@ -414,7 +411,7 @@ namespace TaxZone
                 );
             }
 
-            DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(ConfigManager.DatabaseUserFar, ConfigManager.DatabasePasswordFar, banco.database, banco.owner, query);
+            DataTable dataTableCanceladasFar = DataAccess.ExecuteQuery(Config.DatabaseUserFar, Config.DatabasePasswordFar, banco.database, banco.owner, query);
 
             if(dataTableCanceladasFar is null)
             {
@@ -510,8 +507,8 @@ namespace TaxZone
                     if (local == "MSA")
                     {
                         banco = Empresa.GetBancoMsa(empresa);
-                        user = ConfigManager.DatabaseUserMsa;
-                        password = ConfigManager.DatabasePasswordMsa;
+                        user = Config.DatabaseUserMsa;
+                        password = Config.DatabasePasswordMsa;
 
                         string filtroIncluidasHoje = "";
                         if (!incluidasHoje)
@@ -534,8 +531,8 @@ namespace TaxZone
 
 
 
-                        user = ConfigManager.DatabaseUserFar;
-                        password = ConfigManager.DatabasePasswordFar;
+                        user = Config.DatabaseUserFar;
+                        password = Config.DatabasePasswordFar;
                     }
 
                     if (banco is null) return;
@@ -625,6 +622,117 @@ namespace TaxZone
                             100);
             }
             
+        }
+
+        public static async Task GetQuantidadeNotasFar(DateTime periodoIni, DateTime periodoFin, List<string> empresas, bool mostrarNaTela, string local, bool mesAberto, bool popularTabela, IProgress<Progresso>? progresso = null)
+        {
+            try
+            {
+                SaveFileDialog salvarDialog = new SaveFileDialog();
+
+
+                int taskCount = empresas.Count;
+
+
+                progresso?.Report(new Progresso("Iniciando consulta", 1));
+
+                int tarefasConcluidas = 0;
+
+                var tasks = new List<Task<DataTable>>();
+
+                foreach (string empresa in empresas)
+                {
+                    BancoDTO banco = null;
+                    string query = "", user = "", password = "";
+
+
+                    if (local == "MSA")
+                    {
+                        banco = Empresa.GetBancoMsa(empresa);
+                        user = Config.DatabaseUserMsa;
+                        password = Config.DatabasePasswordMsa;
+
+                        string estabelecimentos = string.Join(",", Empresa.GetEstabelecimentos(empresa));
+                        query = string.Format(Queries.qtdNotasMsa, Empresa.GetCodEmpresa(empresa), empresa, estabelecimentos, periodoIni.ToString("yyyyMMdd"), periodoFin.ToString("yyyyMMdd"), "");
+
+                    }
+                    else if (local == "SIFAR")
+                    {
+                        banco = Empresa.GetBancoFar(empresa);
+
+                        if (mesAberto)
+                            query = string.Format(Queries.qtdNotasFarMesAberto, periodoIni.ToString("dd/MM/yyyy"), periodoFin.ToString("dd/MM/yyyy"), empresa);
+                        else
+                            query = string.Format(Queries.qtdNotasFarMesFechado, periodoIni.Month.ToString("00"), periodoFin.Year, empresa);
+
+                        user = Config.DatabaseUserFar;
+                        password = Config.DatabasePasswordFar;
+                    }
+
+                    if (banco is null) return;
+
+                    string serviceName = banco.database;
+                    string session = banco.owner;
+
+                    tasks.Add(Task.Run(() =>
+                    {
+                        DataTable resultado = DataAccess.ExecuteQuery(
+                            user,
+                            password,
+                            serviceName,
+                            session,
+                            query);
+
+                        int concluidas = Interlocked.Increment(ref tarefasConcluidas);
+                        int porcentagem = concluidas * 100 / taskCount;
+
+                        progresso?.Report(new Progresso($"Consultando {concluidas}/{taskCount}", porcentagem));
+
+                        return resultado;
+                    }));
+                }
+
+                DataTable qtd_notas = new();
+
+                DataTable[] resultados = await Task.WhenAll(tasks);
+
+                foreach (var tabela in resultados)
+                {
+                    if (tabela != null)
+                        qtd_notas.Merge(tabela);
+                }
+
+                if (qtd_notas.Rows.Count == 0)
+                {
+                    MessageBox.Show("Falha ao consultar dados!", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+
+                if (mostrarNaTela)
+                    Util.MostrarDataTable(qtd_notas);
+
+                else if (popularTabela)
+                    Banco.AtualizarQtdSifar(qtd_notas, periodoIni.Year, periodoIni.Month);
+
+                else
+                {
+                    string filename = "C:\\Temp\\TaxZone\\qtd_notas.csv";
+
+                    CsvClass.WriteDataTableToCsv(qtd_notas, filename);
+
+                    var resposta = MessageBox.Show("Extração Finalizada! Deseja abrir o arquivo?", "Pronto!", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                    if (resposta == DialogResult.Yes)
+                    {
+                        Process.Start(new ProcessStartInfo(filename) { UseShellExecute = true });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ocorreu um erro: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
 
         }
 

@@ -12,7 +12,7 @@ namespace TaxZone.DTO
         public int NumeroArquivo { get; set; }
        // public string DescricaoArquivo { get; set; } = string.Empty;
         public string NomeTabelaWork { get; set; } = string.Empty;
-       // public int QtdRegistros { get; set; }
+        public int QtdRegistros { get; set; }
        // public string IndAtoCotepe { get; set; } = string.Empty;
         public string IndEstabGrp { get; set; } = string.Empty;
        // public string IndMultiLoad { get; set; } = string.Empty;

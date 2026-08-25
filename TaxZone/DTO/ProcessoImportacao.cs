@@ -19,12 +19,12 @@ namespace TaxZone.DTO
         public int QtdIgn { get; set; }
         public int QtdErr { get; set; }
         public string Status { get; set; }
-        public DateOnly DataIniMovto { get; set; }
-        public DateOnly DataFimMovto { get; set; }
+        public DateTime DataIniMovto { get; set; }
+        public DateTime DataFimMovto { get; set; }
         public string CodUsuario { get; set; }
-        public DateOnly DataIni { get; set; }
+        public DateTime DataIni { get; set; }
         
-        public DateOnly DataFim { get; set; }
+        public DateTime DataFim { get; set; }
         
         
     }

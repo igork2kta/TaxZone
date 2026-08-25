@@ -34,8 +34,6 @@
             dtp_fim = new DateTimePicker();
             label30 = new Label();
             dtp_inicio = new DateTimePicker();
-            cb_status = new ComboBox();
-            label1 = new Label();
             label2 = new Label();
             label3 = new Label();
             label4 = new Label();
@@ -87,26 +85,6 @@
             dtp_inicio.Name = "dtp_inicio";
             dtp_inicio.Size = new Size(85, 23);
             dtp_inicio.TabIndex = 51;
-            // 
-            // cb_status
-            // 
-            cb_status.FormattingEnabled = true;
-            cb_status.Items.AddRange(new object[] { " ", "Finalizado com sucesso", "Finalizado com erros" });
-            cb_status.Location = new Point(822, 45);
-            cb_status.Name = "cb_status";
-            cb_status.Size = new Size(194, 23);
-            cb_status.TabIndex = 55;
-            cb_status.Visible = false;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(774, 49);
-            label1.Name = "label1";
-            label1.Size = new Size(42, 15);
-            label1.TabIndex = 56;
-            label1.Text = "Status:";
-            label1.Visible = false;
             // 
             // label2
             // 
@@ -277,8 +255,6 @@
             Controls.Add(label4);
             Controls.Add(label3);
             Controls.Add(label2);
-            Controls.Add(label1);
-            Controls.Add(cb_status);
             Controls.Add(label29);
             Controls.Add(dtp_fim);
             Controls.Add(label30);

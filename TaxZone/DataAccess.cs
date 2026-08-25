@@ -98,7 +98,6 @@ namespace TaxZone
         public static DataTable ExecuteQuery(string user, string password, string serviceName, string session, string query)
         {
 
-
             GravaLog.Gravar("Iniciando exportação...\n" +
                 $"Base: {serviceName}\n" +
                 $"Session: {session}\n" +

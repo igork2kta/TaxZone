@@ -6,7 +6,7 @@ namespace TaxZone
     public static class Banco
     {
         private static readonly string connectionString =
-    @"Data Source=J:\Igor Pinheiro\TaxZoneDatabase\taxzone.db";
+    @"Data Source=J:\Igor Pinheiro\TaxZoneDatabase\taxzone.db;BusyTimeout=10000;";
 
         public static void CriarBanco()
         {
