@@ -1,7 +1,10 @@
+using TaxZone.DTO;
+
 namespace TaxZone
 {
     internal static class Program
     {
+        
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -26,10 +29,11 @@ namespace TaxZone
             Directory.CreateDirectory(Config.PathArquivoTemporario);
             foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
                 File.Delete(arquivo);
-                
-            
 
+            
             Config.Load();
+
+            //TaxAutomationInspector.Start();
 
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.

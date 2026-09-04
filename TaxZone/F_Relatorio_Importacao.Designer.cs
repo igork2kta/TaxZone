@@ -48,6 +48,8 @@
             label5 = new Label();
             ckb_gerar_arquivo = new CheckBox();
             ckb_fracionar = new CheckBox();
+            cb_empresa = new ComboBox();
+            label6 = new Label();
             ((System.ComponentModel.ISupportInitialize)dgv_relatorio_importacao).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pb_loading).BeginInit();
             SuspendLayout();
@@ -89,7 +91,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(419, 17);
+            label2.Location = new Point(551, 17);
             label2.Name = "label2";
             label2.Size = new Size(50, 15);
             label2.TabIndex = 57;
@@ -98,7 +100,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(290, 17);
+            label3.Location = new Point(422, 17);
             label3.Name = "label3";
             label3.Size = new Size(38, 15);
             label3.TabIndex = 58;
@@ -107,7 +109,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(607, 17);
+            label4.Location = new Point(739, 17);
             label4.Name = "label4";
             label4.Size = new Size(61, 15);
             label4.TabIndex = 59;
@@ -115,7 +117,7 @@
             // 
             // tb_usuario
             // 
-            tb_usuario.Location = new Point(475, 13);
+            tb_usuario.Location = new Point(607, 13);
             tb_usuario.Name = "tb_usuario";
             tb_usuario.Size = new Size(126, 23);
             tb_usuario.TabIndex = 60;
@@ -124,21 +126,21 @@
             // 
             cb_estabelecimento.FormattingEnabled = true;
             cb_estabelecimento.Items.AddRange(new object[] { "Finalizado com sucesso", "Finalizado com erros" });
-            cb_estabelecimento.Location = new Point(334, 13);
+            cb_estabelecimento.Location = new Point(466, 13);
             cb_estabelecimento.Name = "cb_estabelecimento";
             cb_estabelecimento.Size = new Size(67, 23);
             cb_estabelecimento.TabIndex = 61;
             // 
             // tb_descricao
             // 
-            tb_descricao.Location = new Point(671, 13);
+            tb_descricao.Location = new Point(803, 13);
             tb_descricao.Name = "tb_descricao";
             tb_descricao.Size = new Size(100, 23);
             tb_descricao.TabIndex = 62;
             // 
             // bt_pesquisar
             // 
-            bt_pesquisar.Location = new Point(790, 13);
+            bt_pesquisar.Location = new Point(927, 13);
             bt_pesquisar.Name = "bt_pesquisar";
             bt_pesquisar.Size = new Size(75, 23);
             bt_pesquisar.TabIndex = 63;
@@ -236,11 +238,31 @@
             ckb_fracionar.UseVisualStyleBackColor = true;
             ckb_fracionar.Visible = false;
             // 
+            // cb_empresa
+            // 
+            cb_empresa.FormattingEnabled = true;
+            cb_empresa.Location = new Point(353, 13);
+            cb_empresa.Name = "cb_empresa";
+            cb_empresa.Size = new Size(57, 23);
+            cb_empresa.TabIndex = 71;
+            cb_empresa.SelectedIndexChanged += cb_empresa_SelectedIndexChanged;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(292, 17);
+            label6.Name = "label6";
+            label6.Size = new Size(55, 15);
+            label6.TabIndex = 72;
+            label6.Text = "Empresa:";
+            // 
             // F_Relatorio_Importacao
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1057, 422);
+            Controls.Add(label6);
+            Controls.Add(cb_empresa);
             Controls.Add(ckb_fracionar);
             Controls.Add(ckb_gerar_arquivo);
             Controls.Add(label5);
@@ -260,7 +282,7 @@
             Controls.Add(label30);
             Controls.Add(dtp_inicio);
             Name = "F_Relatorio_Importacao";
-            Text = "F_Relatorio_Importacao";
+            Text = "Relatórios de Importação";
             ((System.ComponentModel.ISupportInitialize)dgv_relatorio_importacao).EndInit();
             ((System.ComponentModel.ISupportInitialize)pb_loading).EndInit();
             ResumeLayout(false);
@@ -289,5 +311,7 @@
         private Label label5;
         private CheckBox ckb_gerar_arquivo;
         private CheckBox ckb_fracionar;
+        private ComboBox cb_empresa;
+        private Label label6;
     }
 }

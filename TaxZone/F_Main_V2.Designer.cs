@@ -85,6 +85,7 @@
             label3 = new Label();
             textBox1 = new TextBox();
             statusStrip = new StatusStrip();
+            bt_resetar_contexto = new Button();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgv_comparativo_notas).BeginInit();
             groupBox2.SuspendLayout();
@@ -121,6 +122,7 @@
             // groupBox1
             // 
             groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            groupBox1.Controls.Add(bt_resetar_contexto);
             groupBox1.Controls.Add(ckb_gerar_arquivo);
             groupBox1.Controls.Add(ckb_fracionar_valores);
             groupBox1.Controls.Add(ckb_renew_task);
@@ -167,7 +169,7 @@
             // ckb_renew_task
             // 
             ckb_renew_task.AutoSize = true;
-            ckb_renew_task.Location = new Point(549, 52);
+            ckb_renew_task.Location = new Point(549, 43);
             ckb_renew_task.Name = "ckb_renew_task";
             ckb_renew_task.RightToLeft = RightToLeft.No;
             ckb_renew_task.Size = new Size(112, 19);
@@ -200,7 +202,7 @@
             // 
             // bt_login
             // 
-            bt_login.Location = new Point(549, 23);
+            bt_login.Location = new Point(549, 15);
             bt_login.Name = "bt_login";
             bt_login.Size = new Size(75, 23);
             bt_login.TabIndex = 67;
@@ -684,6 +686,16 @@
             statusStrip.TabIndex = 76;
             statusStrip.Text = "statusStrip1";
             // 
+            // bt_resetar_contexto
+            // 
+            bt_resetar_contexto.Location = new Point(549, 63);
+            bt_resetar_contexto.Name = "bt_resetar_contexto";
+            bt_resetar_contexto.Size = new Size(112, 23);
+            bt_resetar_contexto.TabIndex = 78;
+            bt_resetar_contexto.Text = "Resetar Contexto";
+            bt_resetar_contexto.UseVisualStyleBackColor = true;
+            bt_resetar_contexto.Click += bt_resetar_contexto_Click;
+            // 
             // F_Main_V2
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -781,5 +793,6 @@
         private CheckBox ckb_mostrar_na_tela;
         private ToolStripMenuItem AbrirInterfaceAntigaToolStripMenuItem;
         private ToolStripMenuItem sobreToolStripMenuItem;
+        private Button bt_resetar_contexto;
     }
 }

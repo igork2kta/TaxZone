@@ -7,19 +7,26 @@ namespace TaxZone
 {
     public partial class F_Relatorio_Importacao : Form
     {
+        TaxContext taxContext = new();
+
         bool primeiro_carregamento = true;
-        TaxContext taxContext;
-        public F_Relatorio_Importacao(TaxContext context)
+        public F_Relatorio_Importacao()
         {
             InitializeComponent();
-            taxContext = context;
 
-            List<string> estabelecimentos = ["TODOS"];
-            estabelecimentos.AddRange(Empresa.GetEstabelecimentos(taxContext.Empresa).Select(a => a.ToString()));
-            cb_estabelecimento.DataSource = estabelecimentos;
             tb_usuario.Text = Config.UsuarioTax;
-
             cb_acao_botao_relatorio.SelectedIndex = 0;
+            cb_empresa.DataSource = Empresa.ListaEmpresas;
+        }
+
+        public F_Relatorio_Importacao(string empresa)
+        {
+            InitializeComponent();
+
+            tb_usuario.Text = Config.UsuarioTax;
+            cb_acao_botao_relatorio.SelectedIndex = 0;
+            cb_empresa.DataSource = Empresa.ListaEmpresas;
+            cb_empresa.SelectedItem = empresa;
         }
 
         private async void bt_pesquisar_Click(object sender, EventArgs e)
@@ -49,7 +56,9 @@ namespace TaxZone
                 }
             });
 
-            var retorno = await ApiTax.ObterLogsProcessosImportacao(taxContext, parametros, progresso);
+            taxContext = ApiTax.GetContext(cb_empresa.Text);
+
+            var retorno = await ApiTax.ObterLogsProcessosImportacao(cb_empresa.Text, parametros, progresso);
 
             if (!retorno.Success)
             {
@@ -166,7 +175,7 @@ namespace TaxZone
                     }
                 }
 
-                if(!response.Success || opcao == 1) //Mostrar mensagem so em caso de erro ou de arquivo baixado
+                if (!response.Success || opcao == 1) //Mostrar mensagem so em caso de erro ou de arquivo baixado
                     MessageBox.Show(response?.Message, "Atenção");
 
             }
@@ -187,10 +196,11 @@ namespace TaxZone
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void cb_empresa_SelectedIndexChanged(object sender, EventArgs e)
         {
-
-            ApiTax.ProgramarJob(taxContext, null, null);
+            List<string> estabelecimentos = ["TODOS"];
+            estabelecimentos.AddRange(Empresa.GetEstabelecimentos(cb_empresa.Text).Select(a => a.ToString()));
+            cb_estabelecimento.DataSource = estabelecimentos;
         }
     }
 }

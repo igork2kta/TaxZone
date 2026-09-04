@@ -926,7 +926,8 @@ namespace TaxZone
 
             string empresa = lbox_empresas.SelectedItem!.ToString()!;
 
-            F_Relatorio_Importacao form = new(GetContext(empresa));
+            //F_Relatorio_Importacao form = new(GetContext(empresa));
+            F_Relatorio_Importacao form = new();
             form.Show();
         }
 
@@ -952,9 +953,8 @@ namespace TaxZone
                         progress_bar_tax.Visible = p.Valor > 0 && p.Valor < 100;
                     });
 
-                    TaxContext context = GetContext(empresa);
 
-                    TaxApiResponse resposta = await ApiTax.ProgramarJob(context, null, progresso);
+                    TaxApiResponse resposta = await ApiTax.ProgramarJob(empresa, null, progresso);
                     int qtd = Interlocked.Increment(ref concluidas);
 
                     if (!resposta.Success)

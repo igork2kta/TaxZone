@@ -1,11 +1,5 @@
-﻿using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser;
-using System;
-using System.Data;
+﻿using System.Data;
 using System.Text;
-using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace TaxZone
 {

@@ -10,8 +10,9 @@ namespace TaxZone
     public partial class F_Main_V2 : Form
     {
         private readonly CookieRenewService _cookieRenew = new();
-        List<TaxContext> contextos = new();
+        //List<TaxContext> contextos = new();
         bool _formCarregado = false;
+
         public F_Main_V2()
         {
             InitializeComponent();
@@ -105,7 +106,7 @@ namespace TaxZone
         {
             Config.Cookie = tb_cookie.Text;
             //Renova os contextos para a nova sessão
-            contextos = new();
+            ApiTax.ResetContext();
         }
 
 
@@ -154,7 +155,7 @@ namespace TaxZone
                 using var status = new StatusTask(statusStrip, $"Empresa {empresa}");
                 var progresso = new Progress<Progresso>(status.Atualizar);
 
-                TaxContext context = GetContext(empresa);
+                TaxContext context = ApiTax.GetContext(empresa);
 
                 TaxApiResponse resposta = await ApiTax.ProgramarRelatorio(context, parametros, progresso);
                 int qtd = Interlocked.Increment(ref concluidas);
@@ -166,19 +167,16 @@ namespace TaxZone
 
             await Task.WhenAll(tasks);
 
+            using var status = new StatusTask(statusStrip, "");
+            IProgress<Progresso> progresso = new Progress<Progresso>(status.Atualizar);
+
+            await BuscarRelatoriosAsync(empresasSelecionadas, progresso);
+
+            MessageBox.Show($"Todos os relatórios programados foram concluídos!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
         }
 
-        private TaxContext GetContext(string empresa)
-        {
-            TaxContext context = contextos.FirstOrDefault(x => x.Empresa == empresa);
 
-            if (context == null)
-            {
-                context = new TaxContext { Empresa = empresa };
-                contextos.Add(context);
-            }
-            return context;
-        }
 
         private void bt_relatorios_Click(object sender, EventArgs e)
         {
@@ -196,7 +194,7 @@ namespace TaxZone
 
             string empresa = lbox_empresas.SelectedItem!.ToString()!;
 
-            F_Relatorios_Executados form = new(GetContext(empresa));
+            F_Relatorios_Executados form = new(ApiTax.GetContext(empresa));
             form.Show();
             form.BuscarDados(empresa);
         }
@@ -215,9 +213,7 @@ namespace TaxZone
                     using var status = new StatusTask(statusStrip, $"Empresa {empresa}");
                     var progresso = new Progress<Progresso>(status.Atualizar);
 
-                    TaxContext context = GetContext(empresa);
-
-                    TaxApiResponse resposta = await ApiTax.ProgramarJob(context, null, progresso);
+                    TaxApiResponse resposta = await ApiTax.ProgramarJob(empresa, null, progresso);
                     int qtd = Interlocked.Increment(ref concluidas);
 
                     if (!resposta.Success)
@@ -403,26 +399,27 @@ namespace TaxZone
 
         private void bt_logs_processos_importacao_Click(object sender, EventArgs e)
         {
+            F_Relatorio_Importacao form;
+
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
-            if (lbox_empresas.SelectedItems.Count == 0)
+            if (lbox_empresas.SelectedItems.Count == 1)
             {
-                MessageBox.Show("Selecione pelo menos uma empresa para visualizar os relatórios executados.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                string empresa = lbox_empresas.SelectedItem!.ToString()!;
+                form = new(empresa);
             }
-            else if (lbox_empresas.SelectedItems.Count > 1)
-            {
-                MessageBox.Show("Selecione apenas uma empresa para visualizar os relatórios executados.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            else
+                form = new();
 
-            string empresa = lbox_empresas.SelectedItem!.ToString()!;
 
-            F_Relatorio_Importacao form = new(GetContext(empresa));
             form.Show();
         }
 
         private async void bt_atualizar_valores_tax_Click(object sender, EventArgs e)
         {
+            //Limpa arquivos temporários
+            foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
+                File.Delete(arquivo);
+
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
             TaxContext context;
@@ -449,7 +446,7 @@ namespace TaxZone
                 using var status = new StatusTask(statusStrip, $"Empresa {empresa}");
                 var progresso = new Progress<Progresso>(status.Atualizar);
 
-                TaxContext context = GetContext(empresa);
+                TaxContext context = ApiTax.GetContext(empresa);
 
                 TaxApiResponse response = await ApiTax.ProgramarRelatorio(context, parametros, progresso);
                 int qtd = Interlocked.Increment(ref concluidas);
@@ -578,7 +575,7 @@ namespace TaxZone
 
                 while (!finalizado)
                 {
-                    TaxContext context = GetContext(empresa);
+                    TaxContext context = ApiTax.GetContext(empresa);
 
                     var response = await ApiTax.VerificaUltimoRelatorioConcluido(
                         empresa,
@@ -756,6 +753,11 @@ namespace TaxZone
         {
             var about = new AboutBox1();
             about.ShowDialog();
+        }
+
+        private void bt_resetar_contexto_Click(object sender, EventArgs e)
+        {
+            ApiTax.ResetContext();
         }
     }
 }

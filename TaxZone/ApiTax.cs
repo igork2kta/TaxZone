@@ -9,6 +9,8 @@ namespace TaxZone
 {
     public class ApiTax
     {
+        public static List<TaxContext> contextos = new();
+
         private static readonly HttpClient _client = new HttpClient();
 
         public ApiTax()
@@ -16,7 +18,24 @@ namespace TaxZone
  
         }
 
-        public static async Task<string> GetCookie(string usuario, string senha)
+        public static TaxContext GetContext(string empresa)
+        {
+            TaxContext context = contextos.FirstOrDefault(x => x.Empresa == empresa);
+
+            if (context == null)
+            {
+                context = new TaxContext { Empresa = empresa };
+                contextos.Add(context);
+            }
+            return context;
+        }
+
+        public static void ResetContext()
+        {
+            contextos.Clear();
+        }
+
+        public static async Task<string> GetCookie(string usuario, string senha, bool headless = false)
         {
             var url = "https://www.onesourcetax.com/";
 
@@ -26,7 +45,7 @@ namespace TaxZone
                 new BrowserTypeLaunchOptions
                 {
                     Channel = "msedge",
-                    Headless = false
+                    Headless = headless
                     //Headless = true
                 });
 
@@ -321,6 +340,9 @@ namespace TaxZone
 
                 if (!string.IsNullOrEmpty(mensagemErro))
                     throw new Exception($"Erro ao selecionar empresa e módulo: {mensagemErro}");
+
+                context.Modulo = modulo;
+
 
             }
             catch (Exception ex)
@@ -1209,8 +1231,10 @@ namespace TaxZone
         }
 
         #region LOGS PROCESSOS IMPORTACAO
-        public static async Task<TaxApiResponse> ObterLogsProcessosImportacao(TaxContext context, ParametrosRelatorioImportacao parametros, IProgress<Progresso>? progresso = null)
+        public static async Task<TaxApiResponse> ObterLogsProcessosImportacao(string empresa, ParametrosRelatorioImportacao parametros, IProgress<Progresso>? progresso = null)
         {
+            TaxContext context = GetContext(empresa);
+           
             try
             {
                 string modulo = "JOB SERVIDOR";
@@ -1229,11 +1253,13 @@ namespace TaxZone
 
                     if (string.IsNullOrEmpty(context.StorageId))
                         throw new Exception("Falha ao selecionar empresa e módulo");
+
+                    progresso?.Report(new Progresso($"30%", 30));
+
+                    await PrepararAmbienteJobImportacao(context);
                 }
 
-                progresso?.Report(new Progresso($"30%", 30));
-
-                await PrepararAmbienteJobImportacao(context);
+                
 
                 progresso?.Report(new Progresso($"50%", 50));
 
@@ -1489,11 +1515,13 @@ namespace TaxZone
 
         #region PROGRAMAR JOB IMPORTACAO
 
-        public static async Task<TaxApiResponse> ProgramarJob(TaxContext context, ParametrosJobImportacao parametros, IProgress<Progresso>? progresso = null)
+        public static async Task<TaxApiResponse> ProgramarJob(string empresa, ParametrosJobImportacao parametros, IProgress<Progresso>? progresso = null)
         {
             try
             {
                 string modulo = "JOB SERVIDOR";
+
+                var context = GetContext(empresa);
 
                 if (string.IsNullOrEmpty(Config.Cookie))
                     throw new ArgumentException("Cookie não encontrado!");
@@ -2081,7 +2109,7 @@ namespace TaxZone
             }
             finally
             {
-                progresso?.Report(new Progresso($"Programando job {context.Empresa}", 100));
+                progresso?.Report(new Progresso($"Programando job {empresa}", 100));
             }
         }
 
