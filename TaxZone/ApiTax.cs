@@ -1537,11 +1537,13 @@ namespace TaxZone
                     await SelecionaEmpresaEModulo(context, modulo);
                     if (string.IsNullOrEmpty(context.StorageId))
                         return new TaxApiResponse(false, "Falha ao selecionar empresa e módulo", context.Empresa);
+
+                    progresso?.Report(new Progresso($"Programando job {context.Empresa}", 10));
+
+                    await PrepararAmbienteJobImportacao(context);
                 }
 
-                progresso?.Report(new Progresso($"Programando job {context.Empresa}", 10));
-
-                await PrepararAmbienteJobImportacao(context);
+                
 
                 progresso?.Report(new Progresso($"Programando job {context.Empresa}", 15));
 

@@ -687,6 +687,9 @@ namespace TaxZone
             var progresso = new Progress<Progresso>(status.Atualizar);
 
             await FuncoesTax.GetQuantidadeNotasFar(periodoIni, periodoFin, empresasSelecionadas, mostrarNaTela, local, mesAberto, popularTabela, progresso);
+
+            AtualizarComparativoNotas();
+        
         }
 
         private void DiretorioPadraoEntradaToolStripMenuItem_Click(object sender, EventArgs e)

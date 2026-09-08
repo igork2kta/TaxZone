@@ -9,7 +9,7 @@ namespace TaxZone
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
 
             // Nome da variável de ambiente do TNS
@@ -32,13 +32,19 @@ namespace TaxZone
 
             
             Config.Load();
-
-            //TaxAutomationInspector.Start();
+            
 
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new F_Main_V2());
+            if (args.Any(x => x.Equals("inspector", StringComparison.OrdinalIgnoreCase)))
+            {
+                Application.Run(new F_inspector());
+            }
+            else
+            {
+                Application.Run(new F_Main_V2());
+            }
         }
     }
 }
