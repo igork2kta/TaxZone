@@ -2,9 +2,10 @@
 using System.IO.Compression;
 using System.Text;
 using System.Windows.Forms;
+using TaxZone.Infrastructure;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
-namespace TaxZone
+namespace TaxZone.Utils
 {
     public class CsvClass
     {

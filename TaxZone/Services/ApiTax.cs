@@ -3,9 +3,9 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using TaxZone.DTO;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using TaxZone.Infrastructure;
 
-namespace TaxZone
+namespace TaxZone.Services
 {
     public class ApiTax
     {
@@ -64,7 +64,7 @@ namespace TaxZone
 
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            await Task.Delay(3000);
+            //await Task.Delay(3000);
 
             var cookies = await context.CookiesAsync();
 
@@ -76,7 +76,7 @@ namespace TaxZone
             return cookieHeader;
         }
 
-        public static async Task RenewCookie()
+        public static async Task<bool> RenewCookie()
         {
             try
             {
@@ -93,13 +93,14 @@ namespace TaxZone
 
                 if(content == "false") 
                     MessageBox.Show("Erro na renovação dos cookies", "Erro na renovação dos cookies", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                return content == "true";
             }
             catch(Exception ex) 
             {
                 MessageBox.Show(ex.Message, "Erro na renovação dos cookies", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
-
-
         }
         public static void AddHeaders(HttpRequestMessage request, string empresa)
         {
@@ -160,7 +161,7 @@ namespace TaxZone
 
             byte[] bytes = await response.Content.ReadAsByteArrayAsync();
 
-            await System.IO.File.WriteAllBytesAsync(caminhoArquivo, bytes);
+            await File.WriteAllBytesAsync(caminhoArquivo, bytes);
         }
 
         private static string? LocalizarDataManagerId(JsonArray metadata, string titulo)

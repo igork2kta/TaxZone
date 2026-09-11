@@ -1,4 +1,6 @@
+using TaxZone.Data;
 using TaxZone.DTO;
+using TaxZone.Infrastructure;
 
 namespace TaxZone
 {
@@ -23,6 +25,11 @@ namespace TaxZone
             }
 
             Banco.CriarBanco();
+
+            Banco.CriarAviso(
+                "2.3.0 - Atualização Segurança",
+                "Nova versão: Para sua segurança, agora suas senhas são salvas com criptografia. Insira novamente as suas senhas no menu Configurações > Credenciais."
+            );
 
             //Limpar pasta de arquivos temporários
             // Garantir que a pasta de arquivos temporários exista

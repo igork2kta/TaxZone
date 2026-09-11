@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Text;
 
-namespace TaxZone
+namespace TaxZone.Utils
 {
     public class Util
     {

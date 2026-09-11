@@ -1,16 +1,21 @@
 ﻿using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using TaxZone.Data;
 using TaxZone.DTO;
+using TaxZone.Infrastructure;
+using TaxZone.Services;
+using static iText.IO.Image.Jpeg2000ImageData;
 
-namespace TaxZone
+namespace TaxZone.Utils
 {
     public static class FuncoesTax
     {
-        public static void DiferencaItens(bool gerarArquivo, bool fracionar)
+        public static void DiferencaItens(bool gerarArquivo, bool fracionar, string? empresa = null)
         {
             string diferencaCapaItem = string.Empty;
             string notasSemItem = string.Empty;
@@ -34,7 +39,6 @@ namespace TaxZone
                     
                     else if (nome.Contains("NOTAS_SEM_ITEM"))
                         notasSemItem = CsvClass.CopiarNotas(2, arquivo);
-                    
                 }
             }
 
@@ -61,9 +65,19 @@ namespace TaxZone
             {
                 Util.DividirValoresAreaTransferencia(resultado, fracionar);
             }
+
+            var parametros = new DocumentoFiscalParametros
+            {
+                Notas = Util.DividirValoresIn(string.Join(",", resultado), "TO_NUMBER(NUM_DOCFIS)", false),
+                DataInicial = Globais.dataInicio,
+                DataFinal = Globais.dataFim
+            };
+
+            ProcessingMonitor.MonitoringQuestion(empresa, ProcessType.SAFX43, parametros);
+
         }
 
-        public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota)
+        public static void BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota, string? empresa = null)
         {
             if (modeloHardcore && (string.IsNullOrEmpty(referenciaBuracoNota) || referenciaBuracoNota.Length < 7))
                 MessageBox.Show("Preencha a referencia para o modo hardcore!");
@@ -93,7 +107,7 @@ namespace TaxZone
                 int numDocfis = int.Parse(match.Groups[1].Value);
                 int proximo = int.Parse(match.Groups[2].Value);
                 pairs.Add((numDocfis, proximo));
-                totalNotas += (proximo - 1) - numDocfis; //precisa do -1, confia em mim
+                totalNotas += proximo - 1 - numDocfis; //precisa do -1, confia em mim
             }
 
             F_buraco_nota buraco = new (ref pairs);
@@ -153,6 +167,16 @@ namespace TaxZone
             }
             else
                 Util.DividirValoresAreaTransferencia(resultado, Globais.fracionarValores);
+
+            var parametros = new DocumentoFiscalParametros
+            {
+                Notas = Util.DividirValoresIn(string.Join(",", resultado), "TO_NUMBER(NUM_DOCFIS)", false),
+                DataInicial = Globais.dataInicio,
+                DataFinal = Globais.dataFim
+            };
+
+            ProcessingMonitor.MonitoringQuestion(empresa, ProcessType.SAFX42, parametros);
+
         }
 
 
@@ -199,7 +223,7 @@ namespace TaxZone
 
 
         /*VOU TER QUE CONVERTER TUDO PARA WRITE STRING LIST DO CSV*/
-        public static void ImportarPessoaFisicaJuridica(bool gerarArquivo,bool fracionar,bool codFisJurCompleto,string? caminhoPdf = null)
+        public static void ImportarPessoaFisicaJuridica(bool gerarArquivo, bool fracionar, bool codFisJurCompleto, string? empresa = null, string? caminhoPdf = null, string? pathSaida = null)
         {
             if (string.IsNullOrWhiteSpace(caminhoPdf))
             {
@@ -211,7 +235,7 @@ namespace TaxZone
                 };
 
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
-                    return;
+                    return; ;
 
                 caminhoPdf = openFileDialog.FileName;
             }
@@ -220,8 +244,9 @@ namespace TaxZone
             {
                 MessageBox.Show("O arquivo informado não foi encontrado.",
                     "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return; ;
             }
+
 
             using var pdf = new PdfDocument(new PdfReader(caminhoPdf));
 
@@ -237,23 +262,24 @@ namespace TaxZone
             var matches = regex.Matches(allText);
 
             var valores = new List<string>();
+            var valoresCompleto = new List<string>();
 
             foreach (Match match in matches)
             {
                 string valor = match.Value;
 
-                if (codFisJurCompleto)
-                {
-                    valores.Add(valor);
-                }
-                else if (valor.Length >= 10)
-                {
-                    // O Parse remove os zeros à esquerda
-                    valores.Add(int.Parse(valor.Substring(valor.Length - 10)).ToString());
-                }
+                valoresCompleto.Add(valor);
+
+                // O Parse remove os zeros à esquerda
+                valores.Add(int.Parse(valor.Substring(valor.Length - 10)).ToString());
+
             }
 
-            valores = valores.Distinct().ToList();
+            if(codFisJurCompleto)
+                valores = valoresCompleto.Distinct().ToList();
+            else
+                valores = valores.Distinct().ToList();
+            
 
             if (valores.Count == 0)
             {
@@ -264,7 +290,7 @@ namespace TaxZone
 
             if (gerarArquivo)
             {
-                CsvClass.WriteListToCsv(valores, fracionar);
+                CsvClass.WriteListToCsv(valores, fracionar, pathSaida);
                 MessageBox.Show("Concluído!", "Sucesso!", MessageBoxButtons.OK);
             }
             else
@@ -274,8 +300,17 @@ namespace TaxZone
 
                 Util.DividirValoresAreaTransferencia(valores, fracionar);
             }
+
+            var parametros = new Safx04_2013Parametros
+            {
+                Codigos = Util.DividirValoresIn(string.Join(",", valoresCompleto.Distinct()), "COD_FIS_JUR", true)
+            };
+
+            ProcessingMonitor.MonitoringQuestion(empresa, ProcessType.SAFX04, parametros);
+
         }
-        public static void ImportarProdutos()
+
+        public static void ImportarProdutos(string? empresa = null, string? caminhoPdf = null)
         {
             using OpenFileDialog openFileDialog = new()
             {
@@ -304,6 +339,7 @@ namespace TaxZone
 
             var listaTaxas = new List<string>();
             var listaProdutos = new List<string>();
+            var listaCompleta = new List<string>();
 
             //Encontra as taxas no pdf
             foreach (Match match in taxas)
@@ -311,7 +347,10 @@ namespace TaxZone
                 string valor = match.Value;
 
                 if (valor.Length >= 7)
+                {
                     listaTaxas.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
+                    listaCompleta.Add(valor);
+                }
             }
 
             //Encontra os produtos no pdf
@@ -320,7 +359,10 @@ namespace TaxZone
                 string valor = match.Value;
 
                 if (valor.Length >= 7)
+                {
                     listaProdutos.Add(int.Parse(valor.Substring(valor.Length - 7)).ToString()); //o parse é para remover os zeros à esquerda
+                    listaCompleta.Add(valor);
+                }
             }
 
             if (listaTaxas.Count == 0 && listaProdutos.Count == 0)
@@ -340,14 +382,13 @@ namespace TaxZone
             //Monta sql das taxas
             if (listaTaxas.Count > 0)
             {
-
-                //buffer.AppendLine("update taxa set IND_SINCRONISMO_FISCAL = 'S' where codtaxa_tab in (");
-
                 foreach (var v in listaTaxas)
                     buffer.Append($"{v},");
 
-                buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
-                                                     
+                if(listaTaxas.Count == 1)
+                    buffer.Remove(buffer.Length - 1, 1); //remove a ultima virgula
+                else
+                    buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
 
                 Clipboard.SetText(buffer.ToString());
 
@@ -360,19 +401,30 @@ namespace TaxZone
             if (listaProdutos.Count > 0)
             {
 
-                //buffer.AppendLine("update TIPO_ITEM_CONTA set IND_SINCRONISMO_FISCAL = 'S' where COD_TIPO_ITEM in (");
-
                 foreach (var v in listaProdutos)
                     buffer.Append($"{v},");
-                
-                buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
-                                                    
+
+                if (listaProdutos.Count == 1)
+                    buffer.Remove(buffer.Length - 1, 1); //remove a ultima virgula
+                else
+                    buffer.Remove(buffer.Length - 3, 1); //remove a ultima virgula, -3 porque o appendline adiciona \n no final
+
                 Clipboard.SetText(buffer.ToString());
 
                 MessageBox.Show($"Finalizado! {listaProdutos.Count} produtos copiados para área de transferência.",
                     "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             }
+
+            if(listaCompleta.Count == 0)
+                return;
+
+            var parametros = new Safx04_2013Parametros
+            {
+                Codigos = Util.DividirValoresIn(string.Join(",", listaCompleta.Distinct()), "COD_PRODUTO", true)
+            };
+
+            ProcessingMonitor.MonitoringQuestion(empresa, ProcessType.SAFX2013, parametros);
 
         }
 
@@ -460,6 +512,14 @@ namespace TaxZone
             else
                 Util.DividirValoresAreaTransferencia(faltando, fracionar);
 
+            var parametros = new DocumentoFiscalParametros
+            {
+                Notas = Util.DividirValoresIn(string.Join(",", faltando), "TO_NUMBER(NUM_DOCFIS)", false),
+                DataInicial = Globais.dataInicio,
+                DataFinal = Globais.dataFim
+            };
+
+            ProcessingMonitor.MonitoringQuestion(empresa, ProcessType.SAFX42, parametros);
         }
 
         public static async Task GetQuantidadeNotas(DateTime periodoIni, DateTime periodoFin, string empresa, bool mostrarNaTela, 
@@ -469,25 +529,9 @@ namespace TaxZone
             {
                 SaveFileDialog salvarDialog = new SaveFileDialog();
 
-
                 int taskCount = 1;
                 if (empresa == "TODAS") taskCount = 9;
 
-                /*
-                if (!mostrarNaTela && !arquivoTemporario)
-                {
-                    salvarDialog.Title = "Salvar arquivo como...";
-                    salvarDialog.Filter = "Arquivo separado por vírgula (*.csv)|*.csv|Todos os arquivos (*.*)|*.*";
-                    salvarDialog.DefaultExt = "csv";
-                    salvarDialog.AddExtension = true;
-                    if (taskCount == 1)
-                        salvarDialog.FileName = $"qtd_notas_{empresa}.csv"; // Nome padrão
-                    else
-                        salvarDialog.FileName = $"qtd_notas.csv"; // Nome padrão
-
-                    if (salvarDialog.ShowDialog() != DialogResult.OK) return;
-                }
-                */
                 NotificationService.AtualizarStatusQtdNotas(
                             $"Iniciando consulta...",
                             1);
@@ -575,19 +619,6 @@ namespace TaxZone
                     MessageBox.Show("Falha ao consultar dados!", "Erro!", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
-
-                /*
-                if (local == "SIFAR")
-                {
-                    qtd_notas.Columns["'NOTAS'"].MaxLength = 20;
-                    DataRow linha = qtd_notas.NewRow();
-                    linha["EMPRESA"] = "DAT";
-                    linha["'NOTAS'"] = DateTime.Now.ToString();
-                    linha["TOTAL"] = 0;
-                    linha["CODFIL"] = 0;
-                    qtd_notas.Rows.Add(linha);
-                }*/
-
 
                 if (mostrarNaTela)
                 {

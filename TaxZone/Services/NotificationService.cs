@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaxZone
+namespace TaxZone.Services
 {
     public static class NotificationService
     {

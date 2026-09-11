@@ -2,6 +2,9 @@
 using System.Data;
 using System.Diagnostics;
 using TaxZone.DTO;
+using TaxZone.Infrastructure;
+using TaxZone.Services;
+using TaxZone.Utils;
 
 namespace TaxZone
 {
@@ -167,11 +170,16 @@ namespace TaxZone
                     if (dgv_relatorio_importacao.Rows[e.RowIndex].Cells["descricao"].Value.ToString() == "IMPX42")
                     {
                         response = await ApiTax.BaixarRelatorioProcessoImportacao(taxContext, e.RowIndex + 1, Config.PathArquivoTemporario + "\\Relatorio.pdf");
-                        FuncoesTax.ImportarPessoaFisicaJuridica(ckb_gerar_arquivo.Checked, ckb_fracionar.Checked, false, Config.PathArquivoTemporario + "\\Relatorio.pdf");
+                        FuncoesTax.ImportarPessoaFisicaJuridica(ckb_gerar_arquivo.Checked, ckb_fracionar.Checked, false, cb_empresa.Text, Config.PathArquivoTemporario + "\\Relatorio.pdf");
+                    }
+                    else if (dgv_relatorio_importacao.Rows[e.RowIndex].Cells["descricao"].Value.ToString() == "IMPX43")
+                    {
+                        response = await ApiTax.BaixarRelatorioProcessoImportacao(taxContext, e.RowIndex + 1, Config.PathArquivoTemporario + "\\Relatorio.pdf");
+                        FuncoesTax.ImportarProdutos(cb_empresa.Text, Config.PathArquivoTemporario + "\\Relatorio.pdf");
                     }
                     else
                     {
-                        MessageBox.Show("Processamento do arquivo disponível apenas para SAFX42", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Processamento do arquivo disponível apenas para SAFX42/SAFX43", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
 

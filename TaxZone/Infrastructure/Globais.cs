@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaxZone
+﻿
+namespace TaxZone.Infrastructure
 {
     static class Globais
     {
         public static bool gerarArquivo;
         public static bool fracionarValores;
         public static bool mesAberto;
+        public static bool jobAutomatico;
+        public static DateTime dataInicio;
+        public static DateTime dataFim;
 
     }
 }

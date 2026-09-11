@@ -33,6 +33,7 @@
             lbox_empresas = new ListBox();
             label4 = new Label();
             groupBox1 = new GroupBox();
+            bt_resetar_contexto = new Button();
             ckb_gerar_arquivo = new CheckBox();
             ckb_fracionar_valores = new CheckBox();
             ckb_renew_task = new CheckBox();
@@ -68,6 +69,9 @@
             bt_qtd_notas = new Button();
             cb_local_qtd_notas = new ComboBox();
             groupBox4 = new GroupBox();
+            ckb_job_automatico = new CheckBox();
+            label5 = new Label();
+            dgv_pendencia_processamento = new DataGridView();
             groupBox6 = new GroupBox();
             ckb_buraco_notas = new CheckBox();
             bt_executar_relatorio = new Button();
@@ -85,13 +89,13 @@
             label3 = new Label();
             textBox1 = new TextBox();
             statusStrip = new StatusStrip();
-            bt_resetar_contexto = new Button();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgv_comparativo_notas).BeginInit();
             groupBox2.SuspendLayout();
             menuStrip1.SuspendLayout();
             groupBox3.SuspendLayout();
             groupBox4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_pendencia_processamento).BeginInit();
             groupBox6.SuspendLayout();
             groupBox5.SuspendLayout();
             SuspendLayout();
@@ -137,10 +141,20 @@
             groupBox1.ForeColor = SystemColors.ControlText;
             groupBox1.Location = new Point(13, 27);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(1024, 93);
+            groupBox1.Size = new Size(1059, 93);
             groupBox1.TabIndex = 62;
             groupBox1.TabStop = false;
             groupBox1.Text = "GLOBAL";
+            // 
+            // bt_resetar_contexto
+            // 
+            bt_resetar_contexto.Location = new Point(549, 63);
+            bt_resetar_contexto.Name = "bt_resetar_contexto";
+            bt_resetar_contexto.Size = new Size(112, 23);
+            bt_resetar_contexto.TabIndex = 78;
+            bt_resetar_contexto.Text = "Resetar Contexto";
+            bt_resetar_contexto.UseVisualStyleBackColor = true;
+            bt_resetar_contexto.Click += bt_resetar_contexto_Click;
             // 
             // ckb_gerar_arquivo
             // 
@@ -196,7 +210,7 @@
             tb_cookie.Location = new Point(676, 18);
             tb_cookie.Multiline = true;
             tb_cookie.Name = "tb_cookie";
-            tb_cookie.Size = new Size(332, 62);
+            tb_cookie.Size = new Size(367, 62);
             tb_cookie.TabIndex = 71;
             tb_cookie.TextChanged += tb_cookie_TextChanged;
             // 
@@ -258,7 +272,7 @@
             dgv_comparativo_notas.Location = new Point(15, 77);
             dgv_comparativo_notas.Name = "dgv_comparativo_notas";
             dgv_comparativo_notas.RowHeadersVisible = false;
-            dgv_comparativo_notas.Size = new Size(556, 395);
+            dgv_comparativo_notas.Size = new Size(563, 395);
             dgv_comparativo_notas.TabIndex = 69;
             dgv_comparativo_notas.CellEndEdit += dgv_comparativo_notas_CellEndEdit;
             dgv_comparativo_notas.CellFormatting += dgv_comparativo_notas_CellFormatting;
@@ -273,9 +287,9 @@
             groupBox2.Controls.Add(bt_popular_tabela_sifar);
             groupBox2.Controls.Add(bt_atualizar_valores_tax);
             groupBox2.Controls.Add(dgv_comparativo_notas);
-            groupBox2.Location = new Point(450, 126);
+            groupBox2.Location = new Point(478, 126);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(587, 483);
+            groupBox2.Size = new Size(594, 483);
             groupBox2.TabIndex = 70;
             groupBox2.TabStop = false;
             groupBox2.Text = "COMPARAÇÃO DE QUANTIDADES";
@@ -343,7 +357,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { configuraçõesToolStripMenuItem, sobreToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1049, 24);
+            menuStrip1.Size = new Size(1084, 24);
             menuStrip1.TabIndex = 71;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -427,7 +441,7 @@
             groupBox3.Controls.Add(cb_local_qtd_notas);
             groupBox3.Location = new Point(12, 126);
             groupBox3.Name = "groupBox3";
-            groupBox3.Size = new Size(432, 109);
+            groupBox3.Size = new Size(460, 109);
             groupBox3.TabIndex = 74;
             groupBox3.TabStop = false;
             groupBox3.Text = "CONSULTAS";
@@ -492,16 +506,54 @@
             // groupBox4
             // 
             groupBox4.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            groupBox4.Controls.Add(ckb_job_automatico);
+            groupBox4.Controls.Add(label5);
+            groupBox4.Controls.Add(dgv_pendencia_processamento);
             groupBox4.Controls.Add(groupBox6);
             groupBox4.Controls.Add(groupBox5);
             groupBox4.Controls.Add(label3);
             groupBox4.Controls.Add(textBox1);
             groupBox4.Location = new Point(12, 287);
             groupBox4.Name = "groupBox4";
-            groupBox4.Size = new Size(432, 322);
+            groupBox4.Size = new Size(460, 322);
             groupBox4.TabIndex = 75;
             groupBox4.TabStop = false;
             groupBox4.Text = "TAX API";
+            // 
+            // ckb_job_automatico
+            // 
+            ckb_job_automatico.AutoSize = true;
+            ckb_job_automatico.Checked = true;
+            ckb_job_automatico.CheckState = CheckState.Checked;
+            ckb_job_automatico.Location = new Point(340, 103);
+            ckb_job_automatico.Name = "ckb_job_automatico";
+            ckb_job_automatico.Size = new Size(110, 19);
+            ckb_job_automatico.TabIndex = 67;
+            ckb_job_automatico.Text = "Job Automatico";
+            ckb_job_automatico.UseVisualStyleBackColor = true;
+            ckb_job_automatico.CheckedChanged += ckb_job_automatico_CheckedChanged;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(188, 107);
+            label5.Name = "label5";
+            label5.Size = new Size(146, 15);
+            label5.TabIndex = 66;
+            label5.Text = "Pendencia Processamento";
+            // 
+            // dgv_pendencia_processamento
+            // 
+            dgv_pendencia_processamento.AllowUserToAddRows = false;
+            dgv_pendencia_processamento.AllowUserToDeleteRows = false;
+            dgv_pendencia_processamento.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgv_pendencia_processamento.Location = new Point(188, 125);
+            dgv_pendencia_processamento.Name = "dgv_pendencia_processamento";
+            dgv_pendencia_processamento.ReadOnly = true;
+            dgv_pendencia_processamento.RowHeadersVisible = false;
+            dgv_pendencia_processamento.Size = new Size(266, 186);
+            dgv_pendencia_processamento.TabIndex = 65;
+            dgv_pendencia_processamento.CellContentClick += dgv_pendencia_processamento_CellContentClick;
             // 
             // groupBox6
             // 
@@ -517,7 +569,7 @@
             groupBox6.Controls.Add(ckb_qtd_canceladas);
             groupBox6.Location = new Point(10, 28);
             groupBox6.Name = "groupBox6";
-            groupBox6.Size = new Size(229, 283);
+            groupBox6.Size = new Size(172, 283);
             groupBox6.TabIndex = 64;
             groupBox6.TabStop = false;
             groupBox6.Text = "RELATÓRIOS";
@@ -576,9 +628,9 @@
             // 
             bt_relatorios.Location = new Point(76, 226);
             bt_relatorios.Name = "bt_relatorios";
-            bt_relatorios.Size = new Size(134, 23);
+            bt_relatorios.Size = new Size(77, 23);
             bt_relatorios.TabIndex = 53;
-            bt_relatorios.Text = "Relatorios Executados";
+            bt_relatorios.Text = "Resultados";
             bt_relatorios.UseVisualStyleBackColor = true;
             bt_relatorios.Click += bt_relatorios_Click;
             // 
@@ -632,9 +684,9 @@
             // 
             groupBox5.Controls.Add(bt_executar_job);
             groupBox5.Controls.Add(bt_logs_processos_importacao);
-            groupBox5.Location = new Point(245, 36);
+            groupBox5.Location = new Point(188, 36);
             groupBox5.Name = "groupBox5";
-            groupBox5.Size = new Size(175, 63);
+            groupBox5.Size = new Size(266, 63);
             groupBox5.TabIndex = 63;
             groupBox5.TabStop = false;
             groupBox5.Text = "JOB IMPORTAÇÃO";
@@ -663,7 +715,7 @@
             // 
             label3.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.Location = new Point(253, 663);
+            label3.Location = new Point(281, 663);
             label3.Name = "label3";
             label3.Size = new Size(44, 15);
             label3.TabIndex = 26;
@@ -672,7 +724,7 @@
             // textBox1
             // 
             textBox1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            textBox1.Location = new Point(253, 685);
+            textBox1.Location = new Point(281, 685);
             textBox1.Multiline = true;
             textBox1.Name = "textBox1";
             textBox1.Size = new Size(441, 52);
@@ -682,26 +734,16 @@
             // 
             statusStrip.Location = new Point(0, 612);
             statusStrip.Name = "statusStrip";
-            statusStrip.Size = new Size(1049, 22);
+            statusStrip.Size = new Size(1084, 22);
             statusStrip.TabIndex = 76;
             statusStrip.Text = "statusStrip1";
-            // 
-            // bt_resetar_contexto
-            // 
-            bt_resetar_contexto.Location = new Point(549, 63);
-            bt_resetar_contexto.Name = "bt_resetar_contexto";
-            bt_resetar_contexto.Size = new Size(112, 23);
-            bt_resetar_contexto.TabIndex = 78;
-            bt_resetar_contexto.Text = "Resetar Contexto";
-            bt_resetar_contexto.UseVisualStyleBackColor = true;
-            bt_resetar_contexto.Click += bt_resetar_contexto_Click;
             // 
             // F_Main_V2
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Control;
-            ClientSize = new Size(1049, 634);
+            ClientSize = new Size(1084, 634);
             Controls.Add(statusStrip);
             Controls.Add(groupBox4);
             Controls.Add(groupBox3);
@@ -727,6 +769,7 @@
             groupBox3.PerformLayout();
             groupBox4.ResumeLayout(false);
             groupBox4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_pendencia_processamento).EndInit();
             groupBox6.ResumeLayout(false);
             groupBox6.PerformLayout();
             groupBox5.ResumeLayout(false);
@@ -794,5 +837,8 @@
         private ToolStripMenuItem AbrirInterfaceAntigaToolStripMenuItem;
         private ToolStripMenuItem sobreToolStripMenuItem;
         private Button bt_resetar_contexto;
+        private Label label5;
+        private DataGridView dgv_pendencia_processamento;
+        private CheckBox ckb_job_automatico;
     }
 }

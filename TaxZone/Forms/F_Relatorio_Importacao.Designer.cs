@@ -200,7 +200,7 @@
             // cb_acao_botao_relatorio
             // 
             cb_acao_botao_relatorio.FormattingEnabled = true;
-            cb_acao_botao_relatorio.Items.AddRange(new object[] { "Visualisar Arquivo", "Baixar Arquivo", "Processar (SAFX42 apenas)" });
+            cb_acao_botao_relatorio.Items.AddRange(new object[] { "Visualisar Arquivo", "Baixar Arquivo", "Processar (SAFX42/SAFX2013)" });
             cb_acao_botao_relatorio.Location = new Point(146, 50);
             cb_acao_botao_relatorio.Name = "cb_acao_botao_relatorio";
             cb_acao_botao_relatorio.Size = new Size(168, 23);

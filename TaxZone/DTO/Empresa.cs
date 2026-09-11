@@ -1,10 +1,8 @@
-﻿
-namespace TaxZone
+﻿namespace TaxZone.DTO
 {
     public static class Empresa
     {
         public static List<string> ListaEmpresas = [ "EMR", "ESE", "EPB", "ETO", "EMT", "EMS", "ESS", "ERO", "EAC" ];
-        //public static List<string> ListaEmpresas = [ "EAC" ];
 
         public static BancoDTO GetBancoFar(string empresa)
         {

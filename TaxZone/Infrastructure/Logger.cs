@@ -1,5 +1,4 @@
-﻿
-namespace TaxZone
+﻿namespace TaxZone.Infrastructure
 {
     public static class Logger
     {

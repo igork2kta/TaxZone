@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaxZone
+namespace TaxZone.Services
 {
     public class CookieRenewService : IDisposable
     {
@@ -45,7 +45,7 @@ namespace TaxZone
             {
                 while (await timer.WaitForNextTickAsync(token))
                 {
-                    await RenewCookieAsync(token);
+                    if(!await RenewCookieAsync(token)) return;
                 }
             }
             catch (OperationCanceledException)
@@ -53,9 +53,9 @@ namespace TaxZone
             }
         }
 
-        private async Task RenewCookieAsync(CancellationToken token)
+        private async Task<bool> RenewCookieAsync(CancellationToken token)
         {
-            await ApiTax.RenewCookie();
+            return await ApiTax.RenewCookie();
         }
 
         public void Dispose()

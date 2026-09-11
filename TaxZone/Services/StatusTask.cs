@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaxZone.DTO;
 
-namespace TaxZone
+namespace TaxZone.Services
 {
     public class StatusTask : IDisposable
     {

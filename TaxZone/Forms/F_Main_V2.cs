@@ -3,15 +3,20 @@ using iText.Kernel.Pdf.Canvas.Parser;
 using System.Data;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using TaxZone.Data;
 using TaxZone.DTO;
+using TaxZone.Infrastructure;
+using TaxZone.Services;
+using TaxZone.Utils;
 
 namespace TaxZone
 {
     public partial class F_Main_V2 : Form
     {
         private readonly CookieRenewService _cookieRenew = new();
-        //List<TaxContext> contextos = new();
         bool _formCarregado = false;
+        //private ProcessingMonitor processingMonitor = new ();
+
 
         public F_Main_V2()
         {
@@ -50,11 +55,54 @@ namespace TaxZone
             _formCarregado = true;
             AtualizarComparativoNotas();
 
+            /*
+            var btnAcao = new DataGridViewButtonColumn
+            {
+                HeaderText = "Ação",
+                Text = "Iniciar",
+                UseColumnTextForButtonValue = false,
+                Name = "btnAcao",
+                Width = 60
+            };
+
+            dgv_pendencia_processamento.Columns.Add(btnAcao);
+            */
+
+            dgv_pendencia_processamento.DataSource = ProcessingMonitor.Processos;
+            dgv_pendencia_processamento.Columns["Id"].Visible = false;
+            dgv_pendencia_processamento.Columns["CancellationTokenSource"].Visible = false;
+            dgv_pendencia_processamento.Columns["Parametros"].Visible = false;
+
+
+            dgv_pendencia_processamento.Columns["BtnAcao"].Width = 60;
+            dgv_pendencia_processamento.Columns["BtnAcao"].HeaderText = "Ação";
+            dgv_pendencia_processamento.Columns["Empresa"].Width = 60;
+            dgv_pendencia_processamento.Columns["Processo"].Width = 60;
+            dgv_pendencia_processamento.Columns["Status"].Width = 80;
+
+        }
+        public static void MostrarAvisos()
+        {
+            DataTable avisos = Banco.ListarAvisosNaoExibidos();
+
+            foreach (DataRow aviso in avisos.Rows)
+            {
+                int id = Convert.ToInt32(aviso["id"]);
+                string mensagem = aviso["mensagem"]?.ToString() ?? "";
+
+                MessageBox.Show(
+                    mensagem,
+                    "Aviso",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                Banco.MarcarAvisoExibido(id);
+            }
         }
 
         private void F_Main_V2_Load(object sender, EventArgs e)
         {
-
+            MostrarAvisos();
         }
 
         #region MUDANÇA DE VALORES
@@ -115,6 +163,8 @@ namespace TaxZone
             if (!_formCarregado)
                 return;
 
+            Globais.dataInicio = dtp_periodo_inicio.Value;
+
             AtualizarComparativoNotas();
         }
 
@@ -123,8 +173,13 @@ namespace TaxZone
             if (!_formCarregado)
                 return;
 
+            Globais.dataFim = dtp_periodo_fim.Value;
+
             AtualizarComparativoNotas();
         }
+
+        private void ckb_job_automatico_CheckedChanged(object sender, EventArgs e)
+            =>Globais.jobAutomatico = ckb_job_automatico.Checked;
 
         #endregion
 
@@ -172,11 +227,9 @@ namespace TaxZone
 
             await BuscarRelatoriosAsync(empresasSelecionadas, progresso);
 
-            MessageBox.Show($"Todos os relatórios programados foram concluídos!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"Todos os relatórios programados foram concluídos!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         }
-
-
 
         private void bt_relatorios_Click(object sender, EventArgs e)
         {
@@ -624,18 +677,23 @@ namespace TaxZone
 
         private void bt_ferramentas_Click(object sender, EventArgs e)
         {
+            string empresa = string.Empty;
+            if (lbox_empresas.SelectedItems.Count == 1)
+                empresa = lbox_empresas.SelectedItem.ToString();
 
             if (cb_ferramentas.SelectedIndex == 0) //ITENS
-                FuncoesTax.DiferencaItens(Globais.gerarArquivo, Globais.fracionarValores);
+                FuncoesTax.DiferencaItens(Globais.gerarArquivo, Globais.fracionarValores, empresa);
 
             else if (cb_ferramentas.SelectedIndex == 1) //BURACO NOTAS
-                FuncoesTax.BuracoDeNota(false, null);
+                FuncoesTax.BuracoDeNota(false, null, empresa);
 
             else if (cb_ferramentas.SelectedIndex == 2) //PRODUTOS / TAXAS
-                FuncoesTax.ImportarProdutos();
+                FuncoesTax.ImportarProdutos(empresa);
 
-            else if (cb_ferramentas.SelectedIndex == 3) //PESSOA FIS/ JUR
-                FuncoesTax.ImportarPessoaFisicaJuridica(Globais.gerarArquivo, Globais.fracionarValores, true);
+            else if (cb_ferramentas.SelectedIndex == 3)
+                //PESSOA FIS/ JUR
+                FuncoesTax.ImportarPessoaFisicaJuridica(Globais.gerarArquivo, Globais.fracionarValores, false, empresa);
+
 
             else if (cb_ferramentas.SelectedIndex == 4)//DIFERENÇA CANCELADAS
             {
@@ -689,7 +747,7 @@ namespace TaxZone
             await FuncoesTax.GetQuantidadeNotasFar(periodoIni, periodoFin, empresasSelecionadas, mostrarNaTela, local, mesAberto, popularTabela, progresso);
 
             AtualizarComparativoNotas();
-        
+
         }
 
         private void DiretorioPadraoEntradaToolStripMenuItem_Click(object sender, EventArgs e)
@@ -762,5 +820,38 @@ namespace TaxZone
         {
             ApiTax.ResetContext();
         }
+
+        private async void dgv_pendencia_processamento_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+
+            if (dgv_pendencia_processamento.Columns[e.ColumnIndex].Name == "BtnAcao")
+            {
+                var processo = (ValidationItem)dgv_pendencia_processamento.CurrentRow.DataBoundItem;
+
+                if (processo.Status == ValidationStatus.NaoIniciado)
+                {
+                    processo.BtnAcao = "Cancelar";
+                    _ = ProcessingMonitor.IniciarValidacao(processo);
+                }
+                else if (processo.Status == ValidationStatus.Validando)
+                {
+                    var resposta = MessageBox.Show("Deseja realmente cancelar o processo?", "Confirmação", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (resposta == DialogResult.Yes)
+                        ProcessingMonitor.Remover(processo);
+                }
+                else if (processo.Status == ValidationStatus.Concluido || processo.Status == ValidationStatus.Erro)
+                {
+                    var resposta = MessageBox.Show("Deseja realmente remover o processo da lista?", "Confirmação", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (resposta == DialogResult.Yes)
+                        ProcessingMonitor.Remover(processo);
+                }
+            }
+
+
+        }
+
+        
     }
 }

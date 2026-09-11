@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Data.SQLite;
 
-namespace TaxZone
+namespace TaxZone.Data
 {
     public static class Banco
     {
@@ -25,7 +25,27 @@ namespace TaxZone
                     qtd_sifar DECIMAL(18,2) NOT NULL DEFAULT 0,
                     qtd_tax DECIMAL(18,2) NOT NULL DEFAULT 0,
                     status TEXT NOT NULL DEFAULT 'EM ANDAMENTO'
-                );";
+                );
+
+                CREATE TABLE IF NOT EXISTS avisos
+                (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    codigo TEXT NOT NULL UNIQUE,
+                    mensagem TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS avisos_exibidos
+                (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    aviso_id INTEGER NOT NULL,
+                    usuario TEXT NOT NULL,
+                    data_exibicao TEXT NOT NULL,
+
+                    UNIQUE(aviso_id, usuario),
+    
+                    FOREIGN KEY(aviso_id) REFERENCES avisos(id)
+                );
+                ";
 
             using var cmd = new SQLiteCommand(sql, conexao);
             cmd.ExecuteNonQuery();
@@ -35,6 +55,33 @@ namespace TaxZone
         {
             return new SQLiteConnection(connectionString);
         }
+
+
+        public static void CriarAviso(string codigo, string mensagem)
+        {
+            using var con = Conexao();
+            con.Open();
+
+            string sql = @"
+        INSERT OR IGNORE INTO avisos
+        (
+            codigo,
+            mensagem
+        )
+        VALUES
+        (
+            @codigo,
+            @mensagem
+        );";
+
+            using var cmd = new SQLiteCommand(sql, con);
+
+            cmd.Parameters.AddWithValue("@codigo", codigo);
+            cmd.Parameters.AddWithValue("@mensagem", mensagem);
+
+            cmd.ExecuteNonQuery();
+        }
+
 
         public static void InserirRegistro(int ano,
                                            int mes,
@@ -244,6 +291,71 @@ namespace TaxZone
                 if (criouConexao)
                     con.Dispose();
             }
+        }
+
+        public static DataTable ListarAvisosNaoExibidos()
+        {
+            string usuario = $"{Environment.UserDomainName}\\{Environment.UserName}";
+
+            using var con = Conexao();
+            con.Open();
+
+            string sql = @"
+        SELECT a.id,
+               a.codigo,
+               a.mensagem
+          FROM avisos a
+         WHERE NOT EXISTS
+         (
+             SELECT 1
+               FROM avisos_exibidos ae
+              WHERE ae.aviso_id = a.id
+                AND ae.usuario = @usuario
+         )
+         ORDER BY a.id;";
+
+            using var cmd = new SQLiteCommand(sql, con);
+
+            cmd.Parameters.AddWithValue("@usuario", usuario);
+
+            using var da = new SQLiteDataAdapter(cmd);
+
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+
+            return dt;
+        }
+
+        public static void MarcarAvisoExibido(int avisoId)
+        {
+            string usuario = $"{Environment.UserDomainName}\\{Environment.UserName}";
+
+            using var con = Conexao();
+            con.Open();
+
+            string sql = @"
+        INSERT OR IGNORE INTO avisos_exibidos
+        (
+            aviso_id,
+            usuario,
+            data_exibicao
+        )
+        VALUES
+        (
+            @aviso_id,
+            @usuario,
+            @data_exibicao
+        );";
+
+            using var cmd = new SQLiteCommand(sql, con);
+
+            cmd.Parameters.AddWithValue("@aviso_id", avisoId);
+            cmd.Parameters.AddWithValue("@usuario", usuario);
+            cmd.Parameters.AddWithValue(
+                "@data_exibicao",
+                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            cmd.ExecuteNonQuery();
         }
     }
 }

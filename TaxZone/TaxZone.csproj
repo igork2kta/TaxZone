@@ -6,15 +6,15 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>icon_v2.ico</ApplicationIcon>
-    <AssemblyVersion>2.2.1</AssemblyVersion>
+    <ApplicationIcon>Resources\icon_v2.ico</ApplicationIcon>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
     <Company>Sustentation Subsystems</Company>
     <Description>Aplicação auxiliar para tratamento de dados entre Energisa e Tax One. Permite executar JOBs, relatórios e disponibiliza ferramentas para tratamento e comparação de dados.</Description>
     <PackageIcon></PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="icon_v2.ico" />
+    <Content Include="Resources\icon_v2.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="icon.svg">
+    <None Update="Resources\icon.svg">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

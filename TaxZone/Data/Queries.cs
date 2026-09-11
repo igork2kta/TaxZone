@@ -1,4 +1,4 @@
-﻿namespace TaxZone
+﻿namespace TaxZone.Data
 {
     public static class Queries
     {
@@ -38,7 +38,6 @@
                                             group by COD_ESTAB
                                             order by 4, 2 desc";
 
-
         public const string qtdNotasMsa_old = @" select '{1}' EMPRESA, 'NOTAS', count(1) TOTAL , COD_ESTAB
                                             from (  SELECT  COD_ESTAB, DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS
                                                     FROM safx42
@@ -77,7 +76,6 @@
                                             ) 
                                             group by COD_ESTAB
                                             order by 4, 2 desc";
-
 
         public const string qtdNotasFarMesFechado = @"select '{2}' EMPRESA, 'NOTAS' TIPO, count(1) TOTAL, codfil COD_ESTAB
                                             from CAPA_NF_SPED_{0}_{1} a
@@ -179,13 +177,40 @@
                                 GROUP BY A.CODFIL";
 
         //num_docfis IN({0}) AND
-        public const string pendentesSafx43 = "select * from safx43 where DTH_INCLUSAO IS NULL";
-        public const string pendentesSafx42 = "select * from safx42 where DTH_INCLUSAO IS NULL";
+        //public const string pendentesSafx43 = "select * from safx43 where DTH_INCLUSAO IS NULL";
+        //public const string pendentesSafx42 = "select * from safx42 where DTH_INCLUSAO IS NULL";
 
         public const string canceladasFarMesAberto = "select NUMDOC_FSC from capa_nf_sped where datcan is not null";
         public const string canceladasFarMesFechado = "select NUMDOC_FSC from capa_nf_sped_{0}_{1} where datcan is not null";
 
         public const string validaExistenciaNota = "select numcod_fsc from capa_nf_sped_{0}_{1}";
+
+
+        public const string pendentesSafx42 = @"SELECT COUNT(1)
+                                                FROM SAFX42
+                                                WHERE DTH_INCLUSAO IS NULL
+                                                  AND COD_EMPRESA = {0}
+                                                  AND COD_ESTAB IN ({1})
+                                                  AND TO_NUMBER(NUM_DOCFIS) IN ({2})
+                                                  AND DAT_FISCAL BETWEEN '{3}' and '{4}'";
+
+        public const string pendentesSafx43 = @"SELECT COUNT(1)
+                                                FROM SAFX43
+                                                WHERE DTH_INCLUSAO IS NULL
+                                                  AND COD_EMPRESA = {0}
+                                                  AND COD_ESTAB IN ({1})
+                                                  AND {2}
+                                                  AND DAT_FISCAL BETWEEN '{3}' and '{4}'";
+
+        public const string pendentesSafx04 = @"SELECT COUNT(1)
+                                                FROM SAFX04
+                                                WHERE DTH_INCLUSAO IS NULL
+                                                   AND {0}";
+
+        public const string pendentesSafx2013 = @"SELECT COUNT(1)
+                                                  FROM SAFX2013
+                                                  WHERE DTH_INCLUSAO IS NULL
+                                                     AND {0}";
 
     }
 }
