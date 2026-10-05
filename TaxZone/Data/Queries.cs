@@ -103,7 +103,28 @@
                                             from CAPA_NF_SPED_{0}_{1} a
                                             where DATCAN is not null AND CODMDE_DOC = 66
                                             group by codfil
+                                                
+                                            union all
 
+                                            SELECT '{2}' EMPRESA, 'ICMS' TIPO, SUM(
+                                            CASE 
+                                                WHEN DATCAN IS NULL 
+                                                THEN DECODE(INDADC_DCT, 'A', B.VLRICMS, B.VLRICMS * (-1)) 
+                                                ELSE 0 
+                                            END
+                                                    ) TOTAL, A.CODFIL COD_ESTAB
+                                            FROM CAPA_NF_SPED_{0}_{1} A,
+                                                 ITEM_NF_SPED_{0}_{1} B
+                                            WHERE A.CODEMP = B.CODEMP
+                                              AND A.CODFIL = B.CODFIL
+                                              AND A.DATEMI = B.DATEMI
+                                              AND A.IDTPSS = B.IDTPSS
+                                              AND A.CODDTN = B.CODDTN
+                                              AND A.NUMDOC_FSC = B.NUMDOC_FSC
+                                              AND A.NUMSER = B.NUMSER
+                                              AND A.CODMDE_DOC = '66'
+                                            GROUP BY A.CODFIL            
+                                
                                             order by 4, 2 desc";
 
         public const string qtdNotasFarMesAberto = @"select '{2}' EMPRESA, 'NOTAS' TIPO, count(1) TOTAL, codfil COD_ESTAB
@@ -135,8 +156,29 @@
                                             where DATCAN is not null AND CODMDE_DOC = 66 and TRUNC(DATEMI) BETWEEN '{0}' AND '{1}'
                                             group by codfil
 
-                                            order by 4, 2 desc";
+                                            union all
 
+                                            SELECT '{2}' EMPRESA, 'ICMS' TIPO,   SUM(
+                                                        CASE 
+                                                            WHEN DATCAN IS NULL 
+                                                            THEN DECODE(INDADC_DCT, 'A', B.VLRICMS, B.VLRICMS * (-1)) 
+                                                            ELSE 0 
+                                                        END
+                                                    ) TOTAL, A.CODFIL COD_ESTAB
+                                            FROM CAPA_NF_SPED A,
+                                                 ITEM_NF_SPED B
+                                            WHERE A.CODEMP = B.CODEMP
+                                              AND A.CODFIL = B.CODFIL
+                                              AND A.DATEMI = B.DATEMI
+                                              AND A.IDTPSS = B.IDTPSS
+                                              AND A.CODDTN = B.CODDTN
+                                              AND A.NUMDOC_FSC = B.NUMDOC_FSC
+                                              AND A.NUMSER = B.NUMSER
+                                              AND A.CODMDE_DOC = '66'
+                                              AND TRUNC(A.DATEMI) BETWEEN BETWEEN '{0}' AND '{1}'
+                                            GROUP BY A.CODFIL
+                                
+                                            order by 4, 2 desc";
 
         public const string queryIcmsSifar = @"SELECT  A.CODFIL, SUM(
                                             CASE 
@@ -176,9 +218,28 @@
                                   AND A.CODMDE_DOC = '66'
                                 GROUP BY A.CODFIL";
 
-        //num_docfis IN({0}) AND
-        //public const string pendentesSafx43 = "select * from safx43 where DTH_INCLUSAO IS NULL";
-        //public const string pendentesSafx42 = "select * from safx42 where DTH_INCLUSAO IS NULL";
+        public const string queryIcmsSifarMesAbertoPopulaTabela = @"SELECT '{2}' EMPRESA, 'ICMS' TIPO,   SUM(
+                                                        CASE 
+                                                            WHEN DATCAN IS NULL 
+                                                            THEN DECODE(INDADC_DCT, 'A', B.VLRICMS, B.VLRICMS * (-1)) 
+                                                            ELSE 0 
+                                                        END
+                                                    ) TOTAL, TO_CHAR(A.CODFIL) COD_ESTAB
+                                            FROM CAPA_NF_SPED A,
+                                                 ITEM_NF_SPED B
+                                            WHERE A.CODEMP = B.CODEMP
+                                              AND A.CODFIL = B.CODFIL
+                                              AND A.DATEMI = B.DATEMI
+                                              AND A.IDTPSS = B.IDTPSS
+                                              AND A.CODDTN = B.CODDTN
+                                              AND A.NUMDOC_FSC = B.NUMDOC_FSC
+                                              AND A.NUMSER = B.NUMSER
+                                              AND A.CODMDE_DOC = '66'
+                                              AND TRUNC(A.DATEMI) BETWEEN '{0}' AND '{1}'
+                                            GROUP BY A.CODFIL
+                                
+                                            order by 4, 2 desc";
+
 
         public const string canceladasFarMesAberto = "select NUMDOC_FSC from capa_nf_sped where datcan is not null";
         public const string canceladasFarMesFechado = "select NUMDOC_FSC from capa_nf_sped_{0}_{1} where datcan is not null";
