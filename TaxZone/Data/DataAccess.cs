@@ -25,7 +25,8 @@ namespace TaxZone.Data
             {
                 DataSource = serviceName,
                 UserID = user,
-                Password = password
+                Password = password,
+                ConnectionTimeout = 60,
             };
 
             // Estabelecer a conexão com o banco de dados Oracle
@@ -59,7 +60,7 @@ namespace TaxZone.Data
 
                             if (dataTable.Rows.Count == 0)
                             {
-                                MessageBox.Show($"0 linhas extraídas.\nBanco: {serviceName}\nSession: {session}\nUsuario: {user}\nSenha: {password} ", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                MessageBox.Show($"0 linhas extraídas.\nBanco: {serviceName}\nSession: {session}\nUsuario: {user} ", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
                             return dataTable;
                         }
@@ -67,9 +68,7 @@ namespace TaxZone.Data
                 }
                 catch (Exception ex)
                 {
-                    if (ex.InnerException != null)
-                    MessageBox.Show($"{ex.Message}\nBanco: {serviceName}\nSession: {session}\nUsuario: {user}\nSenha: {password} ", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return null;
+                     throw new Exception($"Banco: {serviceName}\nSession: {session}\nUsuario: {user} \nErro: {ex.Message}");
                 }
 
             }
