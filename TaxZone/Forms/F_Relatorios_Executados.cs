@@ -29,7 +29,7 @@ namespace TaxZone
             });
 
             var retorno = await ApiTax.ObterRelatorio(taxContext, progresso);
-            if (!retorno.Success) this.Close();
+            if (retorno is null || !retorno.Success) this.Close();
 
             PopulaDataGrid(retorno.ProcessosRelatorio);
         }

@@ -9,6 +9,7 @@ namespace TaxZone.Infrastructure
         public static bool jobAutomatico;
         public static DateTime dataInicio;
         public static DateTime dataFim;
+        public static bool inspector;
 
     }
 }

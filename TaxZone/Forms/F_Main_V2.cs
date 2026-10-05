@@ -15,8 +15,6 @@ namespace TaxZone
     {
         private readonly CookieRenewService _cookieRenew = new();
         bool _formCarregado = false;
-        //private ProcessingMonitor processingMonitor = new ();
-
 
         public F_Main_V2()
         {
@@ -27,7 +25,6 @@ namespace TaxZone
             cb_ferramentas.SelectedIndex = 0;
 
             //se não fizer isso fica vinculado com os combo box e se alterar la altera aqui tambem
-            //lbox_empresas.DataSource = new List<string>(Empresa.ListaEmpresas);
             lbox_empresas.DataSource = new List<string>(Empresa.ListaEmpresas);
 
             //Preenchimento das datas
@@ -54,19 +51,6 @@ namespace TaxZone
 
             _formCarregado = true;
             AtualizarComparativoNotas();
-
-            /*
-            var btnAcao = new DataGridViewButtonColumn
-            {
-                HeaderText = "Ação",
-                Text = "Iniciar",
-                UseColumnTextForButtonValue = false,
-                Name = "btnAcao",
-                Width = 60
-            };
-
-            dgv_pendencia_processamento.Columns.Add(btnAcao);
-            */
 
             dgv_pendencia_processamento.DataSource = ProcessingMonitor.Processos;
             dgv_pendencia_processamento.Columns["Id"].Visible = false;
@@ -475,7 +459,6 @@ namespace TaxZone
 
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
-            TaxContext context;
 
             var parametros = new ParametrosProcessosCustomizados(
                 "*",
@@ -484,7 +467,8 @@ namespace TaxZone
                 dtp_periodo_fim.Value,
                 false,
                 false,
-                false,
+                //Globais.mesAberto? false : true, //Mes aberto não preenche icms
+                true,
                 false,
                 true,
                 true,
@@ -677,23 +661,22 @@ namespace TaxZone
 
         private void bt_ferramentas_Click(object sender, EventArgs e)
         {
+            RetornoOperacao retorno = new RetornoOperacao(false, "Operação não executada!");
             string empresa = string.Empty;
             if (lbox_empresas.SelectedItems.Count == 1)
                 empresa = lbox_empresas.SelectedItem.ToString();
 
             if (cb_ferramentas.SelectedIndex == 0) //ITENS
-                FuncoesTax.DiferencaItens(Globais.gerarArquivo, Globais.fracionarValores, empresa);
+                retorno = FuncoesTax.DiferencaItens(Globais.gerarArquivo, Globais.fracionarValores, empresa);
 
             else if (cb_ferramentas.SelectedIndex == 1) //BURACO NOTAS
-                FuncoesTax.BuracoDeNota(false, null, empresa);
+                retorno = FuncoesTax.BuracoDeNota(false, null, empresa);
 
             else if (cb_ferramentas.SelectedIndex == 2) //PRODUTOS / TAXAS
-                FuncoesTax.ImportarProdutos(empresa);
-
+                retorno = FuncoesTax.ImportarProdutos(false, empresa);
             else if (cb_ferramentas.SelectedIndex == 3)
                 //PESSOA FIS/ JUR
-                FuncoesTax.ImportarPessoaFisicaJuridica(Globais.gerarArquivo, Globais.fracionarValores, false, empresa);
-
+                retorno = FuncoesTax.ImportarPessoaFisicaJuridica(Globais.gerarArquivo, Globais.fracionarValores, false, empresa);
 
             else if (cb_ferramentas.SelectedIndex == 4)//DIFERENÇA CANCELADAS
             {
@@ -708,8 +691,11 @@ namespace TaxZone
                     return;
                 }
 
-                FuncoesTax.GetDiferencaCanceladas(dtp_periodo_inicio.Value.Year.ToString(), dtp_periodo_inicio.Value.Month.ToString("D2"), lbox_empresas.SelectedItem.ToString(), Globais.mesAberto, Globais.gerarArquivo, Globais.fracionarValores);
+                retorno = FuncoesTax.GetDiferencaCanceladas(dtp_periodo_inicio.Value.Year.ToString(), dtp_periodo_inicio.Value.Month.ToString("D2"), lbox_empresas.SelectedItem.ToString(), Globais.mesAberto, Globais.gerarArquivo, Globais.fracionarValores);
             }
+
+            MessageBox.Show(retorno.Mensagem, "Informação", MessageBoxButtons.OK, retorno.Sucesso? MessageBoxIcon.Information : MessageBoxIcon.Error);
+
         }
 
         private async void bt_qtd_notas_Click(object sender, EventArgs e)

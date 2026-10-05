@@ -70,7 +70,7 @@ namespace TaxZone
                 lbl_loading_percentage.Visible = false;
                 return;
             }
-
+  
             dgv_relatorio_importacao.DataSource = retorno.ProcessosImportacao;
 
             dgv_relatorio_importacao.Columns["CodEmpresa"].Visible = false;
@@ -175,7 +175,7 @@ namespace TaxZone
                     else if (dgv_relatorio_importacao.Rows[e.RowIndex].Cells["descricao"].Value.ToString() == "IMPX43")
                     {
                         response = await ApiTax.BaixarRelatorioProcessoImportacao(taxContext, e.RowIndex + 1, Config.PathArquivoTemporario + "\\Relatorio.pdf");
-                        FuncoesTax.ImportarProdutos(cb_empresa.Text, Config.PathArquivoTemporario + "\\Relatorio.pdf");
+                        FuncoesTax.ImportarProdutos(false, cb_empresa.Text, Config.PathArquivoTemporario + "\\Relatorio.pdf");
                     }
                     else
                     {

@@ -17,8 +17,6 @@ namespace TaxZone
         {
             InitializeComponent();
             TaxAutomationInspector.Start();
-            //this.Close();
-            Application.Exit();
         }
     }
 }

@@ -1,14 +1,4 @@
-﻿using iText.Layout.Element;
-using Microsoft.Playwright;
-using Microsoft.VisualBasic.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using TaxZone.DTO;
+﻿using TaxZone.DTO;
 using TaxZone.Infrastructure;
 using TaxZone.Utils;
 
@@ -16,7 +6,6 @@ namespace TaxZone.Services
 {
     public static class TaxAutomationInspector
     {
-
         public static async void Start()
         {
             //Faz login
@@ -30,6 +19,7 @@ namespace TaxZone.Services
             var empresasComErro = await ValidarErros(resultados, false);
 
             //Programa job para as empresas com erro
+            ApiTax.ResetContext();
 
             var tasks = empresasComErro.Select(async empresa =>
             {
@@ -54,11 +44,13 @@ namespace TaxZone.Services
 
             await Task.Delay(TimeSpan.FromMinutes(5));
 
+            ApiTax.ResetContext();
+
             resultados = await ConsultarJob(empresasJobProgramado, Config.UsuarioTax);
             
             empresasComErro = await ValidarErros(resultados, true);
 
-
+            Environment.Exit(0);
         }
 
         public static async Task<TaxApiResponse[]> ConsultarJob(List<string> empresas, string usuario)
@@ -78,17 +70,37 @@ namespace TaxZone.Services
 
             foreach (var resultado in resultados)
             {
-                if (resultado != null)
+                if (resultado != null && resultado.Success)
                 {
                     int row = 1;
-                    foreach (var log in resultado.ProcessosImportacao)
+
+                    if(resultado.ProcessosImportacao.Count == 0)
+                    {
+
+                        Logger.Log(resultado.Empresa, $"Nenhum log encontrado.");
+
+                        if (!empresasComErro.Contains(resultado.Empresa))
+                            empresasComErro.Add(resultado.Empresa);
+
+                        continue;
+                    }
+
+                    //Filtra para obter somente a última execução de cada relatório
+                    var filtrados = resultado.ProcessosImportacao
+                            .GroupBy(p => p.Descricao)
+                            .Select(grupo => grupo
+                                .OrderByDescending(p => p.DataIniMovto)
+                                .First())
+                            .ToList();
+
+                    foreach (var log in filtrados)
                     {
                         if (log.Descricao == "IMPX431" || log.Descricao == "IMPX2013")
                             continue;
 
                         if (log.QtdErr > 0)
                         {
-                            Logger.Log(resultado.Empresa, $"{log.Descricao} - Erros: {log.QtdErr}");
+                            Logger.Log(resultado.Empresa, $"{log.Descricao} - Lidos: {log.QtdLido} / Erros: {log.QtdErr} / Inseridos: {log.QtdIns} / Ignorados: {log.QtdIgn}");
 
                             if (log.Descricao == "IMPX42" )
                             {
@@ -97,8 +109,8 @@ namespace TaxZone.Services
 
                                 if (gerarRelatorioReprocessamento)
                                 {
-                                    string caminhoRelatorio = $"J:\\Igor Pinheiro\\TaxOne\\Relatorio_SAFX42_{resultado.Empresa}_{DateTime.Now.Day}.pdf";
-                                    string caminhoCsv = $"J:\\Igor Pinheiro\\TaxOne\\Reprocessar_SAFX04_{resultado.Empresa}_{DateTime.Now.Day}.csv";
+                                    string caminhoRelatorio = $"J:\\Igor Pinheiro\\TaxOne\\Relatorio_SAFX42_{resultado.Empresa}_{DateTime.Now.Day}_{DateTime.Now.Month}.pdf";
+                                    string caminhoCsv = $"J:\\Igor Pinheiro\\TaxOne\\Reprocessar_SAFX04_{resultado.Empresa}_{DateTime.Now.Day}_{DateTime.Now.Month}.csv";
 
                                     var response = await ApiTax.BaixarRelatorioProcessoImportacao(ApiTax.GetContext(resultado.Empresa), row, caminhoRelatorio );
                                     FuncoesTax.ImportarPessoaFisicaJuridica(true, false, false, null, caminhoRelatorio, caminhoCsv);
@@ -115,14 +127,14 @@ namespace TaxZone.Services
 
                                 if (gerarRelatorioReprocessamento)
                                 {
-                                    string caminhoRelatorio = $"J:\\Igor Pinheiro\\TaxOne\\Relatorio_SAFX43_{resultado.Empresa}_{DateTime.Now.Day}.pdf";
-                                    //string caminhoCsv = $"J:\\Igor Pinheiro\\TaxOne\\Reprocessar_SAFX04_{resultado.Empresa}_{DateTime.Now.Day}.csv";
+                                    string caminhoRelatorio = $"J:\\Igor Pinheiro\\TaxOne\\Relatorio_SAFX43_{resultado.Empresa}_{DateTime.Now.Day}_{DateTime.Now.Month}.pdf";
+                                    string caminhoCsv = $"J:\\Igor Pinheiro\\TaxOne\\Reprocessar_SAFX2013_{resultado.Empresa}_{DateTime.Now.Day}_{DateTime.Now.Month}";
 
                                     var response = await ApiTax.BaixarRelatorioProcessoImportacao(ApiTax.GetContext(resultado.Empresa), row, caminhoRelatorio);
+                                    FuncoesTax.ImportarProdutos(true, null, caminhoRelatorio, caminhoCsv);
 
+                                    File.Delete(caminhoRelatorio);
                                 }
-
-                                
                             }
                         }
                         row++;
@@ -131,7 +143,7 @@ namespace TaxZone.Services
                 }
                 else
                 {
-                    Logger.Log("GERAL", "Nenhum log encontrado.");
+                    Logger.Log("GERAL", $"Falha ao buscar logs. {resultado.Message}");
                 }
             }
 

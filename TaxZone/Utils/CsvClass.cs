@@ -283,8 +283,12 @@ namespace TaxZone.Utils
             // Se o arquivo já existir, pergunta se deseja substituir
             if (File.Exists(filePath))
             {
-                var response = MessageBox.Show($"Arquivo {filePath} já existe! Deseja substituir?", "Atenção!", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (response == DialogResult.No) return;
+                if (!Globais.inspector)
+                {
+                    var response = MessageBox.Show($"Arquivo {filePath} já existe! Deseja substituir?", "Atenção!", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (response == DialogResult.No) return;
+                }
+                
                 else File.Delete(filePath);
             }
 

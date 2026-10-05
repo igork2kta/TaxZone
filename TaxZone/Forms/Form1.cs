@@ -188,7 +188,7 @@ namespace TaxZone
             => FuncoesTax.ImportarPessoaFisicaJuridica(ckb_gerar_arquivo.Checked, ckb_fracionar_valores.Checked, ckb_codFisJur.Checked);
 
         private void bt_produtos_taxas_Click(object sender, EventArgs e)
-            => FuncoesTax.ImportarProdutos();
+            => FuncoesTax.ImportarProdutos(false);
 
 
         private async void bt_tax_automation_Click(object sender, EventArgs e)
@@ -307,7 +307,6 @@ namespace TaxZone
 
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
-            TaxContext context;
             int total = empresasSelecionadas.Count;
             int concluidas = 0;
 
@@ -775,7 +774,6 @@ namespace TaxZone
         {
             List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
-            TaxContext context;
 
             var parametros = new ParametrosProcessosCustomizados(
                 "*",
@@ -941,7 +939,6 @@ namespace TaxZone
             {
                 List<string> empresasSelecionadas = lbox_empresas.SelectedItems.Cast<string>().ToList();
 
-                TaxContext context;
                 int total = empresasSelecionadas.Count;
                 int concluidas = 0;
 
