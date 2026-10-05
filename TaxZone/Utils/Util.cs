@@ -1,11 +1,12 @@
 ﻿using System.Data;
 using System.Text;
+using TaxZone.DTO;
 
 namespace TaxZone.Utils
 {
     public class Util
     {
-        public static void DividirValoresAreaTransferencia<T>(List<T> lista, bool fracionar = true)
+        public static RetornoOperacao DividirValoresAreaTransferencia<T>(List<T> lista, bool fracionar = true)
         {
             StringBuilder notasBuilder = new ();
             int linhasParciais = 0;
@@ -21,7 +22,7 @@ namespace TaxZone.Utils
                                     "Reprocese essas e clique em OK para continuar.",
                         "Atenção", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation);
 
-                    if (resposta == DialogResult.Cancel) return;
+                    if (resposta == DialogResult.Cancel) return new RetornoOperacao(false, "Cancelado pelo usuário");
 
                     notasBuilder.Clear();
                 }
@@ -38,8 +39,8 @@ namespace TaxZone.Utils
             if (notasBuilder.Length > 0)
                 Clipboard.SetText(notasBuilder.ToString());
 
-            MessageBox.Show($"Finalizado! {lista.Count} notas totais copiadas para a área de transferência.",
-                "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return new RetornoOperacao(true, $"Finalizado! {lista.Count} notas totais copiadas para a área de transferência.");
+
         }
 
         public static string IntListToString(List<int> list)
