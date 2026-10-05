@@ -144,8 +144,8 @@ namespace TaxZone
 
         private void dtp_periodo_inicio_ValueChanged(object sender, EventArgs e)
         {
-            if (!_formCarregado)
-                return;
+           // if (!_formCarregado)
+              //  return;
 
             Globais.dataInicio = dtp_periodo_inicio.Value;
 
@@ -154,8 +154,8 @@ namespace TaxZone
 
         private void dtp_periodo_fim_ValueChanged(object sender, EventArgs e)
         {
-            if (!_formCarregado)
-                return;
+           // if (!_formCarregado)
+           //    return;
 
             Globais.dataFim = dtp_periodo_fim.Value;
 

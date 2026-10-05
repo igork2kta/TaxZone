@@ -14,25 +14,36 @@ namespace TaxZone
         static void Main(string[] args)
         {
 
-            // Nome da variável de ambiente do TNS
+            // Nome da variï¿½vel de ambiente do TNS
             const string tnsVariable = "TNS_ADMIN";
 
-            // Verifica se a variável de ambiente já existe no nível do usuário
+            // Verifica se a variï¿½vel de ambiente jï¿½ existe no nï¿½vel do usuï¿½rio
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(tnsVariable, EnvironmentVariableTarget.User)))
             {
-                MessageBox.Show("Variável de ambiente TNS_ADMIN não cadastrada, sua ausência pode causar falha para conectar no banco. Favor criar.",
-                    "Atenção!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Variï¿½vel de ambiente TNS_ADMIN nï¿½o cadastrada, sua ausï¿½ncia pode causar falha para conectar no banco. Favor criar.",
+                    "Atenï¿½ï¿½o!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
             Banco.CriarBanco();
 
+            Version versaoAtual = typeof(Program).Assembly.GetName().Version ?? new Version(0, 0);
+            string? mensagemAtualizacao = Banco.VerificarAtualizacaoDisponivel(versaoAtual);
+            if (mensagemAtualizacao != null)
+            {
+                MessageBox.Show(
+                    mensagemAtualizacao,
+                    "AtualizaÃ§Ã£o disponÃ­vel",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+
             Banco.CriarAviso(
-                "2.3.0 - Atualização Segurança",
-                "Nova versão: Para sua segurança, agora suas senhas são salvas com criptografia. Insira novamente as suas senhas no menu Configurações > Credenciais."
+                "2.3.0 - Atualizaï¿½ï¿½o Seguranï¿½a",
+                "Nova versï¿½o: Para sua seguranï¿½a, agora suas senhas sï¿½o salvas com criptografia. Insira novamente as suas senhas no menu Configuraï¿½ï¿½es > Credenciais."
             );
 
-            //Limpar pasta de arquivos temporários
-            // Garantir que a pasta de arquivos temporários exista
+            //Limpar pasta de arquivos temporï¿½rios
+            // Garantir que a pasta de arquivos temporï¿½rios exista
             Directory.CreateDirectory(Config.PathArquivoTemporario);
             foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
                 File.Delete(arquivo);

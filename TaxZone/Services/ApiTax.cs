@@ -13,14 +13,10 @@ namespace TaxZone.Services
 
         private static readonly HttpClient _client = new HttpClient();
 
-        public ApiTax()
-        {
- 
-        }
 
         public static TaxContext GetContext(string empresa)
         {
-            TaxContext context = contextos.FirstOrDefault(x => x.Empresa == empresa);
+            TaxContext? context = contextos.FirstOrDefault(x => x.Empresa == empresa);
 
             if (context == null)
             {
@@ -31,9 +27,8 @@ namespace TaxZone.Services
         }
 
         public static void ResetContext()
-        {
-            contextos.Clear();
-        }
+            => contextos.Clear();
+        
 
         public static async Task<string> GetCookie(string usuario,string senha,bool headless = false)
         {

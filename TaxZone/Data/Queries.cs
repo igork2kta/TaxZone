@@ -250,15 +250,15 @@
         public const string pendentesSafx42 = @"SELECT COUNT(1)
                                                 FROM SAFX42
                                                 WHERE DTH_INCLUSAO IS NULL
-                                                  AND COD_EMPRESA = {0}
+                                                  AND COD_EMPRESA = '{0}'
                                                   AND COD_ESTAB IN ({1})
-                                                  AND TO_NUMBER(NUM_DOCFIS) IN ({2})
+                                                  AND {2}
                                                   AND DAT_FISCAL BETWEEN '{3}' and '{4}'";
 
         public const string pendentesSafx43 = @"SELECT COUNT(1)
                                                 FROM SAFX43
                                                 WHERE DTH_INCLUSAO IS NULL
-                                                  AND COD_EMPRESA = {0}
+                                                  AND COD_EMPRESA = '{0}'
                                                   AND COD_ESTAB IN ({1})
                                                   AND {2}
                                                   AND DAT_FISCAL BETWEEN '{3}' and '{4}'";

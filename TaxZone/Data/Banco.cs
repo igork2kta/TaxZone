@@ -45,10 +45,82 @@ namespace TaxZone.Data
     
                     FOREIGN KEY(aviso_id) REFERENCES avisos(id)
                 );
+
+                    CREATE TABLE IF NOT EXISTS versoes_aplicacao
+                    (
+                        versao TEXT PRIMARY KEY NOT NULL,
+                        mensagem TEXT NOT NULL,
+                        data_publicacao TEXT NOT NULL
+                    );
                 ";
 
             using var cmd = new SQLiteCommand(sql, conexao);
             cmd.ExecuteNonQuery();
+        }
+
+        public static string? VerificarAtualizacaoDisponivel(Version versaoAtual)
+        {
+            using var con = Conexao();
+            con.Open();
+
+            Version? versaoMaisRecente = null;
+
+            using (var cmd = new SQLiteCommand(
+                "SELECT versao FROM versoes_aplicacao", con))
+            using (var reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    if (!Version.TryParse(reader["versao"]?.ToString(), out var versaoRegistrada))
+                        continue;
+
+                    if (versaoMaisRecente == null || versaoRegistrada > versaoMaisRecente)
+                    {
+                        versaoMaisRecente = versaoRegistrada;
+                    }
+                }
+            }
+
+            if (versaoMaisRecente == null || versaoAtual > versaoMaisRecente)
+            {
+                string versaoTexto = versaoAtual.ToString();
+                string mensagem = $"Há uma atualização disponível para a versão {versaoTexto}.";
+                string sql = @"
+                    INSERT OR IGNORE INTO versoes_aplicacao
+                    (
+                        versao,
+                        mensagem,
+                        data_publicacao
+                    )
+                    VALUES
+                    (
+                        @versao,
+                        @mensagem,
+                        @data_publicacao
+                    );";
+
+                using var cmd = new SQLiteCommand(sql, con);
+                cmd.Parameters.AddWithValue("@versao", versaoTexto);
+                cmd.Parameters.AddWithValue("@mensagem", mensagem);
+                cmd.Parameters.AddWithValue("@data_publicacao", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                cmd.ExecuteNonQuery();
+
+                return null;
+            }
+
+            if (versaoMaisRecente > versaoAtual)
+            {
+                string versaoAtualTexto = versaoAtual.Build >= 0
+                    ? versaoAtual.ToString(3)
+                    : versaoAtual.ToString(2);
+                string versaoNovaTexto = versaoMaisRecente.Build >= 0
+                    ? versaoMaisRecente.ToString(3)
+                    : versaoMaisRecente.ToString(2);
+
+                return $"Há uma atualização disponível. Versão atual: {versaoAtualTexto}, versão nova: {versaoNovaTexto}.";
+            }
+
+            return null;
         }
 
         public static SQLiteConnection Conexao()
