@@ -35,9 +35,9 @@ namespace TaxZone.Services
             contextos.Clear();
         }
 
-        public static async Task<string> GetCookie(string usuario, string senha, bool headless = false)
+        public static async Task<string> GetCookie(string usuario,string senha,bool headless = false)
         {
-            var url = "https://www.onesourcetax.com/";
+            const string url = "https://www.onesourcetax.com/auth/signin?OSTarget=https:%2F%2Fwww.onesourcetax.com";
 
             using var playwright = await Playwright.CreateAsync();
 
@@ -46,34 +46,63 @@ namespace TaxZone.Services
                 {
                     Channel = "msedge",
                     Headless = headless
-                    //Headless = true
                 });
 
             var context = await browser.NewContextAsync();
 
+            // Bloqueia recursos que não são necessários para login/navegação
+            await context.RouteAsync("**/*", async route =>
+            {
+                var request = route.Request;
+                var resourceType = request.ResourceType;
+
+                if (resourceType is "image"
+                    or "font"
+                    or "media")
+                {
+                    await route.AbortAsync();
+                    return;
+                }
+
+                await route.ContinueAsync();
+            });
+
             var page = await context.NewPageAsync();
-            await page.GotoAsync(url);
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).ClickAsync();
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Username" }).FillAsync(usuario);
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).ClickAsync();
-            await page.GetByRole(AriaRole.Textbox, new() { Name = "Password" }).FillAsync(senha);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
-            await page.GetByRole(AriaRole.Listitem, new() { Name = "TAX ONE" }).ClickAsync();
-            await page.GetByRole(AriaRole.Gridcell, new() { Name = "-EMR" }).ClickAsync();
-            await page.GotoAsync("https://www.onesourcetax.com/platform/apps/oms-11/home");
 
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            // Aumente/diminua conforme o comportamento do site
+            page.SetDefaultTimeout(30000);
 
-            //await Task.Delay(3000);
+            await page.GotoAsync(url, new()
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded
+                //WaitUntil = WaitUntilState.NetworkIdle
+            });
+
+            await page.GetByRole(AriaRole.Textbox,new() { Name = "Username" }).FillAsync(usuario);
+
+            await page.GetByRole(AriaRole.Textbox,new() { Name = "Password" }).FillAsync(senha);
+
+            await page.GetByRole(AriaRole.Button,new() { Name = "Sign In" }).ClickAsync();
+
+            await page.GetByRole(AriaRole.Listitem,new() { Name = "TAX ONE" }).ClickAsync();
+
+            await page.GetByRole(AriaRole.Gridcell,new() { Name = "-EMR" }).ClickAsync();
+
+            
+            await page.GotoAsync("https://www.onesourcetax.com/platform/apps/oms-11/home",
+                new()
+                {
+                    WaitUntil = WaitUntilState.NetworkIdle
+                    //WaitUntil = WaitUntilState.DOMContentLoaded
+                });
+            
 
             var cookies = await context.CookiesAsync();
 
-            var cookieHeader = string.Join(
+            return string.Join(
                 "; ",
                 cookies.Select(c => $"{c.Name}={c.Value}")
             );
-
-            return cookieHeader;
         }
 
         public static async Task<bool> RenewCookie()

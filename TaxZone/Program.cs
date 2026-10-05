@@ -46,6 +46,7 @@ namespace TaxZone
             ApplicationConfiguration.Initialize();
             if (args.Any(x => x.Equals("inspector", StringComparison.OrdinalIgnoreCase)))
             {
+                Globais.inspector = true;
                 Application.Run(new F_inspector());
             }
             else
