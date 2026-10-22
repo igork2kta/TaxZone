@@ -159,10 +159,10 @@ namespace TaxZone.Utils
             }
         }
 
-        public static List<int> CopiarNotasCanceladas(int columnIndex)
+        public static List<int> CopiarNotasCanceladas(int columnIndex, string path = "")
         {
 
-            IEnumerable<string> linhas = LerArquivo();
+            IEnumerable<string> linhas = LerArquivo(path);
 
             if (linhas is null) return null; 
             

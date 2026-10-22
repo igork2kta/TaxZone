@@ -209,11 +209,11 @@ namespace TaxZone.Services
 
                     return string.Format(
                         Queries.pendentesSafx42,
-                        processo.Empresa,
+                        Empresa.GetCodEmpresa(processo.Empresa),
                         string.Join(",", Empresa.GetEstabelecimentos(processo.Empresa)),
                         string.Join(",", p42.Notas),
-                        p42.DataInicial.ToString("dd/MM/yyyy"),
-                        p42.DataFinal.ToString("dd/MM/yyyy"));
+                        p42.DataInicial.ToString("yyyyMMdd"),
+                        p42.DataFinal.ToString("yyyyMMdd"));
 
                 case ProcessType.SAFX43:
 
@@ -221,11 +221,11 @@ namespace TaxZone.Services
 
                     return string.Format(
                         Queries.pendentesSafx43,
-                        processo.Empresa,
+                        Empresa.GetCodEmpresa(processo.Empresa),
                         string.Join(",", Empresa.GetEstabelecimentos(processo.Empresa)),
                         string.Join(",", p43.Notas),
-                        p43.DataInicial.ToString("dd/MM/yyyy"),
-                        p43.DataFinal.ToString("dd/MM/yyyy"));
+                        p43.DataInicial.ToString("yyyyMMdd"),
+                        p43.DataFinal.ToString("yyyyMMdd"));
 
                 default:
                     throw new Exception("Processo não suportado");

@@ -20,8 +20,8 @@ namespace TaxZone
             // Verifica se a vari�vel de ambiente j� existe no n�vel do usu�rio
             if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(tnsVariable, EnvironmentVariableTarget.User)))
             {
-                MessageBox.Show("Vari�vel de ambiente TNS_ADMIN n�o cadastrada, sua aus�ncia pode causar falha para conectar no banco. Favor criar.",
-                    "Aten��o!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Variável de ambiente TNS_ADMIN não cadastrada, sua ausência pode causar falha para conectar no banco. Favor criar.",
+                    "Atenção!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
             Banco.CriarBanco();
@@ -38,12 +38,12 @@ namespace TaxZone
             }
 
             Banco.CriarAviso(
-                "2.3.0 - Atualiza��o Seguran�a",
-                "Nova vers�o: Para sua seguran�a, agora suas senhas s�o salvas com criptografia. Insira novamente as suas senhas no menu Configura��es > Credenciais."
+                "2.4.0 - Melhoria ferramentas",
+                "Nova versão: Nas ferramentas de ITENS, BURACO DE NOTA e DIFERENÇA CANCELADAS, agora há a opção de programar relatório automaticamente, bastando aguardar a finalização."
             );
 
-            //Limpar pasta de arquivos tempor�rios
-            // Garantir que a pasta de arquivos tempor�rios exista
+            //Limpar pasta de arquivos temporários
+            //Garantir que a pasta de arquivos temporários exista
             Directory.CreateDirectory(Config.PathArquivoTemporario);
             foreach (string arquivo in Directory.GetFiles(Config.PathArquivoTemporario))
                 File.Delete(arquivo);

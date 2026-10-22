@@ -13,13 +13,15 @@ namespace TaxZone.Utils
 {
     public static class FuncoesTax
     {
-        public static RetornoOperacao DiferencaItens(bool gerarArquivo, bool fracionar, string? empresa = null)
+        public static RetornoOperacao DiferencaItens(bool gerarArquivo, bool fracionar, string? empresa = null, string[]? arquivos = null)
         {
             string diferencaCapaItem = string.Empty;
             string notasSemItem = string.Empty;
 
-            using (OpenFileDialog dialog = new OpenFileDialog())
+            //Sem arquivos informados, solicita ao usuário
+            if (arquivos is null)
             {
+                using OpenFileDialog dialog = new();
                 dialog.Title = "Selecione os arquivos";
                 dialog.Filter = "Arquivos CSV ou ZIP (*.csv;*.zip)|*.csv;*.zip|Todos os arquivos (*.*)|*.*";
                 dialog.Multiselect = true;
@@ -28,16 +30,18 @@ namespace TaxZone.Utils
                 if (dialog.ShowDialog() != DialogResult.OK)
                     return new RetornoOperacao(false, "Cancelado pelo usuário");
 
-                foreach (string arquivo in dialog.FileNames)
-                {
-                    string nome = Path.GetFileNameWithoutExtension(arquivo).ToUpper();
+                arquivos = dialog.FileNames;
+            }
 
-                    if (nome.Contains("DIFERENCA_CAPA_ITEM"))
-                        diferencaCapaItem = CsvClass.CopiarNotas(1, arquivo);
-                    
-                    else if (nome.Contains("NOTAS_SEM_ITEM"))
-                        notasSemItem = CsvClass.CopiarNotas(2, arquivo);
-                }
+            foreach (string arquivo in arquivos)
+            {
+                string nome = Path.GetFileNameWithoutExtension(arquivo).ToUpper();
+
+                if (nome.Contains("DIFERENCA_CAPA_ITEM"))
+                    diferencaCapaItem = CsvClass.CopiarNotas(1, arquivo);
+
+                else if (nome.Contains("NOTAS_SEM_ITEM"))
+                    notasSemItem = CsvClass.CopiarNotas(2, arquivo);
             }
 
             if (string.IsNullOrEmpty(diferencaCapaItem) && string.IsNullOrEmpty(notasSemItem))
@@ -76,22 +80,27 @@ namespace TaxZone.Utils
             return retorno;
         }
 
-        public static RetornoOperacao BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota, string? empresa = null)
+        public static RetornoOperacao BuracoDeNota(bool modeloHardcore, string referenciaBuracoNota, string? empresa = null, string? arquivo = null)
         {
             if (modeloHardcore && (string.IsNullOrEmpty(referenciaBuracoNota) || referenciaBuracoNota.Length < 7))
                 return new RetornoOperacao(false, "Preencha a referencia para o modo hardcore!");
 
-            using OpenFileDialog openFileDialog = new()
+            if (string.IsNullOrEmpty(arquivo))
             {
-                Title = "Selecione um arquivo PDF",
-                Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
-                InitialDirectory = Config.DiretorioPadraoEntrada
-            };
+                using OpenFileDialog openFileDialog = new()
+                {
+                    Title = "Selecione um arquivo PDF",
+                    Filter = "Arquivos PDF (*.pdf)|*.pdf|Todos os arquivos (*.*)|*.*",
+                    InitialDirectory = Config.DiretorioPadraoEntrada
+                };
 
-            if (openFileDialog.ShowDialog() != DialogResult.OK)
-                return new RetornoOperacao(false, "Cancelado pelo usuário");
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                    return new RetornoOperacao(false, "Cancelado pelo usuário");
 
-            using var pdf = new PdfDocument(new PdfReader(openFileDialog.FileName));
+                arquivo = openFileDialog.FileName;
+            }
+
+            using var pdf = new PdfDocument(new PdfReader(arquivo));
             string allText = "";
 
             for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
@@ -435,7 +444,7 @@ namespace TaxZone.Utils
         }
 
 
-        public static RetornoOperacao GetDiferencaCanceladas(string ano, string mes, string empresa, bool mes_aberto, bool gerarArquivo, bool fracionar)
+        public static RetornoOperacao GetDiferencaCanceladas(string ano, string mes, string empresa, bool mes_aberto, bool gerarArquivo, bool fracionar, string? arquivo = null)
         {
             BancoDTO banco = Empresa.GetBancoFar(empresa);
 
@@ -443,7 +452,7 @@ namespace TaxZone.Utils
                 return new RetornoOperacao(false, "Informe o banco de dados!");
             
 
-            List<int> canceladasTax = CsvClass.CopiarNotasCanceladas(1);
+            List<int> canceladasTax = CsvClass.CopiarNotasCanceladas(1, arquivo ?? string.Empty);
 
             if (canceladasTax is null)
                 return new RetornoOperacao(false, "Não foi possível obter as notas do arquivo.");

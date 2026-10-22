@@ -47,7 +47,7 @@ namespace TaxZone
                     dtp_fim.Value,
                     tb_usuario.Text,
                     estabelecimento,
-                    tb_descricao.Text);
+                    tb_descricao.Text.ToUpper());
 
             var progresso = new Progress<Progresso>(p =>
             {

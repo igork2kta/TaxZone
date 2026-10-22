@@ -65,7 +65,7 @@ namespace TaxZone.Services
             var page = await context.NewPageAsync();
 
             // Aumente/diminua conforme o comportamento do site
-            page.SetDefaultTimeout(30000);
+            page.SetDefaultTimeout(60000);
 
             await page.GotoAsync(url, new()
             {
@@ -358,6 +358,7 @@ namespace TaxZone.Services
                 var root = await PostAsync(context.Empresa, url, json_content);
 
                 context.StorageId = root["storageID"].ToString();
+
                 string? mensagemErro = root["Commands"]?
                     .AsArray()
                     .Select(c => c?["parameters"]?["text"]?.GetValue<string>())
@@ -374,8 +375,6 @@ namespace TaxZone.Services
             {
                 throw new Exception($"Erro ao selecionar empresa e módulo. {ex.Message}", ex);
             }
-            
-
         }
 
         #endregion
@@ -1284,8 +1283,6 @@ namespace TaxZone.Services
                     await PrepararAmbienteJobImportacao(context);
                 }
 
-                
-
                 progresso?.Report(new Progresso($"50%", 50));
 
                 //Abrir tela Controles>Relatórios>Importação
@@ -1383,7 +1380,7 @@ namespace TaxZone.Services
                 progresso?.Report(new Progresso($"90%", 90));
 
                 //Recuperar dados
-                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=44&dataManagerId={context.d_consulta_rel_proc_imp_grid}&start=1";
+                url = $"https://www.onesourcetax.com/amer1/oms-taxone-11/ws/dataManagerController/getDataBundlePage?count=100&dataManagerId={context.d_consulta_rel_proc_imp_grid}&start=1";
 
                 json_content = $$$"""
                     {
@@ -1415,13 +1412,8 @@ namespace TaxZone.Services
                         QtdErr = linha[17]!.GetValue<int>(),
                         DataIni = DateTime.ParseExact(linha[7]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
                         DataFim = DateTime.ParseExact(linha[10]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
-                        DataIniMovto = linha[11] is null ? DateTime.MinValue : DateTime.ParseExact(linha[10]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
-                        DataFimMovto = linha[12] is null ? DateTime.MinValue : DateTime.ParseExact(linha[10]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
-
-                        //DataIni = DateOnly.ParseExact(linha[7]!.GetValue<string>(),"ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
-                        //DataFim = DateOnly.ParseExact(linha[10]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
-                        //DataIniMovto = linha[11] is null ? DateOnly.MaxValue : DateOnly.ParseExact(linha[11]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
-                        //DataFimMovto = linha[12] is null ? DateOnly.MaxValue: DateOnly.ParseExact(linha[12]!.GetValue<string>(), "ddMMyyyyHHmmss", CultureInfo.InvariantCulture),
+                        DataIniMovto = linha[11] is null ? DateTime.MinValue : DateTime.ParseExact(linha[11]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
+                        DataFimMovto = linha[12] is null ? DateTime.MinValue : DateTime.ParseExact(linha[12]!.GetValue<string>(),"ddMMyyyyHHmmss",CultureInfo.InvariantCulture,DateTimeStyles.None),
 
                     });
                 }

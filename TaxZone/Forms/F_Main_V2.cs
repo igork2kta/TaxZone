@@ -38,6 +38,7 @@ namespace TaxZone
             Globais.gerarArquivo = ckb_gerar_arquivo.Checked;
             Globais.fracionarValores = ckb_fracionar_valores.Checked;
             Globais.mesAberto = ckb_mes_aberto.Checked;
+            Globais.jobAutomatico = ckb_job_automatico.Checked;
 
             dgv_comparativo_notas.EnableHeadersVisualStyles = false;
             // 1. Define o estilo de borda do cabeçalho como simples
@@ -659,7 +660,99 @@ namespace TaxZone
 
         }
 
-        private void bt_ferramentas_Click(object sender, EventArgs e)
+        private async Task<(string? Erro, string[] Arquivos)> ProgramarEBaixarRelatorioAsync(
+            string empresa,
+            string nomeRelatorio,
+            bool buracoNota = false,
+            bool diferencaCapaItem = false,
+            bool notasSemItem = false,
+            bool extracaoCanceladas = false)
+        {
+            const int intervaloMs = 5000;
+            const int tentativasMaximas = 720; // 1 hora
+
+            using var status = new StatusTask(statusStrip, $"Empresa {empresa}");
+            IProgress<Progresso> progresso = new Progress<Progresso>(status.Atualizar);
+
+            try
+            {
+                TaxContext context = ApiTax.GetContext(empresa);
+
+                //Guarda o último processo existente para identificar o relatório que será programado
+                TaxApiResponse anteriores = await ApiTax.ObterRelatorio(context);
+                if (!anteriores.Success)
+                    return (anteriores.Message, []);
+
+                int ultimoProcessoAnterior = anteriores.ProcessosRelatorio.Select(p => p.NumProcesso).DefaultIfEmpty(0).Max();
+
+                var parametros = new ParametrosProcessosCustomizados(
+                    "*",
+                    "*",
+                    dtp_periodo_inicio.Value,
+                    dtp_periodo_fim.Value,
+                    buracoNota,
+                    diferencaCapaItem,
+                    false,
+                    notasSemItem,
+                    false,
+                    false,
+                    false,
+                    extracaoCanceladas);
+
+                TaxApiResponse programacao = await ApiTax.ProgramarRelatorio(context, parametros, progresso);
+                if (!programacao.Success)
+                    return ($"Falha ao programar relatório para a empresa {empresa}: {programacao.Message}", []);
+
+                ProcessoRelatorio? processo = null;
+                int linha = 0;
+
+                for (int tentativa = 1; processo is null; tentativa++)
+                {
+                    if (tentativa > tentativasMaximas)
+                        return ($"Tempo esgotado aguardando a conclusão do relatório da empresa {empresa}.", []);
+
+                    await Task.Delay(intervaloMs);
+
+                    progresso.Report(new Progresso($"Aguardando conclusão do relatório de {empresa}", Math.Min(99, tentativa)));
+
+                    TaxApiResponse atual = await ApiTax.ObterRelatorio(context);
+                    if (!atual.Success)
+                        continue;
+
+                    processo = atual.ProcessosRelatorio
+                        .Where(p => p.NumProcesso > ultimoProcessoAnterior)
+                        .OrderByDescending(p => p.NumProcesso)
+                        .FirstOrDefault(p => p.Status.Equals("ENCERRADO", StringComparison.OrdinalIgnoreCase));
+
+                    if (processo is not null)
+                        linha = atual.ProcessosRelatorio.IndexOf(processo) + 1;
+                }
+
+                progresso.Report(new Progresso($"Baixando relatório de {empresa}", 99));
+
+                string pasta = Path.Combine(Config.PathArquivoTemporario, $"{nomeRelatorio}_{empresa}");
+                if (Directory.Exists(pasta))
+                    Directory.Delete(pasta, true);
+                Directory.CreateDirectory(pasta);
+
+                if (!await ApiTax.BaixarRelatorio(context, linha, processo!.NumProcesso, pasta))
+                    return ($"Falha ao baixar os arquivos do relatório da empresa {empresa}.", []);
+
+                string[] arquivos = Directory.GetFiles(pasta)
+                    .Where(a => a.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ||
+                                a.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                                a.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                return (null, arquivos);
+            }
+            catch (Exception ex)
+            {
+                return ($"Erro ao programar/baixar relatório da empresa {empresa}: {ex.Message}", []);
+            }
+        }
+
+        private async void bt_ferramentas_Click(object sender, EventArgs e)
         {
             RetornoOperacao retorno = new RetornoOperacao(false, "Operação não executada!");
             string empresa = string.Empty;
@@ -667,10 +760,96 @@ namespace TaxZone
                 empresa = lbox_empresas.SelectedItem.ToString();
 
             if (cb_ferramentas.SelectedIndex == 0) //ITENS
-                retorno = FuncoesTax.DiferencaItens(Globais.gerarArquivo, Globais.fracionarValores, empresa);
+            {
+                string[]? arquivos = null;
+
+                if (lbox_empresas.SelectedItems.Count == 1)
+                {
+                    DialogResult programar = MessageBox.Show(
+                        "Deseja programar um novo relatório?\n\nSim: programa o relatório, aguarda a conclusão e baixa os arquivos.\nNão: selecionar arquivos manualmente.",
+                        "Diferença de itens",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question);
+
+                    if (programar == DialogResult.Cancel)
+                        return;
+
+                    if (programar == DialogResult.Yes)
+                    {
+                        bt_ferramentas.Enabled = false;
+                        try
+                        {
+                            (string? erro, arquivos) = await ProgramarEBaixarRelatorioAsync(
+                                empresa,
+                                "DiferencaItens",
+                                diferencaCapaItem: true,
+                                notasSemItem: true);
+
+                            if (erro is not null)
+                            {
+                                MessageBox.Show(erro, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+                        finally
+                        {
+                            bt_ferramentas.Enabled = true;
+                        }
+                    }
+                }
+
+                retorno = FuncoesTax.DiferencaItens(Globais.gerarArquivo, Globais.fracionarValores, empresa, arquivos);
+            }
 
             else if (cb_ferramentas.SelectedIndex == 1) //BURACO NOTAS
-                retorno = FuncoesTax.BuracoDeNota(false, null, empresa);
+            {
+                string? arquivo = null;
+                if (lbox_empresas.SelectedItems.Count == 1)
+                {
+                    DialogResult programar = MessageBox.Show(
+                        "Deseja programar um novo relatório?\n\nSim: programa o relatório, aguarda a conclusão e baixa os arquivos.\nNão: selecionar um arquivo manualmente.",
+                        "Buraco de notas",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question);
+
+                    if (programar == DialogResult.Cancel)
+                        return;
+
+                    if (programar == DialogResult.Yes)
+                    {
+                        bt_ferramentas.Enabled = false;
+                        try
+                        {
+                            (string? erro, string[] arquivos) = await ProgramarEBaixarRelatorioAsync(
+                                empresa,
+                                "BuracoNotas",
+                                buracoNota: true);
+
+                            if (erro is not null)
+                            {
+                                MessageBox.Show(erro, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+
+                            arquivo = arquivos.FirstOrDefault(a =>
+                                Path.GetFileName(a).StartsWith($"BURACO_{empresa}", StringComparison.OrdinalIgnoreCase) &&
+                                a.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+
+                            if (arquivo is null)
+                            {
+                                MessageBox.Show($"O relatório foi baixado, mas o PDF do buraco não foi encontrado para {empresa}.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+                        finally
+                        {
+                            bt_ferramentas.Enabled = true;
+                        }
+                    }
+                }
+
+                retorno = FuncoesTax.BuracoDeNota(false, null, empresa, arquivo);
+            }
 
             else if (cb_ferramentas.SelectedIndex == 2) //PRODUTOS / TAXAS
                 retorno = FuncoesTax.ImportarProdutos(false, empresa);
@@ -691,7 +870,60 @@ namespace TaxZone
                     return;
                 }
 
-                retorno = FuncoesTax.GetDiferencaCanceladas(dtp_periodo_inicio.Value.Year.ToString(), dtp_periodo_inicio.Value.Month.ToString("D2"), lbox_empresas.SelectedItem.ToString(), Globais.mesAberto, Globais.gerarArquivo, Globais.fracionarValores);
+                string empresaCanceladas = lbox_empresas.SelectedItem!.ToString()!;
+                string? arquivo = null;
+                DialogResult programar = MessageBox.Show(
+                    "Deseja programar um novo relatório?\n\nSim: programa o relatório, aguarda a conclusão e baixa os arquivos.\nNão: selecionar um arquivo manualmente.",
+                    "Diferença de canceladas",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+
+                if (programar == DialogResult.Cancel)
+                    return;
+
+                if (programar == DialogResult.Yes)
+                {
+                    bt_ferramentas.Enabled = false;
+                    try
+                    {
+                        (string? erro, string[] arquivos) = await ProgramarEBaixarRelatorioAsync(
+                            empresaCanceladas,
+                            "DiferencaCanceladas",
+                            extracaoCanceladas: true);
+
+                        if (erro is not null)
+                        {
+                            MessageBox.Show(erro, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        string[] arquivosCanceladas = arquivos
+                            .Where(a => a.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) || a.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                            .ToArray();
+
+                        string[] candidatosCanceladas = arquivosCanceladas.Where(a =>
+                            Path.GetFileName(a).Contains("CANCEL", StringComparison.OrdinalIgnoreCase) ||
+                            Path.GetFileName(a).Contains("CANC", StringComparison.OrdinalIgnoreCase))
+                            .ToArray();
+
+                        if (candidatosCanceladas.Length == 1)
+                            arquivo = candidatosCanceladas[0];
+                        else if (candidatosCanceladas.Length == 0 && arquivosCanceladas.Length == 1)
+                            arquivo = arquivosCanceladas[0];
+
+                        if (arquivo is null)
+                        {
+                            MessageBox.Show("O relatório foi baixado, mas não foi possível identificar um único arquivo CSV/ZIP de canceladas.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+                    }
+                    finally
+                    {
+                        bt_ferramentas.Enabled = true;
+                    }
+                }
+
+                retorno = FuncoesTax.GetDiferencaCanceladas(dtp_periodo_inicio.Value.Year.ToString(), dtp_periodo_inicio.Value.Month.ToString("D2"), empresaCanceladas, Globais.mesAberto, Globais.gerarArquivo, Globais.fracionarValores, arquivo);
             }
 
             MessageBox.Show(retorno.Mensagem, "Informação", MessageBoxButtons.OK, retorno.Sucesso? MessageBoxIcon.Information : MessageBoxIcon.Error);

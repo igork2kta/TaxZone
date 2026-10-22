@@ -1,7 +1,8 @@
 {
   "profiles": {
     "TaxZone": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "inspector"
     }
   }
 }

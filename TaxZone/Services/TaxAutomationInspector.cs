@@ -70,11 +70,15 @@ namespace TaxZone.Services
 
             foreach (var resultado in resultados)
             {
+                
+
                 if (resultado != null && resultado.Success)
                 {
                     int row = 1;
 
-                    if(resultado.ProcessosImportacao.Count == 0)
+                    bool erro = false;
+
+                    if (resultado.ProcessosImportacao.Count == 0)
                     {
 
                         Logger.Log(resultado.Empresa, $"Nenhum log encontrado.");
@@ -87,7 +91,7 @@ namespace TaxZone.Services
 
                     //Filtra para obter somente a última execução de cada relatório
                     var filtrados = resultado.ProcessosImportacao
-                            .GroupBy(p => p.Descricao)
+                            .GroupBy(p => new { p.CodEstab, p.Descricao })
                             .Select(grupo => grupo
                                 .OrderByDescending(p => p.DataIniMovto)
                                 .First())
@@ -95,11 +99,14 @@ namespace TaxZone.Services
 
                     foreach (var log in filtrados)
                     {
+                        
+
                         if (log.Descricao == "IMPX431" || log.Descricao == "IMPX2013")
                             continue;
 
                         if (log.QtdErr > 0)
                         {
+                            erro = true;
                             Logger.Log(resultado.Empresa, $"{log.Descricao} - Lidos: {log.QtdLido} / Erros: {log.QtdErr} / Inseridos: {log.QtdIns} / Ignorados: {log.QtdIgn}");
 
                             if (log.Descricao == "IMPX42" )
@@ -137,14 +144,20 @@ namespace TaxZone.Services
                                 }
                             }
                         }
+
                         row++;
                     }
+
+                    if (!erro)
+                        Logger.Log(resultado.Empresa, $"Não foram encontrados erros nos processos de importação!");
 
                 }
                 else
                 {
                     Logger.Log("GERAL", $"Falha ao buscar logs. {resultado.Message}");
                 }
+
+                
             }
 
             return empresasComErro;
