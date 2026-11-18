@@ -6,21 +6,19 @@ namespace TaxZone
 {
     internal static class Program
     {
-        
+        private const string TnsAdminVariable = "TNS_ADMIN";
+        private const string TnsAdminDirectory = @"C:\oracle\ora121\network\admin";
+
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main(string[] args)
         {
-
-            // Nome da vari�vel de ambiente do TNS
-            const string tnsVariable = "TNS_ADMIN";
-
-            // Verifica se a vari�vel de ambiente j� existe no n�vel do usu�rio
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(tnsVariable, EnvironmentVariableTarget.User)))
+            string? tnsAdminError = ConfigurarTnsAdmin();
+            if (tnsAdminError != null)
             {
-                MessageBox.Show("Variável de ambiente TNS_ADMIN não cadastrada, sua ausência pode causar falha para conectar no banco. Favor criar.",
+                MessageBox.Show(tnsAdminError,
                     "Atenção!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
@@ -63,6 +61,48 @@ namespace TaxZone
             else
             {
                 Application.Run(new F_Main_V2());
+            }
+        }
+
+        private static string? ConfigurarTnsAdmin()
+        {
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(TnsAdminVariable)))
+                return null;
+
+            string? userValue = Environment.GetEnvironmentVariable(
+                TnsAdminVariable,
+                EnvironmentVariableTarget.User);
+            string value = string.IsNullOrWhiteSpace(userValue)
+                ? TnsAdminDirectory
+                : userValue;
+
+            if (string.IsNullOrWhiteSpace(userValue) && !Directory.Exists(TnsAdminDirectory))
+            {
+                return $"A pasta configurada para TNS_ADMIN não foi encontrada:\n{TnsAdminDirectory}";
+            }
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userValue))
+                {
+                    Environment.SetEnvironmentVariable(
+                        TnsAdminVariable,
+                        value,
+                        EnvironmentVariableTarget.User);
+                }
+
+                Environment.SetEnvironmentVariable(
+                    TnsAdminVariable,
+                    value,
+                    EnvironmentVariableTarget.Process);
+                return null;
+            }
+            catch (Exception ex) when (
+                ex is UnauthorizedAccessException or
+                System.Security.SecurityException or
+                ArgumentException)
+            {
+                return $"Não foi possível cadastrar a variável de ambiente TNS_ADMIN:\n{ex.Message}";
             }
         }
     }

@@ -6,7 +6,7 @@
                                                 SELECT COD_ESTAB,  NUM_DOCFIS, MAX(CASE WHEN SITUACAO = 'S' THEN 1 ELSE 0 END) CANCELADA
                                                 FROM SAFX42
                                                 WHERE DTH_INCLUSAO IS NOT NULL
-                                                  AND COD_EMPRESA = '{0}'
+                                                  AND COD_EMPRESA = {0}
                                                   AND COD_ESTAB IN ({2})
                                                   AND DAT_FISCAL BETWEEN '{3}' and '{4}'
                                                   {5}
@@ -29,7 +29,7 @@
                                             from (  select COD_ESTAB,DAT_FISCAL, IND_FIS_JUR, COD_FIS_JUR, NUM_DOCFIS, NUM_ITEM
                                                     from safx43 
                                                     where   DTH_INCLUSAO is not null and
-                                                            COD_EMPRESA = '{0}' and
+                                                            COD_EMPRESA = {0} and
                                                             COD_ESTAB in ({2}) and
                                                             DAT_FISCAL between '{3}' and '{4}'
                                                             {5}

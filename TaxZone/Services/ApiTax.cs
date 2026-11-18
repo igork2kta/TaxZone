@@ -79,11 +79,10 @@ namespace TaxZone.Services
 
             await page.GetByRole(AriaRole.Button,new() { Name = "Sign In" }).ClickAsync();
 
-            await page.GetByRole(AriaRole.Listitem,new() { Name = "TAX ONE" }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Open TAX ONE" }).ClickAsync();
+            await page.GetByRole(AriaRole.Gridcell, new() { Name = "-EMR" }).ClickAsync();
 
-            await page.GetByRole(AriaRole.Gridcell,new() { Name = "-EMR" }).ClickAsync();
-
-            
+            /*
             await page.GotoAsync("https://www.onesourcetax.com/platform/apps/oms-11/home",
                 new()
                 {
@@ -91,7 +90,7 @@ namespace TaxZone.Services
                     //WaitUntil = WaitUntilState.DOMContentLoaded
                 });
             
-
+            */
             var cookies = await context.CookiesAsync();
 
             return string.Join(
